@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logbook Kegiatan Harian - SIAMAG Dishub</title>
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <!-- DataTables Bootstrap 5 -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="wrapper">
+    <!-- SIDEBAR -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="../assets/img/Logo.png" alt="Logo">
+            <div class="brand-text">
+                <h5>SIAMAG</h5>
+                <small>Dishub Ponorogo</small>
+            </div>
+        </div>
+
+        <div class="sidebar-menu">
+            <div class="menu-label">Menu Utama</div>
+            <a href="dashboard.html">
+                <i class="fas fa-th-large"></i> Dashboard
+            </a>
+
+            <div class="menu-label mt-3">Kegiatan</div>
+            <a href="absensi.html">
+                <i class="fas fa-fingerprint"></i> Absensi
+            </a>
+            <a href="logbook.html" class="active">
+                <i class="fas fa-book"></i> Logbook
+            </a>
+            <a href="pengajuan-izin.html">
+                <i class="fas fa-file-alt"></i> Pengajuan Izin
+            </a>
+
+            <div class="menu-label mt-3">Lainnya</div>
+            <a href="riwayat.html">
+                <i class="fas fa-history"></i> Riwayat
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <a href="#" id="btnLogout">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <!-- Topbar -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <button class="btn-sidebar-toggle" id="btnToggleSidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h4>Logbook Harian</h4>
+            </div>
+            <div class="topbar-right">
+                <button class="btn-notif" id="btnNotif">
+                    <i class="fas fa-bell"></i>
+                    <span class="notif-badge">2</span>
+                </button>
+                <div class="dropdown user-dropdown">
+                    <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
+                        <div class="user-avatar" id="userInitial">P</div>
+                        <div class="d-none d-sm-block">
+                            <div style="font-weight:600; line-height:1.2;" id="userName">Peserta Magang</div>
+                            <div style="font-size:0.72rem; color:#999;" id="userRole">Peserta Magang</div>
+                        </div>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item text-danger btn-logout" href="#"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <div>
+                    <h5 class="page-title mb-1">Catatan Kegiatan Harian (Logbook)</h5>
+                    <p class="page-subtitle mb-0">Isi dan laporkan kegiatan magang harian Anda untuk diverifikasi oleh Pembimbing Lapangan.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary btn-sm" id="btnReloadTable">
+                        <i class="fas fa-sync-alt me-1"></i> Refresh
+                    </button>
+                    <button class="btn btn-primary btn-sm" id="btnTambahLogbook" style="background:var(--primary); border:none;">
+                        <i class="fas fa-plus-circle me-1"></i> Isi Logbook Hari Ini
+                    </button>
+                </div>
+            </div>
+
+            <!-- Ringkasan Stat Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-lg-3">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="stat-icon bg-blue">
+                                <i class="fas fa-book-open"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="statTotalLogbook">0</h3>
+                                <p>Total Logbook</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="stat-icon bg-green">
+                                <i class="fas fa-check-double"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="statDiverifikasi">0</h3>
+                                <p>Diverifikasi (Paraf)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="stat-icon bg-orange">
+                                <i class="fas fa-hourglass-half"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="statMenunggu">0</h3>
+                                <p>Menunggu Verifikasi</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="stat-icon bg-red">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="statDitolak">0</h3>
+                                <p>Perlu Revisi</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Card -->
+            <div class="card filter-card mb-4">
+                <div class="card-body p-3">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-4 col-sm-6">
+                            <label class="form-label text-muted small mb-1">Filter Status Verifikasi</label>
+                            <select class="form-select form-select-sm" id="filterStatusLogbook">
+                                <option value="">Semua Status</option>
+                                <option value="diverifikasi">Diverifikasi</option>
+                                <option value="menunggu">Menunggu</option>
+                                <option value="ditolak">Perlu Revisi / Ditolak</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 col-sm-6">
+                            <label class="form-label text-muted small mb-1">Cari Tanggal / Kegiatan</label>
+                            <input type="text" class="form-control form-control-sm" id="filterKeywordLogbook" placeholder="Ketik kata kunci...">
+                        </div>
+                        <div class="col-md-4 col-sm-12">
+                            <button class="btn btn-sm btn-outline-secondary w-100" id="btnResetFilterLogbook">
+                                Reset Filter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabel Daftar Logbook -->
+            <div class="card table-card">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-semibold"><i class="fas fa-list-check me-2"></i>Daftar Seluruh Logbook Kegiatan</h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="table-responsive">
+                        <table class="table table-custom table-hover align-middle w-100" id="tabelLogbook">
+                            <thead>
+                                <tr>
+                                    <th width="5%">No</th>
+                                    <th width="15%">Tanggal & Waktu</th>
+                                    <th>Deskripsi Kegiatan</th>
+                                    <th>Output / Hasil</th>
+                                    <th width="10%">Lampiran</th>
+                                    <th width="15%">Status & Paraf</th>
+                                    <th width="12%" class="text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Rendered by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /.content-area -->
+    </div><!-- /.main-content -->
+</div><!-- /.wrapper -->
+
+<!-- MODAL TAMBAH / EDIT LOGBOOK -->
+<div class="modal fade" id="modalLogbook" tabindex="-1" aria-labelledby="modalLogbookTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalLogbookTitle"><i class="fas fa-edit me-2"></i>Isi Logbook Kegiatan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formLogbook" autocomplete="off">
+                <div class="modal-body">
+                    <input type="hidden" id="logbookId" name="id">
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Tanggal Kegiatan <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="tglLogbook" name="tanggal" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Waktu Mulai <span class="text-danger">*</span></label>
+                            <input type="time" class="form-control" id="waktuMulai" name="waktu_mulai" required value="08:00">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Waktu Selesai <span class="text-danger">*</span></label>
+                            <input type="time" class="form-control" id="waktuSelesai" name="waktu_selesai" required value="15:00">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Deskripsi Pekerjaan / Kegiatan <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="deskripsiKegiatan" name="deskripsi_kegiatan" rows="3" 
+                                      placeholder="Uraikan detail pekerjaan yang Anda lakukan hari ini..." required></textarea>
+                            <small class="text-muted">Contoh: Memperbaiki fitur deteksi lokasi untuk absensi.</small>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Hasil / Output Kegiatan <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="hasilKegiatan" name="hasil_kegiatan" rows="2" 
+                                      placeholder="Apa hasil atau output dari kegiatan tersebut..." required></textarea>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Upload Foto / Bukti Dokumentasi Kegiatan</label>
+                            <input type="file" class="form-control" id="fileLampiran" accept="image/*,.pdf">
+                            <small class="text-muted">Format: JPG, PNG, atau PDF (Maks. 5MB).</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary btn-sm" style="background:var(--primary); border:none;">
+                        <i class="fas fa-save me-1"></i> Simpan Logbook
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DETAIL LOGBOOK -->
+<div class="modal fade" id="modalDetailLogbook" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-info-circle me-2"></i>Detail Logbook Kegiatan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4" id="contentDetailLogbook">
+                <!-- Diisi via JS -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="../assets/js/app.js"></script>
+<script src="../assets/js/masterData.js"></script>
+<script src="../assets/js/pembimbing-demo-data.js"></script>
+<script src="../assets/js/peserta-logbook.js"></script>
+
+</body>
+</html>

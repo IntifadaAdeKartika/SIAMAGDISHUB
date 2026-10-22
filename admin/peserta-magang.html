@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kelola Peserta Magang - SIAMAG Dishub</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <!-- DataTables Bootstrap 5 -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<!-- Overlay sidebar mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="wrapper">
+    <!-- SIDEBAR -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="../assets/img/Logo.png" alt="Logo">
+            <div class="brand-text">
+                <h5>SIAMAG</h5>
+                <small>Dishub Ponorogo</small>
+            </div>
+        </div>
+
+        <div class="sidebar-menu">
+            <div class="menu-label">Menu Utama</div>
+            <a href="dashboard.html">
+                <i class="fas fa-th-large"></i> Dashboard
+            </a>
+            <a href="peserta-magang.html" class="active">
+                <i class="fas fa-user-graduate"></i> Peserta Magang
+            </a>
+            <a href="pembimbing.html">
+                <i class="fas fa-user-tie"></i> Pembimbing
+            </a>
+            <a href="unit-kerja.html">
+                <i class="fas fa-building"></i> Unit Kerja
+            </a>
+
+            <div class="menu-label mt-3">Monitoring</div>
+            <a href="absensi.html">
+                <i class="fas fa-clipboard-check"></i> Absensi
+            </a>
+            <a href="logbook.html">
+                <i class="fas fa-book"></i> Logbook
+            </a>
+            <a href="pengajuan-izin.html">
+                <i class="fas fa-envelope-open-text"></i> Pengajuan Izin
+            </a>
+
+            <div class="menu-label mt-3">Lainnya</div>
+            <a href="laporan.html">
+                <i class="fas fa-file-export"></i> Laporan
+            </a>
+            <a href="log-aktivitas.html">
+                <i class="fas fa-history"></i> Log Aktivitas
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <a href="#" id="btnLogout">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <!-- Topbar -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <button class="btn-sidebar-toggle" id="btnToggleSidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h4>Data Peserta Magang</h4>
+            </div>
+            <div class="topbar-right">
+                <button class="btn-notif" id="btnNotif">
+                    <i class="fas fa-bell"></i>
+                    <span class="notif-badge"> </span>
+                </button>
+                <div class="dropdown user-dropdown">
+                    <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
+                        <div class="user-avatar" id="userInitial">A</div>
+                        <div class="d-none d-sm-block">
+                            <div style="font-weight:600; line-height:1.2;" id="userName">Admin</div>
+                            <div style="font-size:0.72rem; color:#999;" id="userRole">Administrator</div>
+                        </div>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item text-danger btn-logout" href="#"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content-area">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <div>
+                    <h5 class="page-title mb-1">Manajemen Peserta Magang</h5>
+                    <p class="page-subtitle mb-0">Kelola data siswa dan mahasiswa magang di lingkungan Dinas Perhubungan.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary btn-sm" id="btnReloadTable">
+                        Refresh
+                    </button>
+                    <button class="btn btn-primary btn-sm" id="btnTambahPeserta">
+                        Tambah Peserta
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter Card -->
+            <div class="card mb-4 border-0">
+                <div class="card-body p-3">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-3 col-sm-6">
+                            <label class="form-label text-muted small mb-1">Jenis Peserta</label>
+                            <select class="form-select form-select-sm" id="filterJenis">
+                                <option value="">Semua Jenis</option>
+                                <option value="Siswa">Siswa (SMK)</option>
+                                <option value="Mahasiswa">Mahasiswa</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <label class="form-label text-muted small mb-1">Penempatan</label>
+                            <select class="form-select form-select-sm" id="filterUnit">
+                                <option value="">Semua Unit Kerja</option>
+                                <option value="Sekretariat">Sekretariat</option>
+                                <option value="Sub Bagian Umum Dan Kepegawaian">Sub Bagian Umum Dan Kepegawaian</option>
+                                <option value="Sub Bagian Keuangan Dan Penyusunan Program">Sub Bagian Keuangan Dan Penyusunan Program</option>
+                                <option value="Bidang Angkutan">Bidang Angkutan</option>
+                                <option value="Seksi Angkutan Orang">Seksi Angkutan Orang</option>
+                                <option value="Seksi Angkutan Barang">Seksi Angkutan Barang</option>
+                                <option value="Bidang Lalu Lintas, Sarana, Prasarana">Bidang Lalu Lintas, Sarana, Prasarana</option>
+                                <option value="Seksi Perparkiran">Seksi Perparkiran</option>
+                                <option value="Seksi Manajemen Rekayasa Lalu Lintas">Seksi Manajemen Rekayasa Lalu Lintas</option>
+                                <option value="Seksi Penerangan Jalan Umum">Seksi Penerangan Jalan Umum</option>
+                                <option value="Bidang Pengendalian Operasional">Bidang Pengendalian Operasional LL & AJ</option>
+                                <option value="UPT Pengujian Kendaraan Bermotor">UPT Pengujian Kendaraan Bermotor</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <label class="form-label text-muted small mb-1">Status</label>
+                            <select class="form-select form-select-sm" id="filterStatus">
+                                <option value="">Semua Status</option>
+                                <option value="aktif">Aktif</option>
+                                <option value="belum mulai">Belum Mulai</option>
+                                <option value="tidak aktif">Tidak Aktif</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 col-sm-6 d-flex align-items-end">
+                            <button class="btn btn-sm btn-link text-muted w-100" id="btnResetFilter">
+                                Reset Filter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabel Card -->
+            <div class="card table-card">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0"><i class="fas fa-list me-2"></i>Daftar Seluruh Peserta Magang</h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="table-responsive">
+                        <table class="table table-custom table-hover align-middle w-100" id="tabelPeserta">
+                            <thead>
+                                <tr>
+                                    <th width="5%">No</th>
+                                    <th>Identitas & Nama</th>
+                                    <th>Asal Sekolah/Kampus</th>
+                                    <th>Unit Penempatan</th>
+                                    <th>Pembimbing</th>
+                                    <th>Periode Magang</th>
+                                    <th>Status</th>
+                                    <th width="14%" class="text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data di-render via jQuery / JS (dibawah) -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /.content-area -->
+    </div><!-- /.main-content -->
+</div><!-- /.wrapper -->
+
+<!-- MODAL TAMBAH / EDIT PESERTA -->
+<div class="modal fade" id="modalPeserta" tabindex="-1" aria-labelledby="modalPesertaTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalPesertaTitle"><i class="fas fa-user-plus me-2"></i>Tambah Peserta Magang</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formPeserta" autocomplete="off">
+                <div class="modal-body">
+                    <!-- ID Hidden untuk Edit -->
+                    <input type="hidden" id="pesertaId" name="id">
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Jenis Peserta <span class="text-danger">*</span></label>
+                            <select class="form-select" id="jenisPeserta" name="jenis_peserta" required>
+                                <option value="siswa">Siswa SMK / Sederajat</option>
+                                <option value="mahasiswa">Mahasiswa (D3/D4/S1)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" id="labelUsername">Username / NISN <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="usernamePeserta" name="username" 
+                                   placeholder="Contoh: 0012345678" required>
+                            <small class="text-muted" id="hintUsername">Untuk siswa: NISN. Untuk mahasiswa: Kode Kampus+NIM.</small>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="namaLengkap" name="nama_lengkap" 
+                                   placeholder="Nama lengkap sesuai KTP/KTM" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">No. Handphone <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control" id="noHp" name="no_hp" 
+                                   placeholder="081234567890" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Asal Sekolah / Kampus <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="asalSekolahKampus" name="asal_sekolah_kampus" 
+                                   placeholder="Contoh: SMKN 1 Jenangan / Univ. Muhammadiyah Ponorogo" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Jurusan / Prodi</label>
+                            <input type="text" class="form-control" id="prodiJurusan" name="prodi_jurusan" 
+                                   placeholder="Rekayasa Perangkat Lunak / Teknik Informatika">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Kelas / Semester</label>
+                            <input type="text" class="form-control" id="kelasSemester" name="kelas_semester" 
+                                   placeholder="Kelas XII RPL 1 / Semester 7">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Unit Kerja Penempatan <span class="text-danger">*</span></label>
+                            <select class="form-select" id="idUnitKerja" name="id_unit_kerja" required>
+                                <option value="">-- Pilih Unit Kerja --</option>
+                            </select>
+                            <div class="mt-1" style="font-size: 0.78rem; color: var(--primary);">
+                                <i class="fas fa-info-circle me-1"></i>Pembimbing Otomatis: <strong id="previewPembimbing">-</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Status Peserta <span class="text-danger">*</span></label>
+                            <select class="form-select" id="statusPeserta" name="status_peserta" required>
+                                <option value="aktif">Aktif</option>
+                                <option value="belum mulai">Belum Mulai</option>
+                                <option value="tidak aktif">Tidak Aktif / Selesai</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Tanggal Mulai Magang <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="tanggalMulai" name="tanggal_mulai" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Tanggal Selesai Magang <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="tanggalSelesai" name="tanggal_selesai" required>
+                        </div>
+
+                        <div class="col-12" id="boxPassword">
+                            <div class="p-2 border rounded" style="background:var(--bg-light); font-size:0.8rem;">
+                                <i class="fas fa-key me-1 text-primary"></i> <strong>Password Akun:</strong> 
+                                <span id="textPasswordInfo">Default password untuk akun baru adalah: <code>magang123</code> (bisa diganti peserta setelah login).</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="btnSimpanPeserta" style="background:var(--primary); border:none;">
+                        <i class="fas fa-save me-1"></i> Simpan Data
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DETAIL PESERTA -->
+<div class="modal fade" id="modalDetailPeserta" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-id-card me-2"></i>Detail Peserta Magang</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4" id="contentDetailPeserta">
+                <!-- Diisi JS -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="../assets/js/app.js"></script>
+<script src="../assets/js/masterData.js"></script>
+<script src="../assets/js/admin-peserta.js"></script>
+
+</body>
+</html>

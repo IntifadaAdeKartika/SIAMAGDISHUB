@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekap & Laporan — SIAMAG DISHUB</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="../assets/img/Logo.png">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../assets/css/style.css">
+
+    <style>
+        @media print {
+            body { background: #fff !important; color: #000 !important; font-size: 11pt; }
+            .sidebar, .topbar, .filter-card, .btn-aksi-cetak, .sidebar-overlay,
+            .btn-sidebar-toggle, .kop-surat, .ttd-box { display: none !important; }
+            .main-content { margin-left: 0 !important; padding: 0 !important; width: 100% !important; }
+            .content-area { padding: 0 !important; }
+            .table { width: 100% !important; border-collapse: collapse !important; }
+            .table th, .table td { border: 1px solid #000 !important; padding: 5px 7px !important; color: #000 !important; font-size: 10pt; }
+            .table thead th { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .badge { border: 1px solid #666; color: #000 !important; background: transparent !important; }
+            .card { border: none !important; box-shadow: none !important; }
+        }
+        @media screen {
+            .kop-surat, .ttd-box { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="wrapper">
+    <!-- SIDEBAR -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="../assets/img/Logo.png" alt="Logo">
+            <div class="brand-text">
+                <h5>SIAMAG</h5>
+                <small>Dishub Ponorogo</small>
+            </div>
+        </div>
+
+        <div class="sidebar-menu">
+            <div class="menu-label">Menu Utama</div>
+            <a href="dashboard.html">
+                <i class="fas fa-th-large"></i> Dashboard
+            </a>
+            <a href="peserta-magang.html">
+                <i class="fas fa-user-graduate"></i> Peserta Magang
+            </a>
+            <a href="pembimbing.html">
+                <i class="fas fa-user-tie"></i> Pembimbing
+            </a>
+            <a href="unit-kerja.html">
+                <i class="fas fa-building"></i> Unit Kerja
+            </a>
+
+            <div class="menu-label mt-3">Monitoring</div>
+            <a href="absensi.html">
+                <i class="fas fa-clipboard-check"></i> Absensi
+            </a>
+            <a href="logbook.html">
+                <i class="fas fa-book"></i> Logbook
+            </a>
+            <a href="pengajuan-izin.html">
+                <i class="fas fa-envelope-open-text"></i> Pengajuan Izin
+            </a>
+
+            <div class="menu-label mt-3">Lainnya</div>
+            <a href="laporan.html" class="active">
+                <i class="fas fa-file-export"></i> Laporan
+            </a>
+            <a href="log-aktivitas.html">
+                <i class="fas fa-history"></i> Log Aktivitas
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <a href="#" id="btnLogout">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <!-- Topbar -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <button class="btn-sidebar-toggle" id="btnToggleSidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h4>Rekap & Laporan</h4>
+            </div>
+            <div class="topbar-right">
+                <button class="btn-notif" id="btnNotif">
+                    <i class="far fa-bell"></i>
+                    <span class="notif-badge">3</span>
+                </button>
+                <div class="dropdown user-dropdown">
+                    <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
+                        <div class="user-avatar" id="userInitial">A</div>
+                        <div class="d-none d-sm-block">
+                            <div class="fw-semibold small" id="userName">Administrator</div>
+                            <div class="text-muted" style="font-size:0.75rem;" id="userRole">Admin Dinas</div>
+                        </div>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item text-danger btn-logout" href="#"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h5 class="page-title mb-1">Laporan & Rekapitulasi Magang</h5>
+                    <p class="page-subtitle mb-0">Cetak rekap kehadiran presensi dan catatan logbook harian peserta magang Dinas Perhubungan.</p>
+                </div>
+                <div class="btn-aksi-cetak d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-secondary" id="btnExportExcel">
+                        Ekspor Excel
+                    </button>
+                    <button class="btn btn-sm btn-primary" id="btnCetakLaporan">
+                        Cetak Laporan
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter Panel -->
+            <div class="card filter-card mb-4">
+                <div class="card-body p-3">
+                    <form id="formFilterLaporan" onsubmit="return false;">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label text-muted small mb-1">Jenis Laporan</label>
+                                <select class="form-select form-select-sm" id="jenisLaporan">
+                                    <option value="presensi" selected>Rekapitulasi Presensi</option>
+                                    <option value="logbook">Rekapitulasi Logbook Kegiatan</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label text-muted small mb-1">Unit Kerja</label>
+                                <select class="form-select form-select-sm" id="filterUnit">
+                                    <option value="">Semua Unit Kerja</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label text-muted small mb-1">Peserta Magang</label>
+                                <select class="form-select form-select-sm" id="filterPeserta">
+                                    <option value="">Semua Peserta</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label text-muted small mb-1">Rentang Tanggal</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="date" class="form-control" id="tglMulai">
+                                    <span class="input-group-text"><i class="fas fa-arrow-right"></i></span>
+                                    <input type="date" class="form-control" id="tglSelesai">
+                                </div>
+                            </div>
+                            <div class="col-12 d-flex justify-content-end gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnReset">
+                                    Reset Filter
+                                </button>
+                                <button type="button" class="btn btn-sm btn-primary" id="btnFilter">
+                                    Terapkan Filter
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Ringkasan Statistik Singkat -->
+            <div class="row g-3 mb-4 filter-card">
+                <div class="col-md-3 col-6">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="stat-icon bg-blue">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="statHadir">2</h3>
+                                <p>Hadir Tepat Waktu</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="stat-icon bg-orange">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="statTerlambat">1</h3>
+                                <p>Total Terlambat</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="stat-icon bg-sky">
+                                <i class="fas fa-envelope-open-text"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="statIzin">0</h3>
+                                <p>Izin Disetujui</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="stat-icon bg-red">
+                                <i class="fas fa-notes-medical"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="statSakit">0</h3>
+                                <p>Total Sakit</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION TABEL PRESENSI -->
+            <div id="sectionLaporanPresensi">
+                <div class="card table-card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-custom table-hover align-middle mb-0" id="tabelLaporanPresensi">
+                                <thead>
+                                    <tr class="text-center">
+                                        <th style="width: 40px;">No</th>
+                                        <th>Tanggal</th>
+                                        <th>Nama Peserta / Instansi</th>
+                                        <th>Unit Kerja Penempatan</th>
+                                        <th>Masuk</th>
+                                        <th>Pulang</th>
+                                        <th>Status Kehadiran</th>
+                                        <th>Keterlambatan</th>
+                                        <th>Paraf Pembimbing</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Diisi secara dinamis via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION TABEL LOGBOOK -->
+            <div id="sectionLaporanLogbook" style="display: none;">
+                <div class="card table-card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-custom table-hover align-middle mb-0" id="tabelLaporanLogbook">
+                                <thead>
+                                    <tr class="text-center">
+                                        <th style="width: 40px;">No</th>
+                                        <th>Tanggal</th>
+                                        <th>Nama Peserta / Instansi</th>
+                                        <th>Unit Kerja</th>
+                                        <th>Uraian Kegiatan Tugas Harian</th>
+                                        <th>Status Verifikasi</th>
+                                        <th>Paraf Pembimbing</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Diisi secara dinamis via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- App JS -->
+<script src="../assets/js/app.js"></script>
+<!-- Laporan JS -->
+<script src="../assets/js/masterData.js"></script>
+<script src="../assets/js/admin-laporan.js"></script>
+
+</body>
+</html>
