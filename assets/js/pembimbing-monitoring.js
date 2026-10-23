@@ -51,26 +51,34 @@ $(document).ready(function() {
     var cards = context.peserta.map(function(peserta) {
         var absensi = attendanceByNim[peserta.nim];
         var logbook = logbookByNim[peserta.nim];
+        var attendanceStatus = absensi ? absensi.status : 'Belum Absen';
+        var logbookStatus = logbook ? logbook.status : 'Belum ada logbook';
+        var attendanceTime = absensi ? absensi.jamMasuk.replace(' WIB', '') : '';
         return `
             <div class="col-md-6">
-                <div class="card bimbingan-card h-100">
+                <article class="card bimbingan-card h-100">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div>
-                                <h6 class="mb-1">${peserta.nama}</h6>
-                                <small class="text-muted">${peserta.instansi}</small>
+                        <div class="bimbingan-card-header">
+                            <div class="bimbingan-card-identity">
+                                <h6>${peserta.nama}</h6>
+                                <p>${peserta.instansi}</p>
                             </div>
-                            <span class="badge bg-light text-primary border">${peserta.nim}</span>
+                            <span class="bimbingan-card-nim"><i class="fas fa-id-card"></i>${peserta.nim}</span>
                         </div>
-                        <div class="small mb-2"><i class="fas fa-calendar-check text-primary me-2"></i>Presensi:
-                            <strong>${absensi ? absensi.status : 'Belum Absen'}</strong>
-                            <span class="text-muted">${absensi ? '— ' + absensi.jamMasuk.replace(' WIB', '') : ''}</span>
-                        </div>
-                        <div class="small"><i class="fas fa-book text-primary me-2"></i>Logbook:
-                            <strong>${logbook ? logbook.status : 'Belum ada logbook'}</strong>
+                        <div class="bimbingan-card-activity">
+                            <div class="bimbingan-card-activity-row">
+                                <span class="bimbingan-card-activity-label"><i class="fas fa-calendar-check"></i>Presensi</span>
+                                <strong>${attendanceStatus}</strong>
+                                ${attendanceTime ? `<span class="bimbingan-card-time">${attendanceTime}</span>` : ''}
+                            </div>
+                            <div class="bimbingan-card-activity-row">
+                                <span class="bimbingan-card-activity-label"><i class="fas fa-book"></i>Logbook</span>
+                                <strong>${logbookStatus}</strong>
+                                <span></span>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </article>
             </div>
         `;
     }).join('');
