@@ -297,23 +297,47 @@ $(document).ready(function() {
 
         var html = `
             ${catatanHtml}
-            <div class="row g-2 mb-3" style="font-size:0.85rem;">
-                <div class="col-6"><strong>Nama Peserta:</strong> ${item.nama_peserta}</div>
-                <div class="col-6"><strong>Instansi:</strong> ${item.instansi}</div>
-                <div class="col-6"><strong>Jenis:</strong> <span class="text-uppercase fw-bold">${item.jenis}</span></div>
-                <div class="col-6"><strong>Durasi:</strong> ${item.durasi} Hari (${item.tanggal_mulai} s/d ${item.tanggal_selesai})</div>
-                <div class="col-12"><strong>Status:</strong> ${badgeStatus}</div>
+            <div class="modal-detail-wrapper mb-3">
+                <table class="table table-sm table-striped align-middle mb-0" style="font-size:0.875rem;">
+                    <tbody>
+                        <tr>
+                            <td class="text-muted py-2" style="width:38%;"><i class="fas fa-user-graduate me-2 text-primary" style="width:16px;"></i>Nama Peserta</td>
+                            <td class="text-center text-muted py-2" style="width:5%;">:</td>
+                            <td class="fw-bold text-dark py-2">${item.nama_peserta}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-university me-2 text-primary" style="width:16px;"></i>Instansi</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="fw-semibold text-dark py-2">${item.instansi}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-tag me-2 text-primary" style="width:16px;"></i>Jenis Pengajuan</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="py-2"><span class="text-uppercase fw-bold text-primary">${item.jenis}</span></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-calendar-alt me-2 text-secondary" style="width:16px;"></i>Periode & Durasi</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="fw-semibold text-dark py-2">${item.durasi} Hari (${item.tanggal_mulai} s/d ${item.tanggal_selesai})</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-info-circle me-2 text-info" style="width:16px;"></i>Status Persetujuan</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="py-2">${badgeStatus}</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
             <div class="mb-3">
-                <label class="fw-bold small text-muted">Alasan Permohonan:</label>
-                <div class="p-3 rounded" style="background:var(--bg-light); font-size:0.85rem; line-height:1.5;">
+                <label class="fw-bold small text-muted mb-1"><i class="fas fa-comment-dots text-primary me-1"></i>Alasan Permohonan:</label>
+                <div class="p-3 rounded bg-light border" style="font-size:0.85rem; line-height:1.5;">
                     ${item.alasan}
                 </div>
             </div>
 
             <div class="mt-3">
-                <label class="fw-bold small text-muted d-block text-start mb-2">Lampiran Bukti Surat:</label>
+                <label class="fw-bold small text-muted d-block text-start mb-2"><i class="fas fa-file-alt text-primary me-1"></i>Lampiran Bukti Surat:</label>
                 <div class="p-3 border rounded bg-light text-center">
                     <i class="fas fa-file-pdf text-danger fa-2x mb-2"></i>
                     <div class="fw-semibold small">${item.file_surat}</div>

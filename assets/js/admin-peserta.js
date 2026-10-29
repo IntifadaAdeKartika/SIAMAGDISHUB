@@ -337,40 +337,48 @@ $(document).ready(function() {
                 </div>
             </div>
 
-            <div class="table-responsive">
+            <div class="modal-detail-wrapper">
                 <table class="table table-sm table-striped align-middle mb-0" style="font-size:0.875rem;">
                     <tbody>
                         <tr>
-                            <td class="text-muted py-2" style="width:38%;"><i class="fas fa-university me-2 text-primary"></i>Asal Instansi</td>
-                            <td class="fw-semibold py-2">: ${item.asal_sekolah_kampus}</td>
+                            <td class="text-muted py-2" style="width:38%;"><i class="fas fa-university me-2 text-primary" style="width:16px;"></i>Asal Instansi</td>
+                            <td class="text-center text-muted py-2" style="width:5%;">:</td>
+                            <td class="fw-semibold text-dark py-2">${item.asal_sekolah_kampus}</td>
                         </tr>
                         <tr>
-                            <td class="text-muted py-2"><i class="fas fa-graduation-cap me-2 text-primary"></i>Prodi / Jurusan</td>
-                            <td class="fw-semibold py-2">: ${item.prodi_jurusan || '-'}</td>
+                            <td class="text-muted py-2"><i class="fas fa-graduation-cap me-2 text-primary" style="width:16px;"></i>Prodi / Jurusan</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="fw-semibold text-dark py-2">${item.prodi_jurusan || '-'}</td>
                         </tr>
                         <tr>
-                            <td class="text-muted py-2"><i class="fas fa-layer-group me-2 text-primary"></i>Kelas / Semester</td>
-                            <td class="fw-semibold py-2">: ${item.kelas_semester || '-'}</td>
+                            <td class="text-muted py-2"><i class="fas fa-layer-group me-2 text-primary" style="width:16px;"></i>Kelas / Semester</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="fw-semibold text-dark py-2">${item.kelas_semester || '-'}</td>
                         </tr>
                         <tr>
-                            <td class="text-muted py-2"><i class="fas fa-phone me-2 text-success"></i>No. HP / WhatsApp</td>
-                            <td class="fw-semibold py-2">: ${item.no_hp || '-'}</td>
+                            <td class="text-muted py-2"><i class="fas fa-phone me-2 text-success" style="width:16px;"></i>No. HP / WhatsApp</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="fw-semibold text-dark py-2">${item.no_hp || '-'}</td>
                         </tr>
                         <tr>
-                            <td class="text-muted py-2"><i class="fas fa-building me-2 text-primary"></i>Unit Penempatan</td>
-                            <td class="fw-bold text-dark py-2">: ${item.nama_unit_kerja}</td>
+                            <td class="text-muted py-2"><i class="fas fa-building me-2 text-primary" style="width:16px;"></i>Unit Penempatan</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="fw-bold text-dark py-2">${item.nama_unit_kerja}</td>
                         </tr>
                         <tr>
-                            <td class="text-muted py-2"><i class="fas fa-user-tie me-2 text-primary"></i>Pembimbing</td>
-                            <td class="fw-bold text-primary py-2">: ${item.nama_pembimbing}</td>
+                            <td class="text-muted py-2"><i class="fas fa-user-tie me-2 text-primary" style="width:16px;"></i>Pembimbing</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="fw-bold text-primary py-2">${item.nama_pembimbing}</td>
                         </tr>
                         <tr>
-                            <td class="text-muted py-2"><i class="fas fa-calendar-alt me-2 text-secondary"></i>Periode Magang</td>
-                            <td class="py-2">: <span class="badge bg-light text-dark border">${item.tanggal_mulai}</span> s/d <span class="badge bg-light text-dark border">${item.tanggal_selesai}</span></td>
+                            <td class="text-muted py-2"><i class="fas fa-calendar-alt me-2 text-secondary" style="width:16px;"></i>Periode Magang</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="py-2"><span class="badge bg-light text-dark border">${item.tanggal_mulai}</span> s/d <span class="badge bg-light text-dark border">${item.tanggal_selesai}</span></td>
                         </tr>
                         <tr>
-                            <td class="text-muted py-2"><i class="fas fa-info-circle me-2 text-info"></i>Status Peserta</td>
-                            <td class="py-2">: ${badgeStatus}</td>
+                            <td class="text-muted py-2"><i class="fas fa-info-circle me-2 text-info" style="width:16px;"></i>Status Peserta</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="py-2">${badgeStatus}</td>
                         </tr>
                     </tbody>
                 </table>

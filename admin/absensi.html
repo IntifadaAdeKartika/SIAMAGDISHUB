@@ -194,8 +194,9 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <button type="button" class="btn btn-sm btn-link text-muted w-100" id="btnResetFilter">
-                                Reset Filter
+                            <label class="form-label d-none d-md-block small mb-1" style="visibility:hidden;">Aksi</label>
+                            <button type="button" class="btn btn-sm btn-outline-secondary w-100" id="btnResetFilter">
+                                <i class="fas fa-rotate-left me-1"></i> Reset Filter
                             </button>
                         </div>
                     </div>
@@ -258,26 +259,41 @@
                 <h5 class="fw-bold mb-1" id="modalNama">-</h5>
                 <p class="text-muted small mb-3" id="modalNimInstansi">-</p>
 
-                <div class="text-start bg-light p-3 rounded small">
-                    <div class="row g-2">
-                        <div class="col-5 text-muted">Unit Penempatan:</div>
-                        <div class="col-7 fw-semibold" id="modalUnit">-</div>
-                        
-                        <div class="col-5 text-muted">Pembimbing:</div>
-                        <div class="col-7 fw-semibold" id="modalPembimbing">-</div>
-                        
-                        <div class="col-5 text-muted">Waktu Presensi:</div>
-                        <div class="col-7 fw-semibold" id="modalWaktu">-</div>
-                        
-                        <div class="col-5 text-muted">Lokasi Kantor:</div>
-                        <div class="col-7 fw-semibold text-primary" id="modalLokasiKantor">-</div>
-
-                        <div class="col-5 text-muted">Lokasi GPS:</div>
-                        <div class="col-7 fw-semibold" id="modalRadius">-</div>
-
-                        <div class="col-5 text-muted">Status Verifikasi:</div>
-                        <div class="col-7 fw-semibold" id="modalVerif">-</div>
-                    </div>
+                <div class="modal-detail-wrapper text-start">
+                    <table class="table table-sm table-striped align-middle mb-0" style="font-size:0.875rem;">
+                        <tbody>
+                            <tr>
+                                <td class="text-muted py-2" style="width:38%;"><i class="fas fa-building me-2 text-primary" style="width:16px;"></i>Unit Penempatan</td>
+                                <td class="text-center text-muted py-2" style="width:5%;">:</td>
+                                <td class="fw-semibold text-dark py-2" id="modalUnit">-</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted py-2"><i class="fas fa-user-tie me-2 text-primary" style="width:16px;"></i>Pembimbing</td>
+                                <td class="text-center text-muted py-2">:</td>
+                                <td class="fw-semibold text-dark py-2" id="modalPembimbing">-</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted py-2"><i class="fas fa-clock me-2 text-primary" style="width:16px;"></i>Waktu Presensi</td>
+                                <td class="text-center text-muted py-2">:</td>
+                                <td class="fw-semibold text-dark py-2" id="modalWaktu">-</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted py-2"><i class="fas fa-map-marker-alt me-2 text-danger" style="width:16px;"></i>Lokasi Kantor</td>
+                                <td class="text-center text-muted py-2">:</td>
+                                <td class="fw-semibold text-primary py-2" id="modalLokasiKantor">-</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted py-2"><i class="fas fa-crosshairs me-2 text-success" style="width:16px;"></i>Lokasi GPS</td>
+                                <td class="text-center text-muted py-2">:</td>
+                                <td class="fw-semibold text-dark py-2" id="modalRadius">-</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted py-2"><i class="fas fa-signature me-2 text-info" style="width:16px;"></i>Status Verifikasi</td>
+                                <td class="text-center text-muted py-2">:</td>
+                                <td class="fw-semibold text-dark py-2" id="modalVerif">-</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
             <div class="modal-footer">

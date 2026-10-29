@@ -281,19 +281,47 @@ $(document).ready(function() {
                         <div style="font-size:0.7rem;" class="text-muted">${item.foto_masuk}</div>
                     </div>
                 </div>
-                <h6 class="fw-bold mb-0">${item.nama_peserta}</h6>
+                <h6 class="fw-bold mb-0 text-dark">${item.nama_peserta}</h6>
                 <small class="text-muted">${item.instansi}</small>
             </div>
-            <table class="table table-sm table-borderless" style="font-size:0.85rem;">
-                <tr><th width="40%">Tanggal</th><td>: ${item.tanggal}</td></tr>
-                <tr><th>Waktu Masuk</th><td>: ${item.jam_masuk} WIB</td></tr>
-                <tr><th>Waktu Pulang</th><td>: ${item.jam_pulang} WIB</td></tr>
-                <tr><th>Lokasi Kantor</th><td>: Kantor Sekretariat Dishub (Jl. Diponegoro No. 14)</td></tr>
-                <tr><th>Jarak GPS</th><td>: ${item.jarak_meter} Meter dari titik kantor Dishub</td></tr>
-                <tr><th>Status Verifikasi</th><td>: <span class="badge ${item.status_verif === 'diverifikasi' ? 'badge-approved' : (item.status_verif === 'menunggu' ? 'badge-pending' : 'badge-rejected')}">${item.status_verif}</span></td></tr>
-                ${item.paraf_oleh ? `<tr><th>Paraf Pembimbing</th><td>: <strong class="text-success">${item.paraf_oleh}</strong> (${item.waktu_paraf})</td></tr>` : ''}
-                ${item.catatan && item.catatan !== '-' ? `<tr><th>Catatan</th><td>: <em class="text-danger">${item.catatan}</em></td></tr>` : ''}
-            </table>
+            <div class="modal-detail-wrapper text-start">
+                <table class="table table-sm table-striped align-middle mb-0" style="font-size:0.875rem;">
+                    <tbody>
+                        <tr>
+                            <td class="text-muted py-2" style="width:40%;"><i class="fas fa-calendar-alt me-2 text-primary" style="width:16px;"></i>Tanggal</td>
+                            <td class="text-center text-muted py-2" style="width:5%;">:</td>
+                            <td class="fw-semibold text-dark py-2">${item.tanggal}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-sign-in-alt me-2 text-success" style="width:16px;"></i>Waktu Masuk</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="fw-semibold text-dark py-2">${item.jam_masuk} WIB</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-sign-out-alt me-2 text-danger" style="width:16px;"></i>Waktu Pulang</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="fw-semibold text-dark py-2">${item.jam_pulang} WIB</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-map-marker-alt me-2 text-danger" style="width:16px;"></i>Lokasi Kantor</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="fw-semibold text-primary py-2">Kantor Sekretariat Dishub (Jl. Diponegoro No. 14)</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-crosshairs me-2 text-success" style="width:16px;"></i>Jarak GPS</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="fw-semibold text-dark py-2">${item.jarak_meter} Meter dari titik kantor</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-info-circle me-2 text-info" style="width:16px;"></i>Status Verifikasi</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="py-2"><span class="badge ${item.status_verif === 'diverifikasi' ? 'badge-approved' : (item.status_verif === 'menunggu' ? 'badge-pending' : 'badge-rejected')}">${item.status_verif}</span></td>
+                        </tr>
+                        ${item.paraf_oleh ? `<tr><td class="text-muted py-2"><i class="fas fa-signature me-2 text-primary" style="width:16px;"></i>Paraf Pembimbing</td><td class="text-center text-muted py-2">:</td><td class="py-2"><strong class="text-success">${item.paraf_oleh}</strong> (${item.waktu_paraf})</td></tr>` : ''}
+                        ${item.catatan && item.catatan !== '-' ? `<tr><td class="text-muted py-2"><i class="fas fa-comment me-2 text-danger" style="width:16px;"></i>Catatan</td><td class="text-center text-muted py-2">:</td><td class="py-2"><em class="text-danger">${item.catatan}</em></td></tr>` : ''}
+                    </tbody>
+                </table>
+            </div>
         `;
 
         $('#contentModalVerif').html(html);

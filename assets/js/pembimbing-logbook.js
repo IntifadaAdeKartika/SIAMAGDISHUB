@@ -307,28 +307,44 @@ $(document).ready(function() {
 
         var html = `
             ${catatanHtml}
-            <div class="row g-2 mb-3" style="font-size:0.85rem;">
-                <div class="col-6"><strong>Peserta:</strong> ${item.nama_peserta} (${item.instansi})</div>
-                <div class="col-6"><strong>Tanggal:</strong> ${item.tanggal} (${item.waktu_mulai} - ${item.waktu_selesai} WIB)</div>
-                <div class="col-12"><strong>Status Logbook:</strong> ${badgeStatus}</div>
+            <div class="modal-detail-wrapper mb-3">
+                <table class="table table-sm table-striped align-middle mb-0" style="font-size:0.875rem;">
+                    <tbody>
+                        <tr>
+                            <td class="text-muted py-2" style="width:38%;"><i class="fas fa-user-graduate me-2 text-primary" style="width:16px;"></i>Nama Peserta</td>
+                            <td class="text-center text-muted py-2" style="width:5%;">:</td>
+                            <td class="fw-bold text-dark py-2">${item.nama_peserta} <span class="fw-normal text-muted">(${item.instansi})</span></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-clock me-2 text-primary" style="width:16px;"></i>Waktu Pelaksanaan</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="fw-semibold text-dark py-2">${item.tanggal} (${item.waktu_mulai} - ${item.waktu_selesai} WIB)</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-info-circle me-2 text-info" style="width:16px;"></i>Status Logbook</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="py-2">${badgeStatus}</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
             <div class="mb-3">
-                <label class="fw-bold small text-muted">Deskripsi Kegiatan:</label>
-                <div class="p-3 rounded" style="background:var(--bg-light); font-size:0.85rem; line-height:1.5;">
+                <label class="fw-bold small text-muted mb-1"><i class="fas fa-tasks text-primary me-1"></i>Deskripsi Kegiatan:</label>
+                <div class="p-3 rounded bg-light border" style="font-size:0.85rem; line-height:1.5;">
                     ${item.deskripsi}
                 </div>
             </div>
 
             <div class="mb-3">
-                <label class="fw-bold small text-muted">Hasil / Output Pekerjaan:</label>
-                <div class="p-2 rounded" style="background:var(--bg-light); font-size:0.85rem; line-height:1.5;">
+                <label class="fw-bold small text-muted mb-1"><i class="fas fa-bullseye text-success me-1"></i>Hasil / Output Pekerjaan:</label>
+                <div class="p-3 rounded bg-light border" style="font-size:0.85rem; line-height:1.5;">
                     ${item.hasil}
                 </div>
             </div>
 
             <div>
-                <label class="fw-bold small text-muted">Dokumen Lampiran Bukti:</label>
+                <label class="fw-bold small text-muted mb-1"><i class="fas fa-paperclip text-secondary me-1"></i>Dokumen Lampiran Bukti:</label>
                 ${lampiranHtml}
             </div>
         `;

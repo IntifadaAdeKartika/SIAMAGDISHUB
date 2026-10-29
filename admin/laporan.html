@@ -19,16 +19,72 @@
 
     <style>
         @media print {
-            body { background: #fff !important; color: #000 !important; font-size: 11pt; }
+            @page {
+                size: A4 portrait;
+                margin: 10mm 8mm;
+            }
+            body {
+                background: #fff !important;
+                color: #000 !important;
+                font-size: 8.5pt !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
             .sidebar, .topbar, .filter-card, .btn-aksi-cetak, .sidebar-overlay,
-            .btn-sidebar-toggle, .kop-surat, .ttd-box { display: none !important; }
-            .main-content { margin-left: 0 !important; padding: 0 !important; width: 100% !important; }
-            .content-area { padding: 0 !important; }
-            .table { width: 100% !important; border-collapse: collapse !important; }
-            .table th, .table td { border: 1px solid #000 !important; padding: 5px 7px !important; color: #000 !important; font-size: 10pt; }
-            .table thead th { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .badge { border: 1px solid #666; color: #000 !important; background: transparent !important; }
-            .card { border: none !important; box-shadow: none !important; }
+            .btn-sidebar-toggle, .kop-surat, .ttd-box, .stat-card, .dataTables_filter,
+            .dataTables_length, .dataTables_paginate, .dataTables_info {
+                display: none !important;
+            }
+            .wrapper, .main-content, .content-area {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                display: block !important;
+            }
+            .page-title {
+                font-size: 13pt !important;
+                font-weight: bold !important;
+                margin-bottom: 2px !important;
+            }
+            .page-subtitle {
+                font-size: 8.5pt !important;
+                margin-bottom: 12px !important;
+            }
+            .table-responsive {
+                overflow: visible !important;
+                display: block !important;
+            }
+            .table {
+                width: 100% !important;
+                table-layout: auto !important;
+                border-collapse: collapse !important;
+                margin: 0 !important;
+            }
+            .table th, .table td {
+                border: 1px solid #333 !important;
+                padding: 4px 5px !important;
+                color: #000 !important;
+                font-size: 8pt !important;
+                line-height: 1.25 !important;
+                word-wrap: break-word !important;
+            }
+            .table thead th {
+                background-color: #f2f2f2 !important;
+                font-weight: bold !important;
+                text-align: center !important;
+            }
+            .badge {
+                border: 1px solid #555 !important;
+                color: #000 !important;
+                background: transparent !important;
+                font-size: 7.5pt !important;
+                padding: 1px 4px !important;
+            }
+            .card {
+                border: none !important;
+                box-shadow: none !important;
+                background: transparent !important;
+            }
         }
         @media screen {
             .kop-surat, .ttd-box { display: none; }

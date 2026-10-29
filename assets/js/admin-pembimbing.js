@@ -293,24 +293,28 @@ $(document).ready(function() {
                 </div>
             </div>
 
-            <div class="table-responsive mb-3">
+            <div class="modal-detail-wrapper mb-3">
                 <table class="table table-sm table-striped align-middle mb-0" style="font-size:0.875rem;">
                     <tbody>
                         <tr>
-                            <td class="text-muted py-2" style="width:40%;"><i class="fas fa-building me-2 text-primary"></i>Unit Kerja</td>
-                            <td class="fw-bold text-dark py-2">: ${item.nama_unit_kerja}</td>
+                            <td class="text-muted py-2" style="width:40%;"><i class="fas fa-building me-2 text-primary" style="width:16px;"></i>Unit Kerja</td>
+                            <td class="text-center text-muted py-2" style="width:5%;">:</td>
+                            <td class="fw-bold text-dark py-2">${item.nama_unit_kerja}</td>
                         </tr>
                         <tr>
-                            <td class="text-muted py-2"><i class="fab fa-whatsapp me-2 text-success"></i>Kontak HP / WA</td>
-                            <td class="fw-semibold py-2">: ${item.no_hp || '-'}</td>
+                            <td class="text-muted py-2"><i class="fab fa-whatsapp me-2 text-success" style="width:16px;"></i>Kontak HP / WA</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="fw-semibold py-2">${item.no_hp || '-'}</td>
                         </tr>
                         <tr>
-                            <td class="text-muted py-2"><i class="fas fa-calendar-alt me-2 text-secondary"></i>Periode Tugas</td>
-                            <td class="py-2">: ${item.tanggal_mulai_tugas || '-'} s/d ${item.tanggal_selesai_tugas || '-'}</td>
+                            <td class="text-muted py-2"><i class="fas fa-calendar-alt me-2 text-secondary" style="width:16px;"></i>Periode Tugas</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="py-2">${item.tanggal_mulai_tugas || '-'} s/d ${item.tanggal_selesai_tugas || '-'}</td>
                         </tr>
                         <tr>
-                            <td class="text-muted py-2"><i class="fas fa-info-circle me-2 text-info"></i>Status Penugasan</td>
-                            <td class="py-2">: ${badgeStatus}</td>
+                            <td class="text-muted py-2"><i class="fas fa-info-circle me-2 text-info" style="width:16px;"></i>Status Penugasan</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="py-2">${badgeStatus}</td>
                         </tr>
                     </tbody>
                 </table>

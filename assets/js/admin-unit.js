@@ -278,28 +278,33 @@ $(document).ready(function() {
                 </div>
             </div>
 
-            <div class="table-responsive">
+            <div class="modal-detail-wrapper">
                 <table class="table table-sm table-striped align-middle mb-0" style="font-size:0.875rem;">
                     <tbody>
                         <tr>
-                            <td class="text-muted py-2" style="width:42%;"><i class="fas fa-barcode me-2 text-primary"></i>Kode Unit Kerja</td>
-                            <td class="py-2">: <code><strong>${item.kode_unit}</strong></code></td>
+                            <td class="text-muted py-2" style="width:40%;"><i class="fas fa-barcode me-2 text-primary" style="width:16px;"></i>Kode Unit Kerja</td>
+                            <td class="text-center text-muted py-2" style="width:5%;">:</td>
+                            <td class="py-2"><code><strong>${item.kode_unit}</strong></code></td>
                         </tr>
                         <tr>
-                            <td class="text-muted py-2"><i class="fas fa-sitemap me-2 text-primary"></i>Induk Organisasi</td>
-                            <td class="fw-semibold text-dark py-2">: ${item.nama_induk}</td>
+                            <td class="text-muted py-2"><i class="fas fa-sitemap me-2 text-primary" style="width:16px;"></i>Induk Organisasi</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="fw-semibold text-dark py-2">${item.nama_induk}</td>
                         </tr>
                         <tr>
-                            <td class="text-muted py-2"><i class="fas fa-user-tie me-2 text-primary"></i>Pembimbing Lapangan</td>
-                            <td class="fw-bold text-primary py-2">: ${item.nama_pembimbing}</td>
+                            <td class="text-muted py-2"><i class="fas fa-user-tie me-2 text-primary" style="width:16px;"></i>Pembimbing Lapangan</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="fw-bold text-primary py-2">${item.nama_pembimbing}</td>
                         </tr>
                         <tr>
-                            <td class="text-muted py-2"><i class="fas fa-users me-2 text-primary"></i>Peserta Magang Aktif</td>
-                            <td class="py-2">: <span class="badge ${item.jumlah_peserta > 0 ? 'bg-primary' : 'bg-light text-muted border'}">${item.jumlah_peserta} Orang</span></td>
+                            <td class="text-muted py-2"><i class="fas fa-users me-2 text-primary" style="width:16px;"></i>Peserta Magang Aktif</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="py-2"><span class="badge ${item.jumlah_peserta > 0 ? 'bg-primary' : 'bg-light text-muted border'}">${item.jumlah_peserta} Orang</span></td>
                         </tr>
                         <tr>
-                            <td class="text-muted py-2"><i class="fas fa-info-circle me-2 text-info"></i>Status Unit</td>
-                            <td class="py-2">: ${badgeStatus}</td>
+                            <td class="text-muted py-2"><i class="fas fa-info-circle me-2 text-info" style="width:16px;"></i>Status Unit</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="py-2">${badgeStatus}</td>
                         </tr>
                     </tbody>
                 </table>
