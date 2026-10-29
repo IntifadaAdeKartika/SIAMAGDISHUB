@@ -108,6 +108,10 @@ $(document).ready(function() {
         order: [[1, 'asc']]
     });
 
+    $('#tab-lintas-tab').on('shown.bs.tab', function() {
+        tableLintas.columns.adjust().draw(false);
+    });
+
     function renderTableLintas() {
         tableLintas.clear();
         dataLintasBidang.forEach(function(item, idx) {

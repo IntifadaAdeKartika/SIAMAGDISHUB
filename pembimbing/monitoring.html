@@ -25,6 +25,7 @@
             border-radius: 8px 8px 0 0;
             padding: 10px 18px;
             font-size: 0.88rem;
+            white-space: nowrap;
         }
         .nav-tabs .nav-link.active {
             color: var(--primary);
@@ -66,12 +67,14 @@
             font-size: 0.95rem;
             font-weight: 700;
             color: #172033;
+            overflow-wrap: anywhere;
         }
         .bimbingan-card-identity p {
             margin: 0;
             color: #64748b;
             font-size: 0.78rem;
             line-height: 1.45;
+            overflow-wrap: anywhere;
         }
         .bimbingan-card-nim {
             flex: 0 0 auto;
@@ -95,7 +98,7 @@
         }
         .bimbingan-card-activity-row {
             display: grid;
-            grid-template-columns: minmax(76px, 0.75fr) minmax(0, 1.5fr) auto;
+            grid-template-columns: minmax(100px, 1fr) minmax(0, 1.5fr) minmax(48px, 0.45fr);
             align-items: center;
             gap: 0.5rem;
             font-size: 0.8rem;
@@ -111,11 +114,67 @@
         .bimbingan-card-activity-row strong {
             color: #334155;
             font-weight: 600;
+            text-align: left;
+            overflow-wrap: anywhere;
         }
         .bimbingan-card-time {
             color: #64748b;
             font-size: 0.75rem;
             white-space: nowrap;
+            text-align: right;
+        }
+        #tab-lintas .card-header {
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        #tab-lintas .card-header h6 {
+            min-width: 0;
+            line-height: 1.45;
+        }
+        .main-content,
+        .content-area,
+        #tabMonitoringContent,
+        #tab-lintas,
+        #tab-lintas .card,
+        #tab-lintas .card-body,
+        #tab-lintas .dataTables_wrapper {
+            min-width: 0;
+            max-width: 100%;
+        }
+        #tab-lintas .table-responsive {
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        #tab-lintas .dataTables_wrapper {
+            width: 100%;
+        }
+        #tabelLintasBidang {
+            min-width: 900px;
+            table-layout: fixed;
+        }
+        #tabelLintasBidang th,
+        #tabelLintasBidang td {
+            vertical-align: middle;
+            overflow-wrap: anywhere;
+        }
+        #tabelLintasBidang th:nth-child(1) { width: 4%; }
+        #tabelLintasBidang th:nth-child(2) { width: 21%; }
+        #tabelLintasBidang th:nth-child(3) { width: 16%; }
+        #tabelLintasBidang th:nth-child(4) { width: 19%; }
+        #tabelLintasBidang th:nth-child(5) { width: 9%; }
+        #tabelLintasBidang th:nth-child(6) { width: 16%; }
+        #tabelLintasBidang th:nth-child(7) { width: 15%; }
+        #tab-lintas .card-header #labelTanggalMonitoring {
+            flex: 0 0 auto;
+        }
+        #tab-lintas .row.align-items-end > div {
+            min-width: 0;
+        }
+        #tab-lintas .form-select,
+        #tab-lintas #btnResetFilterLintas {
+            min-height: 36px;
         }
         @media (max-width: 575.98px) {
             .monitoring-card-list > .card-body {
@@ -126,9 +185,30 @@
                 padding: 0.875rem !important;
             }
             .bimbingan-card-activity-row {
-                grid-template-columns: minmax(76px, 0.8fr) minmax(0, 1.2fr) auto;
+                grid-template-columns: minmax(88px, 0.9fr) minmax(0, 1.2fr) minmax(42px, 0.45fr);
                 gap: 0.35rem;
                 font-size: 0.75rem;
+            }
+            .nav-tabs {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                overflow-y: hidden;
+            }
+            .nav-tabs .nav-link {
+                padding: 0.65rem 0.75rem;
+                font-size: 0.78rem;
+            }
+            #tab-lintas .card-body {
+                padding: 0.75rem !important;
+            }
+            #tab-lintas .card-header {
+                align-items: flex-start !important;
+            }
+            #tab-lintas .card-header h6 {
+                font-size: 0.85rem;
+            }
+            #tab-lintas .card-header #labelTanggalMonitoring {
+                margin-left: auto;
             }
         }
     </style>
@@ -301,7 +381,7 @@
                                     </select>
                                 </div>
                                 <div class="col-md-4 col-sm-12">
-                                    <label class="form-label d-none d-md-block small mb-1" style="visibility:hidden;">Aksi</label>
+                                    <label class="form-label small mb-1">Aksi</label>
                                     <button class="btn btn-sm btn-outline-secondary w-100" id="btnResetFilterLintas">
                                         <i class="fas fa-rotate-left me-1"></i> Reset Filter
                                     </button>
