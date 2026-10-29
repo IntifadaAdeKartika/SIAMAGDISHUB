@@ -262,37 +262,66 @@ $(document).ready(function() {
         if (!item) return;
 
         var listAnak = '';
-        if (item.anak_bimbingan.length > 0) {
-            item.anak_bimbingan.forEach(function(anak, i) {
-                listAnak += `<li class="list-group-item d-flex justify-content-between align-items-center py-2" style="font-size:0.83rem;">
+        if (item.anak_bimbingan && item.anak_bimbingan.length > 0) {
+            item.anak_bimbingan.forEach(function(anak) {
+                listAnak += `<li class="list-group-item d-flex justify-content-between align-items-center py-2" style="font-size:0.85rem;">
                     <span><i class="fas fa-user-graduate me-2 text-primary"></i>${anak}</span>
                     <span class="badge badge-approved" style="font-size:0.7rem;">Aktif</span>
                 </li>`;
             });
         } else {
-            listAnak = `<li class="list-group-item text-muted text-center py-3" style="font-size:0.82rem;">Belum ada peserta magang yang ditempatkan di bidang ini.</li>`;
+            listAnak = `<li class="list-group-item text-muted text-center py-3" style="font-size:0.85rem;">Belum ada peserta magang yang ditempatkan di unit ini.</li>`;
         }
 
+        var badgeStatus = item.status_pembimbing === 'aktif' 
+            ? '<span class="badge badge-approved">Aktif</span>' 
+            : '<span class="badge badge-rejected">Nonaktif</span>';
+
         var html = `
-            <div class="d-flex align-items-center gap-3 mb-3 p-3 rounded" style="background:var(--bg-light);">
-                <div class="user-avatar" style="width:50px;height:50px;font-size:1.2rem;">
-                    ${item.nama_lengkap.charAt(0)}
-                </div>
-                <div>
-                    <h6 class="fw-bold mb-0">${item.nama_lengkap}</h6>
-                    <div style="font-size:0.8rem; color:#666;">NIP. ${item.nip}</div>
-                    <div style="font-size:0.8rem; color:var(--primary); font-weight:500;">${item.jabatan}</div>
+            <div class="card border-0 mb-3" style="background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%); border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="user-avatar" style="width:54px;height:54px;font-size:1.4rem; background:var(--primary); color:#fff; border-radius:12px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 4px 6px -1px rgba(37,99,235,0.2);">
+                            ${item.nama_lengkap.charAt(0)}
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-1 text-dark" style="font-size:1.05rem;">${item.nama_lengkap}</h6>
+                            <div class="small text-muted mb-1"><i class="fas fa-id-card me-1"></i>NIP. ${item.nip}</div>
+                            <div><span class="badge" style="background:#e0f2fe; color:#0369a1;">${item.jabatan}</span></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="row g-2 mb-3" style="font-size:0.84rem;">
-                <div class="col-6"><strong>Unit Kerja:</strong> ${item.nama_unit_kerja}</div>
-                <div class="col-6"><strong>WhatsApp:</strong> ${item.no_hp}</div>
-                <div class="col-6"><strong>Status:</strong> <span class="badge ${item.status_pembimbing === 'aktif' ? 'badge-approved' : 'badge-rejected'}">${item.status_pembimbing}</span></div>
-                <div class="col-6"><strong>Mulai Tugas:</strong> ${item.tanggal_mulai_tugas || '-'}</div>
+            <div class="table-responsive mb-3">
+                <table class="table table-sm table-striped align-middle mb-0" style="font-size:0.875rem;">
+                    <tbody>
+                        <tr>
+                            <td class="text-muted py-2" style="width:40%;"><i class="fas fa-building me-2 text-primary"></i>Unit Kerja</td>
+                            <td class="fw-bold text-dark py-2">: ${item.nama_unit_kerja}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fab fa-whatsapp me-2 text-success"></i>Kontak HP / WA</td>
+                            <td class="fw-semibold py-2">: ${item.no_hp || '-'}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-calendar-alt me-2 text-secondary"></i>Periode Tugas</td>
+                            <td class="py-2">: ${item.tanggal_mulai_tugas || '-'} s/d ${item.tanggal_selesai_tugas || '-'}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-info-circle me-2 text-info"></i>Status Penugasan</td>
+                            <td class="py-2">: ${badgeStatus}</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
-            <h6 class="fw-bold mt-3 mb-2" style="font-size:0.9rem;"><i class="fas fa-users me-2 text-primary"></i>Daftar Anak Bimbingan (${item.jumlah_bimbingan} Orang)</h6>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold mb-0 text-dark" style="font-size:0.9rem;">
+                    <i class="fas fa-users me-2 text-primary"></i>Daftar Anak Bimbingan
+                </h6>
+                <span class="badge bg-primary rounded-pill">${item.jumlah_bimbingan} Orang</span>
+            </div>
             <ul class="list-group">
                 ${listAnak}
             </ul>

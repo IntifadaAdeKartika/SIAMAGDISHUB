@@ -130,13 +130,13 @@ $(document).ready(function() {
     // Filter Tipe
     $('#filterTipeUnit').on('change', function() {
         var val = $(this).val();
-        table.column(3).search(val).draw();
+        table.column(3).search(val ? '^' + val + '$' : '', true, false).draw();
     });
 
     // Filter Status
     $('#filterStatusUnit').on('change', function() {
         var val = $(this).val();
-        table.column(7).search(val).draw();
+        table.column(7).search(val ? '^' + val + '$' : '', true, false).draw();
     });
 
     // Reset Filter
@@ -260,22 +260,50 @@ $(document).ready(function() {
         var item = dataUnit.find(u => u.id == id);
         if (!item) return;
 
+        var badgeStatus = item.status === 'aktif' 
+            ? '<span class="badge badge-approved">Aktif</span>' 
+            : '<span class="badge badge-rejected">Nonaktif</span>';
+
         var html = `
-            <div class="p-3 rounded mb-3" style="background:var(--bg-light);">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="fw-bold mb-0 text-primary">${item.nama_unit}</h6>
-                    <code>${item.kode_unit}</code>
+            <div class="card border-0 mb-3" style="background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%); border-radius: 12px;">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <h6 class="fw-bold mb-0 text-dark" style="font-size:1.05rem;">${item.nama_unit}</h6>
+                        <span class="badge bg-primary px-2 py-1">${item.kode_unit}</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 small text-muted">
+                        <span>Tipe: <strong>${getBadgeTipe(item.tipe)}</strong></span> &bull; 
+                        <span>Status: ${badgeStatus}</span>
+                    </div>
                 </div>
-                <small class="text-muted">Tipe: ${item.tipe.toUpperCase()} &bull; Status: ${item.status.toUpperCase()}</small>
             </div>
 
-            <table class="table table-sm table-borderless" style="font-size:0.85rem;">
-                <tr><th width="40%">Kode Unit</th><td>: <code>${item.kode_unit}</code></td></tr>
-                <tr><th>Induk Organisasi</th><td>: ${item.nama_induk}</td></tr>
-                <tr><th>Pembimbing Lapangan</th><td>: <strong class="text-primary">${item.nama_pembimbing}</strong></td></tr>
-                <tr><th>Peserta Magang Aktif</th><td>: <span class="badge bg-primary">${item.jumlah_peserta} Orang</span></td></tr>
-                <tr><th>Status</th><td>: <span class="badge ${item.status === 'aktif' ? 'badge-approved' : 'badge-rejected'}">${item.status}</span></td></tr>
-            </table>
+            <div class="table-responsive">
+                <table class="table table-sm table-striped align-middle mb-0" style="font-size:0.875rem;">
+                    <tbody>
+                        <tr>
+                            <td class="text-muted py-2" style="width:42%;"><i class="fas fa-barcode me-2 text-primary"></i>Kode Unit Kerja</td>
+                            <td class="py-2">: <code><strong>${item.kode_unit}</strong></code></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-sitemap me-2 text-primary"></i>Induk Organisasi</td>
+                            <td class="fw-semibold text-dark py-2">: ${item.nama_induk}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-user-tie me-2 text-primary"></i>Pembimbing Lapangan</td>
+                            <td class="fw-bold text-primary py-2">: ${item.nama_pembimbing}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-users me-2 text-primary"></i>Peserta Magang Aktif</td>
+                            <td class="py-2">: <span class="badge ${item.jumlah_peserta > 0 ? 'bg-primary' : 'bg-light text-muted border'}">${item.jumlah_peserta} Orang</span></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-info-circle me-2 text-info"></i>Status Unit</td>
+                            <td class="py-2">: ${badgeStatus}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         `;
 
         $('#contentDetailUnit').html(html);

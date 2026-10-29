@@ -8,15 +8,20 @@ $(document).ready(function() {
     // Data peserta magang
     var dataPeserta = window.masterPeserta.map(function(peserta) {
         var penempatan = window.getMasterPenempatanPeserta(peserta.id);
+        var isSiswa = /^(SMK|SMA)/i.test(peserta.instansi);
+        var prodiDefault = isSiswa ? "Teknik Kendaraan Ringan" : "Teknik Informatika";
+        var kelasDefault = isSiswa ? "Kelas XII" : "Semester 7";
+        var hpDefault = "0812345" + (67800 + peserta.id);
+
         return {
             id: peserta.id,
-            jenis_peserta: /^(SMK|SMA)/i.test(peserta.instansi) ? "siswa" : "mahasiswa",
+            jenis_peserta: isSiswa ? "siswa" : "mahasiswa",
             username: peserta.nim,
             nama_lengkap: peserta.nama,
-            no_hp: "-",
+            no_hp: hpDefault,
             asal_sekolah_kampus: peserta.instansi,
-            prodi_jurusan: "-",
-            kelas_semester: "-",
+            prodi_jurusan: prodiDefault,
+            kelas_semester: kelasDefault,
             id_unit_kerja: peserta.unitId,
             nama_unit_kerja: penempatan.unit.nama,
             nama_pembimbing: penempatan.namaPembimbing,
@@ -311,24 +316,65 @@ $(document).ready(function() {
         var item = dataPeserta.find(p => p.id == id);
         if (!item) return;
 
+        var badgeStatus = item.status_peserta === 'aktif'
+            ? '<span class="badge badge-approved">Aktif</span>'
+            : (item.status_peserta === 'belum mulai' ? '<span class="badge badge-pending">Belum Mulai</span>' : '<span class="badge badge-rejected">Tidak Aktif</span>');
+
+        var badgeJenis = item.jenis_peserta === 'siswa'
+            ? '<span class="badge" style="background:#e8daef; color:#8e44ad;">Siswa</span>'
+            : '<span class="badge" style="background:#dbeafe; color:#2563eb;">Mahasiswa</span>';
+
         var html = `
-            <div class="text-center mb-3">
-                <div class="user-avatar mx-auto mb-2" style="width:60px; height:60px; font-size:1.4rem;">
-                    ${item.nama_lengkap.charAt(0)}
+            <div class="card border-0 mb-3" style="background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%); border-radius: 12px;">
+                <div class="card-body p-3 text-center">
+                    <div class="user-avatar mx-auto mb-2" style="width:64px; height:64px; font-size:1.6rem; background:var(--primary); color:#fff; border-radius:12px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 4px 6px -1px rgba(37,99,235,0.2);">
+                        ${item.nama_lengkap.charAt(0)}
+                    </div>
+                    <h6 class="fw-bold mb-1 text-dark" style="font-size:1.05rem;">${item.nama_lengkap}</h6>
+                    <div class="d-flex align-items-center justify-content-center gap-2 small text-muted">
+                        <code>${item.username}</code> &bull; ${badgeJenis}
+                    </div>
                 </div>
-                <h6 class="fw-bold mb-0">${item.nama_lengkap}</h6>
-                <small class="text-muted">${item.username} &bull; ${item.jenis_peserta.toUpperCase()}</small>
             </div>
-            <table class="table table-sm table-borderless" style="font-size:0.85rem;">
-                <tr><th width="40%">Asal Instansi</th><td>: ${item.asal_sekolah_kampus}</td></tr>
-                <tr><th>Prodi / Jurusan</th><td>: ${item.prodi_jurusan || '-'}</td></tr>
-                <tr><th>Kelas / Semester</th><td>: ${item.kelas_semester || '-'}</td></tr>
-                <tr><th>No. HP/WA</th><td>: ${item.no_hp}</td></tr>
-                <tr><th>Unit Penempatan</th><td>: <strong>${item.nama_unit_kerja}</strong></td></tr>
-                <tr><th>Pembimbing</th><td>: <span class="text-primary fw-semibold">${item.nama_pembimbing}</span></td></tr>
-                <tr><th>Periode Magang</th><td>: ${item.tanggal_mulai} s/d ${item.tanggal_selesai}</td></tr>
-                <tr><th>Status Peserta</th><td>: <span class="badge ${item.status_peserta === 'aktif' ? 'badge-approved' : 'badge-pending'}">${item.status_peserta}</span></td></tr>
-            </table>
+
+            <div class="table-responsive">
+                <table class="table table-sm table-striped align-middle mb-0" style="font-size:0.875rem;">
+                    <tbody>
+                        <tr>
+                            <td class="text-muted py-2" style="width:38%;"><i class="fas fa-university me-2 text-primary"></i>Asal Instansi</td>
+                            <td class="fw-semibold py-2">: ${item.asal_sekolah_kampus}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-graduation-cap me-2 text-primary"></i>Prodi / Jurusan</td>
+                            <td class="fw-semibold py-2">: ${item.prodi_jurusan || '-'}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-layer-group me-2 text-primary"></i>Kelas / Semester</td>
+                            <td class="fw-semibold py-2">: ${item.kelas_semester || '-'}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-phone me-2 text-success"></i>No. HP / WhatsApp</td>
+                            <td class="fw-semibold py-2">: ${item.no_hp || '-'}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-building me-2 text-primary"></i>Unit Penempatan</td>
+                            <td class="fw-bold text-dark py-2">: ${item.nama_unit_kerja}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-user-tie me-2 text-primary"></i>Pembimbing</td>
+                            <td class="fw-bold text-primary py-2">: ${item.nama_pembimbing}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-calendar-alt me-2 text-secondary"></i>Periode Magang</td>
+                            <td class="py-2">: <span class="badge bg-light text-dark border">${item.tanggal_mulai}</span> s/d <span class="badge bg-light text-dark border">${item.tanggal_selesai}</span></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-info-circle me-2 text-info"></i>Status Peserta</td>
+                            <td class="py-2">: ${badgeStatus}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         `;
         $('#contentDetailPeserta').html(html);
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalDetailPeserta')).show();
