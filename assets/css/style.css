@@ -712,9 +712,14 @@ img {
 
 /* tombol aksi tabel */
 .btn-aksi {
-    padding: 5px 8px;
-    font-size: 0.78rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 9px;
+    font-size: 0.8rem;
+    line-height: 1;
     border-radius: 6px;
+    vertical-align: middle;
 }
 
 /* toolbar atas tabel */
@@ -978,7 +983,30 @@ div.dataTables_wrapper div.dataTables_processing {
 
 .table .btn-group-sm > .btn,
 .table td .btn {
-    margin: 2px 0;
+    margin: 0;
+}
+
+/* Container Aksi Tabel - Pastikan selalu sejajar satu baris tanpa wrap */
+.table td .action-buttons,
+.table td .btn-action-group,
+.table td .text-center:has(> .btn-aksi),
+.table td .text-center:has(> .btn),
+.table td .d-flex.justify-content-center {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    flex-wrap: nowrap !important;
+    white-space: nowrap !important;
+}
+
+/* Kolom aksi tabel tidak boleh wrap */
+.table th:last-child,
+.table td:last-child,
+.table th.th-action,
+.table td.td-action {
+    white-space: nowrap !important;
+    text-align: center !important;
 }
 
 /* MODAL FOOTER BUTTONS */

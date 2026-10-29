@@ -86,7 +86,7 @@ $(document).ready(function() {
             var colPeriode = `<div style="font-size:0.76rem; color:#666;">${item.tanggal_mulai}<br>&rarr; ${item.tanggal_selesai}</div>`;
 
             var colAksi = `
-                <div class="text-center">
+                <div class="action-buttons text-center">
                     <button class="btn btn-sm btn-outline-primary btn-aksi btn-detail" data-id="${item.id}" title="Detail">
                         <i class="fas fa-eye"></i>
                     </button>

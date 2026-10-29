@@ -108,7 +108,7 @@ $(document).ready(function() {
             }
 
             var colAksi = `
-                <div class="text-center">
+                <div class="action-buttons text-center">
                     <button class="btn btn-sm btn-outline-primary btn-aksi btn-detail-absen" data-id="${item.id}" title="Periksa Detail">
                         <i class="fas fa-eye me-1"></i> Detail
                     </button>

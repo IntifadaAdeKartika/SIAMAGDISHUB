@@ -83,7 +83,7 @@ $(document).ready(function() {
             `;
 
             var colAksi = `
-                <div class="text-center">
+                <div class="action-buttons text-center">
                     <button class="btn btn-sm btn-outline-primary btn-aksi btn-detail-unit" data-id="${item.id}" title="Detail">
                         <i class="fas fa-eye"></i>
                     </button>
