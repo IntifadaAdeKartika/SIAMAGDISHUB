@@ -1018,6 +1018,117 @@ div.dataTables_wrapper div.dataTables_processing {
     min-height: 88px;
 }
 
+/* Keep filter reset actions aligned with their neighboring controls. */
+.row.align-items-end > div:has(> label + button[id^="btnReset"]) {
+    display: flex;
+    flex-direction: column;
+}
+
+.row.align-items-end > div > button[id^="btnReset"] {
+    min-height: 34px;
+    margin-top: auto;
+}
+
+/* Consistent, readable key/value layout in detail dialogs. */
+.modal-detail-wrapper {
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.modal-detail-wrapper .table {
+    width: 100%;
+    table-layout: fixed;
+    margin: 0;
+}
+
+.modal-detail-wrapper .table td {
+    vertical-align: top;
+    padding: 0.6rem 0.65rem;
+    overflow-wrap: anywhere;
+}
+
+.modal-detail-wrapper .table td:first-child {
+    width: 40% !important;
+    color: #64748b;
+}
+
+.modal-detail-wrapper .table td:nth-child(2) {
+    width: 5% !important;
+}
+
+.modal-detail-wrapper .table td:last-child {
+    width: 55% !important;
+    text-align: left !important;
+}
+
+.modal-dialog-centered .modal-content {
+    max-height: calc(100vh - 2rem);
+}
+
+.modal-dialog-centered .modal-body {
+    overflow-y: auto;
+}
+
+.detail-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.detail-summary-item {
+    min-width: 0;
+    padding: 0.7rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-light);
+    overflow-wrap: anywhere;
+}
+
+.detail-summary-item .detail-summary-label {
+    display: block;
+    margin-bottom: 0.2rem;
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.detail-summary-item .detail-summary-value {
+    color: #1e293b;
+    font-size: 0.85rem;
+}
+
+@media (max-width: 575.98px) {
+    .modal-dialog-centered .modal-content {
+        max-height: calc(100dvh - 1rem);
+    }
+
+    .modal-dialog-centered .modal-body {
+        padding: 1rem !important;
+    }
+
+    .detail-summary-grid {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    .modal-detail-wrapper .table td {
+        padding: 0.5rem 0.4rem;
+        font-size: 0.8rem;
+    }
+
+    .modal-detail-wrapper .table td:first-child {
+        width: 43% !important;
+    }
+
+    .modal-detail-wrapper .table td:last-child {
+        width: 52% !important;
+    }
+}
+
 /* EQUAL HEIGHT CARDS IN A ROW */
 .row > [class*="col-"] > .card.h-100,
 .row.g-3 > [class*="col-"] > .card {

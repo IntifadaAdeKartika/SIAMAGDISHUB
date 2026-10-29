@@ -217,11 +217,23 @@ $(document).ready(function() {
 
         var html = `
             ${catatanHtml}
-            <div class="row g-2 mb-3" style="font-size:0.85rem;">
-                <div class="col-6"><strong>Jenis:</strong> <span class="text-uppercase fw-bold">${item.jenis}</span></div>
-                <div class="col-6"><strong>Durasi:</strong> ${item.durasi_hari} Hari</div>
-                <div class="col-6"><strong>Periode:</strong> ${item.tanggal_mulai} s/d ${item.tanggal_selesai}</div>
-                <div class="col-6"><strong>Status:</strong> ${badgeStatus}</div>
+            <div class="detail-summary-grid">
+                <div class="detail-summary-item">
+                    <span class="detail-summary-label">Jenis</span>
+                    <span class="detail-summary-value text-uppercase fw-bold">${item.jenis}</span>
+                </div>
+                <div class="detail-summary-item">
+                    <span class="detail-summary-label">Durasi</span>
+                    <span class="detail-summary-value">${item.durasi_hari} Hari</span>
+                </div>
+                <div class="detail-summary-item">
+                    <span class="detail-summary-label">Periode</span>
+                    <span class="detail-summary-value">${item.tanggal_mulai} s/d ${item.tanggal_selesai}</span>
+                </div>
+                <div class="detail-summary-item">
+                    <span class="detail-summary-label">Status</span>
+                    <span class="detail-summary-value">${badgeStatus}</span>
+                </div>
             </div>
 
             <div class="mb-3">

@@ -40,7 +40,10 @@
                 padding: 0 !important;
                 width: 100% !important;
                 display: block !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
             }
+            .card, .card-body, .table-responsive { min-width: 0 !important; max-width: 100% !important; }
             .page-title {
                 font-size: 13pt !important;
                 font-weight: bold !important;
@@ -56,22 +59,47 @@
             }
             .table {
                 width: 100% !important;
-                table-layout: auto !important;
+                table-layout: fixed !important;
                 border-collapse: collapse !important;
                 margin: 0 !important;
             }
             .table th, .table td {
                 border: 1px solid #333 !important;
-                padding: 4px 5px !important;
+                padding: 2px 3px !important;
                 color: #000 !important;
-                font-size: 8pt !important;
-                line-height: 1.25 !important;
-                word-wrap: break-word !important;
+                font-size: 6.5pt !important;
+                line-height: 1.15 !important;
+                white-space: normal !important;
+                overflow-wrap: anywhere !important;
+                word-break: normal !important;
+                vertical-align: top !important;
             }
+            #tabelLaporanPresensi th:nth-child(1) { width: 4% !important; }
+            #tabelLaporanPresensi th:nth-child(2) { width: 9% !important; }
+            #tabelLaporanPresensi th:nth-child(3) { width: 18% !important; }
+            #tabelLaporanPresensi th:nth-child(4) { width: 15% !important; }
+            #tabelLaporanPresensi th:nth-child(5),
+            #tabelLaporanPresensi th:nth-child(6) { width: 7% !important; }
+            #tabelLaporanPresensi th:nth-child(7) { width: 11% !important; }
+            #tabelLaporanPresensi th:nth-child(8) { width: 8% !important; }
+            #tabelLaporanPresensi th:nth-child(9) { width: 21% !important; }
+            #tabelLaporanLogbook th:nth-child(1) { width: 4% !important; }
+            #tabelLaporanLogbook th:nth-child(2) { width: 9% !important; }
+            #tabelLaporanLogbook th:nth-child(3) { width: 18% !important; }
+            #tabelLaporanLogbook th:nth-child(4) { width: 13% !important; }
+            #tabelLaporanLogbook th:nth-child(5) { width: 28% !important; }
+            #tabelLaporanLogbook th:nth-child(6) { width: 10% !important; }
+            #tabelLaporanLogbook th:nth-child(7) { width: 18% !important; }
             .table thead th {
                 background-color: #f2f2f2 !important;
                 font-weight: bold !important;
                 text-align: center !important;
+            }
+            .table thead { display: table-header-group; }
+            .table tr { break-inside: avoid; page-break-inside: avoid; }
+            .table .badge {
+                white-space: normal !important;
+                overflow-wrap: anywhere !important;
             }
             .badge {
                 border: 1px solid #555 !important;
