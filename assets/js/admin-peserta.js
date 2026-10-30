@@ -13,21 +13,23 @@ $(document).ready(function() {
         var kelasDefault = isSiswa ? "Kelas XII" : "Semester 7";
         var hpDefault = "0812345" + (67800 + peserta.id);
 
+        var dosenDefault = isSiswa ? "Drs. Eko Prasetyo" : "Dr. Bambang Sutikno, M.Kom.";
         return {
             id: peserta.id,
-            jenis_peserta: isSiswa ? "siswa" : "mahasiswa",
+            jenis_peserta: peserta.jenis_peserta || (isSiswa ? "siswa" : "mahasiswa"),
             username: peserta.nim,
             nama_lengkap: peserta.nama,
-            no_hp: hpDefault,
+            no_hp: peserta.no_hp || hpDefault,
             asal_sekolah_kampus: peserta.instansi,
-            prodi_jurusan: prodiDefault,
-            kelas_semester: kelasDefault,
+            prodi_jurusan: peserta.prodi_jurusan || prodiDefault,
+            kelas_semester: peserta.kelas_semester || kelasDefault,
+            dosen_guru_pembimbing: peserta.dosen_guru_pembimbing || dosenDefault,
             id_unit_kerja: peserta.unitId,
             nama_unit_kerja: penempatan.unit.nama,
             nama_pembimbing: penempatan.namaPembimbing,
-            tanggal_mulai: "2026-08-01",
-            tanggal_selesai: "2026-11-30",
-            status_peserta: "aktif"
+            tanggal_mulai: peserta.tanggal_mulai || "2026-08-01",
+            tanggal_selesai: peserta.tanggal_selesai || "2026-11-30",
+            status_peserta: peserta.status_peserta || "aktif"
         };
     });
     
@@ -81,8 +83,11 @@ $(document).ready(function() {
 
             var colAsal = `
                 <div>
-                    <div style="font-size:0.84rem; font-weight:500;">${item.asal_sekolah_kampus}</div>
-                    <div style="font-size:0.75rem; color:#888;">${item.prodi_jurusan || '-'} (${item.kelas_semester || '-'})</div>
+                    <div style="font-size:0.84rem; font-weight:600; color:var(--primary-dark);">${item.asal_sekolah_kampus}</div>
+                    <div style="font-size:0.75rem; color:#666;">${item.prodi_jurusan || '-'} (${item.kelas_semester || '-'})</div>
+                    <div style="font-size:0.74rem; color:#0d6efd; margin-top:2px;" title="Dosen / Guru Pembimbing">
+                        <i class="fas fa-chalkboard-teacher me-1"></i>${item.dosen_guru_pembimbing || '-'}
+                    </div>
                 </div>
             `;
 
@@ -214,6 +219,7 @@ $(document).ready(function() {
         var asal = $('#asalSekolahKampus').val().trim();
         var prodi = $('#prodiJurusan').val().trim();
         var kelas = $('#kelasSemester').val().trim();
+        var dosen = $('#dosenGuruPembimbing').val().trim();
         var unitId = $('#idUnitKerja').val();
         var unitNama = $('#idUnitKerja option:selected').text().split('(')[0].trim();
         var pembimbing = window.getMasterPembimbingForUnit(unitId);
@@ -239,6 +245,7 @@ $(document).ready(function() {
                     asal_sekolah_kampus: asal,
                     prodi_jurusan: prodi,
                     kelas_semester: kelas,
+                    dosen_guru_pembimbing: dosen,
                     no_hp: noHp,
                     id_unit_kerja: unitId,
                     nama_unit_kerja: unitNama,
@@ -266,6 +273,7 @@ $(document).ready(function() {
                 asal_sekolah_kampus: asal,
                 prodi_jurusan: prodi,
                 kelas_semester: kelas,
+                dosen_guru_pembimbing: dosen,
                 no_hp: noHp,
                 id_unit_kerja: unitId,
                 nama_unit_kerja: unitNama,
@@ -356,6 +364,11 @@ $(document).ready(function() {
                             <td class="fw-semibold text-dark py-2">${item.kelas_semester || '-'}</td>
                         </tr>
                         <tr>
+                            <td class="text-muted py-2"><i class="fas fa-chalkboard-teacher me-2 text-primary" style="width:16px;"></i>Dosen / Guru Pembimbing</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="fw-bold text-dark py-2" style="color:var(--primary) !important;">${item.dosen_guru_pembimbing || '-'}</td>
+                        </tr>
+                        <tr>
                             <td class="text-muted py-2"><i class="fas fa-phone me-2 text-success" style="width:16px;"></i>No. HP / WhatsApp</td>
                             <td class="text-center text-muted py-2">:</td>
                             <td class="fw-semibold text-dark py-2">${item.no_hp || '-'}</td>
@@ -382,6 +395,31 @@ $(document).ready(function() {
                         </tr>
                     </tbody>
                 </table>
+            </div>
+            
+            <div class="mt-3 p-3 rounded border bg-light">
+                <div class="fw-bold small text-muted mb-2"><i class="fas fa-folder-open text-primary me-1"></i>Status Dokumen Magang (Monitoring):</div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="p-2 rounded bg-white border text-center">
+                            <small class="text-muted d-block mb-1">Surat Permohonan</small>
+                            <span class="badge bg-success mb-1"><i class="fas fa-check me-1"></i>Sudah Upload</span>
+                            <div class="mt-1">
+                                <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2 btn-preview-doc" data-tipe="permohonan" data-id="${item.id}" style="font-size:0.72rem;">
+                                    <i class="fas fa-eye me-1"></i>Preview
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 rounded bg-white border text-center">
+                            <small class="text-muted d-block mb-1">Surat Balasan Dishub</small>
+                            ${(window.getDokumenPesertaById(item.id).surat_balasan) 
+                                ? '<span class="badge bg-success mb-1"><i class="fas fa-check me-1"></i>Diterbitkan</span><div class="mt-1"><button type="button" class="btn btn-xs btn-outline-success py-0 px-2 btn-preview-doc" data-tipe="balasan" data-id="' + item.id + '" style="font-size:0.72rem;"><i class="fas fa-eye me-1"></i>Preview</button></div>'
+                                : '<span class="badge bg-warning text-dark mb-1"><i class="fas fa-clock me-1"></i>Menunggu Pembimbing</span><div class="mt-1 text-muted" style="font-size:0.7rem;">Belum diunggah</div>'}
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
         $('#contentDetailPeserta').html(html);

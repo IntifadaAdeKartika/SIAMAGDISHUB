@@ -217,23 +217,31 @@ $(document).ready(function() {
 
         var html = `
             ${catatanHtml}
-            <div class="detail-summary-grid">
-                <div class="detail-summary-item">
-                    <span class="detail-summary-label">Jenis</span>
-                    <span class="detail-summary-value text-uppercase fw-bold">${item.jenis}</span>
-                </div>
-                <div class="detail-summary-item">
-                    <span class="detail-summary-label">Durasi</span>
-                    <span class="detail-summary-value">${item.durasi_hari} Hari</span>
-                </div>
-                <div class="detail-summary-item">
-                    <span class="detail-summary-label">Periode</span>
-                    <span class="detail-summary-value">${item.tanggal_mulai} s/d ${item.tanggal_selesai}</span>
-                </div>
-                <div class="detail-summary-item">
-                    <span class="detail-summary-label">Status</span>
-                    <span class="detail-summary-value">${badgeStatus}</span>
-                </div>
+            <div class="modal-detail-wrapper mb-3">
+                <table class="table table-sm table-striped align-middle mb-0" style="font-size:0.875rem;">
+                    <tbody>
+                        <tr>
+                            <td class="text-muted py-2" style="width:38%;"><i class="fas fa-tag me-2 text-primary" style="width:16px;"></i>Jenis Pengajuan</td>
+                            <td class="text-center text-muted py-2" style="width:5%;">:</td>
+                            <td class="py-2"><span class="text-uppercase fw-bold text-primary">${item.jenis}</span></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-hourglass-half me-2 text-primary" style="width:16px;"></i>Durasi</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="fw-semibold text-dark py-2">${item.durasi_hari} Hari</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-calendar-alt me-2 text-secondary" style="width:16px;"></i>Periode Izin</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="fw-semibold text-dark py-2">${item.tanggal_mulai} s/d ${item.tanggal_selesai}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-info-circle me-2 text-info" style="width:16px;"></i>Status Persetujuan</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="py-2">${badgeStatus}</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
             <div class="mb-3">

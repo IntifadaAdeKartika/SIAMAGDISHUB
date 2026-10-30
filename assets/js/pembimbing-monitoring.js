@@ -27,6 +27,7 @@ $(document).ready(function() {
             unitId: penempatan.unit.id,
             unit_kerja: penempatan.unit.nama,
             pembimbing: penempatan.namaPembimbing,
+            dosen_guru_pembimbing: peserta.dosen_guru_pembimbing || '-',
             checkin: absensi ? absensi.jamMasuk.replace(' WIB', '') : '-',
             status_hadir: absensi ? absensi.status : 'Belum Absen',
             status_logbook: logbook ? logbook.status : 'Belum ada logbook'
@@ -61,7 +62,10 @@ $(document).ready(function() {
                         <div class="bimbingan-card-header">
                             <div class="bimbingan-card-identity">
                                 <h6>${peserta.nama}</h6>
-                                <p>${peserta.instansi}</p>
+                                <p class="mb-1">${peserta.instansi}</p>
+                                <div class="small text-primary mb-1" style="font-size:0.76rem;">
+                                    <i class="fas fa-chalkboard-teacher me-1"></i>Pembimbing Asal: <strong>${peserta.dosen_guru_pembimbing || '-'}</strong>
+                                </div>
                             </div>
                             <span class="bimbingan-card-nim"><i class="fas fa-id-card"></i>${peserta.nim}</span>
                         </div>
@@ -119,6 +123,7 @@ $(document).ready(function() {
                 <div>
                     <strong style="color:var(--primary-dark);">${item.nama_peserta}</strong>
                     <div style="font-size:0.75rem; color:#777;">${item.instansi}</div>
+                    <div style="font-size:0.72rem; color:#0d6efd;"><i class="fas fa-chalkboard-teacher me-1"></i>${item.dosen_guru_pembimbing || '-'}</div>
                 </div>
             `;
 

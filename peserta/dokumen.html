@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dokumen & Surat Magang - SIAMAG Dishub</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="wrapper">
+    <!-- SIDEBAR -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="../assets/img/Logo.png" alt="Logo">
+            <div class="brand-text">
+                <h5>SIAMAG</h5>
+                <small>Dishub Ponorogo</small>
+            </div>
+        </div>
+
+        <div class="sidebar-menu">
+            <div class="menu-label">Menu Utama</div>
+            <a href="dashboard.html">
+                <i class="fas fa-th-large"></i> Dashboard
+            </a>
+            <a href="absensi.html">
+                <i class="fas fa-fingerprint"></i> Absensi
+            </a>
+            <a href="logbook.html">
+                <i class="fas fa-book"></i> Logbook
+            </a>
+            <a href="pengajuan-izin.html">
+                <i class="fas fa-file-alt"></i> Pengajuan Izin
+            </a>
+            <a href="dokumen.html" class="active">
+                <i class="fas fa-folder-open"></i> Dokumen Magang
+            </a>
+            <a href="riwayat.html">
+                <i class="fas fa-history"></i> Riwayat
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <a href="#" id="btnLogout">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <!-- Topbar -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <button class="btn-sidebar-toggle" id="btnToggleSidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h4>Dokumen Magang</h4>
+            </div>
+            <div class="topbar-right">
+                <button class="btn-notif" id="btnNotif">
+                    <i class="fas fa-bell"></i>
+                    <span class="notif-badge">0</span>
+                </button>
+                <div class="dropdown user-dropdown">
+                    <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
+                        <div class="user-avatar" id="userInitial">I</div>
+                        <div class="d-none d-sm-block">
+                            <div style="font-weight:600; line-height:1.2;" id="userName">Intifada Ade Kartika</div>
+                            <div style="font-size:0.72rem; color:#999;" id="userRole">Peserta Magang</div>
+                        </div>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item text-danger btn-logout" href="#"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <div>
+                    <h5 class="page-title mb-1">Dokumen & Surat Magang</h5>
+                    <p class="page-subtitle mb-0">Kelola berkas permohonan magang dan unduh surat balasan resmi dari Dinas Perhubungan</p>
+                </div>
+                <div>
+                    <button class="btn btn-outline-primary btn-sm" id="btnRefreshDokumen">
+                        <i class="fas fa-rotate me-1"></i> Refresh Data
+                    </button>
+                </div>
+            </div>
+
+            <!-- Identitas Peserta & Pembimbing Card -->
+            <div class="card mb-4 border-0 shadow-sm" style="border-radius:12px; background:linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);">
+                <div class="card-body p-4">
+                    <div class="row align-items-center g-3">
+                        <div class="col-auto">
+                            <div class="user-avatar" style="width:64px; height:64px; font-size:1.6rem; background:var(--primary); color:#fff; border-radius:14px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(37,99,235,0.25);">
+                                <i class="fas fa-user-graduate"></i>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <h5 class="fw-bold mb-1 text-dark" id="profilNamaPeserta">Intifada Ade Kartika</h5>
+                            <div class="small text-muted mb-2">
+                                <span class="badge bg-primary me-2" id="profilNimBadge">220102001</span>
+                                <span id="profilInstansi">Univ. Muhammadiyah Ponorogo</span> &bull; <span id="profilProdi">Teknik Informatika</span>
+                            </div>
+                            <div class="row g-2 pt-2 border-top" style="font-size:0.85rem;">
+                                <div class="col-md-6">
+                                    <span class="text-muted"><i class="fas fa-chalkboard-teacher me-1 text-primary"></i>Dosen / Guru Pembimbing:</span>
+                                    <strong class="text-dark d-block" id="profilDosenPembimbing">Dr. Bambang Sutikno, M.Kom.</strong>
+                                </div>
+                                <div class="col-md-6">
+                                    <span class="text-muted"><i class="fas fa-user-tie me-1 text-success"></i>Pembimbing Lapangan (Dishub):</span>
+                                    <strong class="text-dark d-block" id="profilPembimbingDishub">Dra. Ida (Sekretariat)</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Two Cards: Surat Permohonan & Surat Balasan -->
+            <div class="row g-4">
+                <!-- 1. SURAT PERMOHONAN MAGANG -->
+                <div class="col-lg-6">
+                    <div class="card h-100 border-0 shadow-sm" style="border-radius:12px;">
+                        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                            <h6 class="fw-bold mb-0 text-dark">
+                                <i class="fas fa-file-invoice text-primary me-2"></i>1. Surat Permohonan Magang
+                            </h6>
+                            <span id="badgeStatusPermohonan" class="badge bg-secondary">Memuat...</span>
+                        </div>
+                        <div class="card-body p-4 d-flex flex-column justify-content-between">
+                            <div>
+                                <p class="text-muted small mb-3">
+                                    Surat permohonan / rekomendasi magang resmi yang diterbitkan oleh pihak sekolah atau perguruan tinggi asal Anda.
+                                </p>
+                                
+                                <div id="boxFilePermohonan" class="p-3 rounded border mb-3" style="background:#f8fafc;">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="text-danger">
+                                            <i class="fas fa-file-pdf fa-3x"></i>
+                                        </div>
+                                        <div class="flex-grow-1 overflow-hidden">
+                                            <div class="fw-bold text-dark text-truncate" id="namaFilePermohonan">Surat_Permohonan.pdf</div>
+                                            <div class="small text-muted" id="infoMetaPermohonan">Nomor: - | Tanggal: -</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="boxEmptyPermohonan" class="p-4 rounded border text-center mb-3 text-muted" style="background:#fafafa; display:none;">
+                                    <i class="fas fa-cloud-arrow-up fa-3x mb-2 text-secondary opacity-50"></i>
+                                    <div class="fw-semibold">Belum Ada Surat Permohonan</div>
+                                    <small>Silakan unggah berkas surat permohonan magang dalam format PDF (maks. 5MB).</small>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2 flex-wrap pt-3 border-top">
+                                <button type="button" class="btn btn-primary btn-sm" id="btnUploadPermohonan">
+                                    <i class="fas fa-upload me-1"></i> Unggah / Ganti Surat
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="btnPreviewPermohonan">
+                                    <i class="fas fa-eye me-1"></i> Lihat Berkas
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="btnUnduhPermohonan">
+                                    <i class="fas fa-download me-1"></i> Unduh PDF
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. SURAT BALASAN DINAS -->
+                <div class="col-lg-6">
+                    <div class="card h-100 border-0 shadow-sm" style="border-radius:12px;">
+                        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                            <h6 class="fw-bold mb-0 text-dark">
+                                <i class="fas fa-file-circle-check text-success me-2"></i>2. Surat Balasan Dinas Perhubungan
+                            </h6>
+                            <span id="badgeStatusBalasan" class="badge bg-secondary">Memuat...</span>
+                        </div>
+                        <div class="card-body p-4 d-flex flex-column justify-content-between">
+                            <div>
+                                <p class="text-muted small mb-3">
+                                    Surat balasan persetujuan / penerimaan magang resmi yang diterbitkan dan diunggah oleh <strong>Pembimbing Lapangan Dinas Perhubungan</strong>.
+                                </p>
+
+                                <div id="boxFileBalasan" class="p-3 rounded border mb-3" style="background:#f0fdf4; border-color:#bbf7d0 !important;">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="text-success">
+                                            <i class="fas fa-file-pdf fa-3x"></i>
+                                        </div>
+                                        <div class="flex-grow-1 overflow-hidden">
+                                            <div class="fw-bold text-dark text-truncate" id="namaFileBalasan">Surat_Balasan_Dishub.pdf</div>
+                                            <div class="small text-muted" id="infoMetaBalasan">Nomor: - | Tanggal: -</div>
+                                            <div class="badge bg-success mt-1"><i class="fas fa-check-circle me-1"></i>Sah & Terverifikasi Dinas</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="boxPendingBalasan" class="p-4 rounded border text-center mb-3" style="background:#fffbeb; border-color:#fde68a !important; display:none;">
+                                    <i class="fas fa-hourglass-half fa-3x mb-2 text-warning"></i>
+                                    <div class="fw-bold text-dark">Menunggu Surat Balasan</div>
+                                    <small class="text-muted d-block mt-1">
+                                        Pembimbing Lapangan Dishub sedang memproses surat balasan penerimaan magang Anda. Anda dapat melihat dan mengunduh berkasnya segera setelah diunggah oleh pembimbing.
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2 flex-wrap pt-3 border-top" id="actionsBalasan">
+                                <button type="button" class="btn btn-success btn-sm" id="btnPreviewBalasan">
+                                    <i class="fas fa-eye me-1"></i> Lihat Surat Balasan
+                                </button>
+                                <button type="button" class="btn btn-outline-success btn-sm" id="btnUnduhBalasan">
+                                    <i class="fas fa-download me-1"></i> Unduh Berkas Resmi (PDF)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Petunjuk Informasi -->
+            <div class="alert alert-info border-0 shadow-sm mt-4 p-3 d-flex align-items-center gap-3" style="border-radius:10px; font-size:0.875rem;">
+                <i class="fas fa-info-circle fa-2x text-primary"></i>
+                <div>
+                    <strong>Informasi Alur Dokumen Magang:</strong>
+                    Peserta magang mengunggah Surat Permohonan dari kampus/sekolah. Pembimbing lapangan Dishub akan menerbitkan dan mengunggah Surat Balasan Resmi. Kedua berkas dapat Anda unduh kapan saja sebagai arsip magang.
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- MODAL UPLOAD SURAT PERMOHONAN -->
+<div class="modal fade" id="modalUploadPermohonan" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-cloud-arrow-up me-2 text-primary"></i>Unggah Surat Permohonan Magang</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formUploadPermohonan">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nomor Surat dari Kampus / Sekolah <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="inputNoSuratPermohonan" placeholder="Contoh: 045/FT-UMPO/VII/2026" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Tanggal Surat <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="inputTglSuratPermohonan" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Pilih File Surat (PDF) <span class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="inputFilePermohonan" accept=".pdf" required>
+                        <small class="text-muted">Format file harus PDF, ukuran maksimal 5 MB.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="btnSubmitPermohonan">
+                        <i class="fas fa-upload me-1"></i> Simpan & Unggah
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="../assets/js/app.js"></script>
+<script src="../assets/js/masterData.js"></script>
+<script src="../assets/js/pembimbing-demo-data.js"></script>
+<script src="../assets/js/peserta-dokumen.js"></script>
+
+</body>
+</html>
