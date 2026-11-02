@@ -25,13 +25,13 @@
 }
 
 html {
-    overflow-x: hidden;
+    overflow-x: clip;
     width: 100%;
     position: relative;
 }
 
 body {
-    overflow-x: hidden;
+    overflow-x: clip;
     width: 100%;
     position: relative;
 }
@@ -346,8 +346,7 @@ img {
     z-index: 1020;
     min-height: 64px;
     width: 100%;
-    /* overflow: hidden di topbar mencegah elemen keluar kiri/kanan */
-    overflow: hidden;
+    overflow: visible;
 }
 
 .topbar-left {
@@ -1197,12 +1196,14 @@ div.dataTables_wrapper div.dataTables_processing {
 .modal-detail-wrapper .table td {
     vertical-align: top;
     padding: 0.6rem 0.65rem;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
+    word-break: normal;
 }
 
 .modal-detail-wrapper .table td:first-child {
     width: 40% !important;
     color: #64748b;
+    overflow-wrap: normal;
 }
 
 .modal-detail-wrapper .table td:nth-child(2) {

@@ -270,30 +270,32 @@ window.previewDokumenSweetAlert = function(tipe, infoSurat, namaPeserta, options
         <h6 class="fw-bold mb-0 text-dark">${infoSurat.nama_file}</h6>
         <div class="small text-muted">${infoSurat.ukuran || '1.1 MB'} &bull; Diunggah: ${infoSurat.tanggal_upload}</div>
       </div>
-      <table class="table table-sm table-striped align-middle mb-0" style="font-size:0.85rem;">
-        <tbody>
-          <tr>
-            <td class="text-muted" style="width:38%;">Nomor Surat</td>
-            <td class="text-center" style="width:5%;">:</td>
-            <td class="fw-bold text-dark">${infoSurat.nomor_surat || '-'}</td>
-          </tr>
-          <tr>
-            <td class="text-muted">Nama Peserta</td>
-            <td class="text-center">:</td>
-            <td class="fw-semibold text-dark">${namaPeserta || '-'}</td>
-          </tr>
-          <tr>
-            <td class="text-muted">Instansi Penerbit</td>
-            <td class="text-center">:</td>
-            <td class="fw-semibold text-dark">${instansiTitle}</td>
-          </tr>
-          <tr>
-            <td class="text-muted">Status Dokumen</td>
-            <td class="text-center">:</td>
-            <td><span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>${isPermohonan ? 'Telah Diunggah' : 'Diterbitkan & Sah'}</span></td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="modal-detail-wrapper document-preview-table-wrapper mt-3">
+        <table class="table table-sm table-striped align-middle mb-0" style="font-size:0.85rem;">
+          <tbody>
+            <tr>
+              <td class="text-muted" style="width:38%;">Nomor Surat</td>
+              <td class="text-center" style="width:5%;">:</td>
+              <td class="fw-bold text-dark">${infoSurat.nomor_surat || '-'}</td>
+            </tr>
+            <tr>
+              <td class="text-muted">Nama Peserta</td>
+              <td class="text-center">:</td>
+              <td class="fw-semibold text-dark">${namaPeserta || '-'}</td>
+            </tr>
+            <tr>
+              <td class="text-muted">Instansi Penerbit</td>
+              <td class="text-center">:</td>
+              <td class="fw-semibold text-dark">${instansiTitle}</td>
+            </tr>
+            <tr>
+              <td class="text-muted">Status Dokumen</td>
+              <td class="text-center">:</td>
+              <td><span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>${isPermohonan ? 'Telah Diunggah' : 'Diterbitkan & Sah'}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <div class="mt-3 p-3 rounded bg-light border text-center small text-muted">
         <i class="fas fa-stamp text-primary me-1"></i>Dokumen ini terverifikasi secara elektronik dalam Sistem Informasi Magang (SIAMAG) Dishub Ponorogo.
       </div>

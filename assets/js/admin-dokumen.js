@@ -29,7 +29,7 @@ $(document).ready(function() {
         },
         pageLength: 10,
         columnDefs: [
-            { orderable: false, targets: [4, 5, 6] }
+            { orderable: false, targets: [4, 5] }
         ]
     });
 
@@ -135,23 +135,13 @@ $(document).ready(function() {
                 colBalasan = '<span class="badge badge-pending"><i class="fas fa-clock me-1"></i>Menunggu Pembimbing</span>';
             }
 
-            // Aksi Monitoring Admin
-            var colAksi = `
-                <div class="action-buttons text-center">
-                    <button type="button" class="btn btn-sm btn-outline-primary btn-aksi btn-detail-arsip" data-id="${item.id}" title="Detail Arsip Magang">
-                        <i class="fas fa-eye me-1"></i> Detail
-                    </button>
-                </div>
-            `;
-
             table.row.add([
                 idx + 1,
                 colPeserta,
                 colAsal,
                 colPenempatan,
                 colPermohonan,
-                colBalasan,
-                colAksi
+                colBalasan
             ]);
         });
         table.draw();
@@ -159,82 +149,6 @@ $(document).ready(function() {
     }
 
     renderTable();
-
-    // Modal Detail Arsip Magang
-    $(document).on('click', '.btn-detail-arsip', function() {
-        var id = $(this).data('id');
-        var item = window.masterPeserta.find(p => p.id == id);
-        if (!item) return;
-
-        var penempatan = window.getMasterPenempatanPeserta(item.id);
-        var docs = window.getDokumenPesertaById(item.id);
-        var permohonan = docs.surat_permohonan;
-        var balasan = docs.surat_balasan;
-
-        var badgePermohonan = permohonan && permohonan.status === 'sudah_upload'
-            ? '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Sudah Diunggah</span>'
-            : '<span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Belum Diunggah</span>';
-
-        var badgeBalasan = balasan && balasan.status === 'diterbitkan'
-            ? '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Diterbitkan</span>'
-            : '<span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Menunggu Pembimbing</span>';
-
-        var html = `
-            <div class="card border-0 mb-3" style="background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%); border-radius: 12px;">
-                <div class="card-body p-3 text-center">
-                    <div class="user-avatar mx-auto mb-2" style="width:60px; height:60px; font-size:1.5rem; background:var(--primary); color:#fff; border-radius:12px; display:inline-flex; align-items:center; justify-content:center;">
-                        ${item.nama.charAt(0)}
-                    </div>
-                    <h6 class="fw-bold mb-1 text-dark">${item.nama}</h6>
-                    <div class="small text-muted">${item.nim} &bull; ${item.instansi}</div>
-                </div>
-            </div>
-
-            <div class="modal-detail-wrapper mb-3">
-                <table class="table table-sm table-striped align-middle mb-0" style="font-size:0.875rem;">
-                    <tbody>
-                        <tr>
-                            <td class="text-muted py-2" style="width:40%;"><i class="fas fa-chalkboard-teacher me-2 text-primary" style="width:16px;"></i>Dosen / Guru Pembimbing</td>
-                            <td class="text-center text-muted py-2" style="width:5%;">:</td>
-                            <td class="fw-bold text-dark py-2" style="color:var(--primary) !important;">${item.dosen_guru_pembimbing || '-'}</td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted py-2"><i class="fas fa-building me-2 text-primary" style="width:16px;"></i>Unit Penempatan</td>
-                            <td class="text-center text-muted py-2">:</td>
-                            <td class="fw-semibold text-dark py-2">${penempatan.unit.nama}</td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted py-2"><i class="fas fa-user-tie me-2 text-primary" style="width:16px;"></i>Pembimbing Lapangan</td>
-                            <td class="text-center text-muted py-2">:</td>
-                            <td class="fw-bold text-primary py-2">${penempatan.namaPembimbing}</td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted py-2"><i class="fas fa-file-invoice me-2 text-primary" style="width:16px;"></i>Surat Permohonan</td>
-                            <td class="text-center text-muted py-2">:</td>
-                            <td class="py-2">${badgePermohonan}</td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted py-2"><i class="fas fa-file-circle-check me-2 text-success" style="width:16px;"></i>Surat Balasan Dishub</td>
-                            <td class="text-center text-muted py-2">:</td>
-                            <td class="py-2">${badgeBalasan}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="p-3 rounded border bg-light">
-                <div class="fw-bold small text-muted mb-2"><i class="fas fa-file-pdf text-danger me-1"></i>Monitoring Berkas (Hanya Lihat):</div>
-                <div class="d-flex gap-2 flex-wrap">
-                    ${permohonan ? '<button class="btn btn-sm btn-outline-primary btn-preview-permohonan" data-id="' + item.id + '"><i class="fas fa-eye me-1"></i>Lihat Permohonan</button>' : '<span class="small text-muted">Permohonan belum diunggah.</span>'}
-                    ${balasan ? '<button class="btn btn-sm btn-outline-success btn-preview-balasan" data-id="' + item.id + '"><i class="fas fa-eye me-1"></i>Lihat Surat Balasan</button>' : '<span class="small text-muted">Surat balasan belum diterbitkan pembimbing.</span>'}
-                </div>
-            </div>
-        `;
-
-        $('#contentDetailArsip').html(html);
-        var modalEl = document.getElementById('modalDetailArsip');
-        bootstrap.Modal.getOrCreateInstance(modalEl).show();
-    });
 
     // Preview Permohonan
     $(document).on('click', '.btn-preview-permohonan', function() {
