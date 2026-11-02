@@ -13,16 +13,42 @@ $(document).ready(function() {
         $('#userInitial').text((user.nama || user.username).charAt(0).toUpperCase());
     }
 
+    // Tambahkan tombol tutup sidebar mobile jika belum ada
+    if ($('#sidebar .sidebar-header').length && !$('#btnCloseSidebar').length) {
+        $('#sidebar .sidebar-header').append(
+            '<button type="button" class="btn-sidebar-close" id="btnCloseSidebar" aria-label="Tutup Menu">' +
+            '<i class="fas fa-times"></i>' +
+            '</button>'
+        );
+    }
+
     // Toggle sidebar pada tampilan mobile
-    $('#btnToggleSidebar').on('click', function() {
+    $('#btnToggleSidebar').on('click', function(e) {
+        e.stopPropagation();
         $('#sidebar').toggleClass('show');
         $('#sidebarOverlay').toggleClass('show');
     });
 
-    // Tutup sidebar saat klik overlay
-    $('#sidebarOverlay').on('click', function() {
+    // Tutup sidebar saat klik tombol close atau overlay
+    $(document).on('click', '#btnCloseSidebar, #sidebarOverlay', function() {
         $('#sidebar').removeClass('show');
-        $(this).removeClass('show');
+        $('#sidebarOverlay').removeClass('show');
+    });
+
+    // Tutup sidebar saat klik menu item pada tampilan mobile
+    $('.sidebar-menu a').on('click', function() {
+        if ($(window).width() <= 992) {
+            $('#sidebar').removeClass('show');
+            $('#sidebarOverlay').removeClass('show');
+        }
+    });
+
+    // Tutup sidebar jika tekan ESC
+    $(document).on('keydown', function(e) {
+        if (e.key === 'Escape' && $('#sidebar').hasClass('show')) {
+            $('#sidebar').removeClass('show');
+            $('#sidebarOverlay').removeClass('show');
+        }
     });
 
     // Handler logout pengguna
@@ -178,7 +204,7 @@ $(document).ready(function() {
             html: '<div style="max-height: 320px; overflow-y: auto;">' + itemsHtml + '</div>',
             showConfirmButton: false,
             showCloseButton: true,
-            width: '450px',
+            width: $(window).width() < 500 ? '92%' : '450px',
             didOpen: function() {
                 $('.notif-item').on('click', function() {
                     var notificationId = $(this).data('notification-id');
