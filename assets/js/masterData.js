@@ -175,7 +175,7 @@ window.getMasterPenempatanPeserta = function(identifier) {
   };
 };
 
-// Helper Persistensi Dokumen Magang (LocalStorage)
+// Helper Persistensi Surat Magang (LocalStorage)
 window.getDokumenStorageKey = function() {
   return 'siamag_dokumen_magang';
 };
@@ -256,7 +256,8 @@ window.unduhFileDokumen = function(namaFile, judulDokumen, isiDetail) {
 };
 
 // Helper Modal Preview PDF Dokumen dengan SweetAlert2
-window.previewDokumenSweetAlert = function(tipe, infoSurat, namaPeserta) {
+window.previewDokumenSweetAlert = function(tipe, infoSurat, namaPeserta, options) {
+  var allowDownload = !options || options.allowDownload !== false;
   var isPermohonan = tipe === 'permohonan';
   var headerTitle = isPermohonan ? 'Surat Permohonan Magang' : 'Surat Balasan / Penerimaan Dinas';
   var iconClass = isPermohonan ? 'fa-file-invoice text-primary' : 'fa-file-circle-check text-success';
@@ -303,13 +304,13 @@ window.previewDokumenSweetAlert = function(tipe, infoSurat, namaPeserta) {
     title: '<i class="fas ' + iconClass + ' me-2"></i>' + headerTitle,
     html: contentHtml,
     width: 580,
-    showCancelButton: true,
+    showCancelButton: allowDownload,
     confirmButtonColor: '#334EAC',
     cancelButtonColor: '#6c757d',
-    confirmButtonText: '<i class="fas fa-download me-1"></i> Unduh File PDF',
+    confirmButtonText: allowDownload ? '<i class="fas fa-download me-1"></i> Unduh File PDF' : 'Tutup',
     cancelButtonText: 'Tutup'
   }).then(function(result) {
-    if (result.isConfirmed) {
+    if (allowDownload && result.isConfirmed) {
       window.unduhFileDokumen(infoSurat.nama_file, headerTitle, 'Nomor: ' + infoSurat.nomor_surat + ' | Peserta: ' + namaPeserta);
       Swal.fire({
         toast: true,

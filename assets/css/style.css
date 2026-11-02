@@ -778,6 +778,43 @@ img {
     padding: 16px 24px;
 }
 
+.modal-upload-surat .modal-dialog {
+    width: calc(100% - 1rem);
+    max-width: 32rem;
+    margin: 0.5rem auto;
+}
+
+.modal-upload-surat .modal-content {
+    max-height: calc(100vh - 1rem);
+    max-height: calc(100dvh - 1rem);
+    overflow: hidden;
+}
+
+.modal-upload-surat form {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.modal-upload-surat .modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: calc(100vh - 12rem);
+    max-height: calc(100dvh - 12rem);
+    overflow-y: auto;
+}
+
+.modal-upload-surat .modal-footer {
+    flex: 0 0 auto;
+}
+
+.dokumen-page-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
 /* tombol aksi tabel */
 .btn-aksi {
     display: inline-flex;
@@ -1175,6 +1212,7 @@ div.dataTables_wrapper div.dataTables_processing {
 .modal-detail-wrapper .table td:last-child {
     width: 55% !important;
     text-align: left !important;
+    white-space: normal !important;
 }
 
 .modal-dialog-centered .modal-content {
@@ -1215,6 +1253,16 @@ div.dataTables_wrapper div.dataTables_processing {
 }
 
 @media (max-width: 575.98px) {
+    .dokumen-page-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .dokumen-page-actions .btn {
+        width: 100%;
+        white-space: normal;
+    }
+
     .modal-dialog-centered .modal-content {
         max-height: calc(100dvh - 1rem);
     }
@@ -1259,6 +1307,7 @@ div.dataTables_wrapper div.dataTables_processing {
     }
 
     .modal-detail-wrapper .table {
+        width: max(100%, 520px);
         min-width: 520px;
     }
 }

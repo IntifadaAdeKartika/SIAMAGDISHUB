@@ -331,6 +331,7 @@ $(document).ready(function() {
         var badgeJenis = item.jenis_peserta === 'siswa'
             ? '<span class="badge" style="background:#e8daef; color:#8e44ad;">Siswa</span>'
             : '<span class="badge" style="background:#dbeafe; color:#2563eb;">Mahasiswa</span>';
+        var dokumenPeserta = window.getDokumenPesertaById(item.id);
 
         var html = `
             <div class="card border-0 mb-3" style="background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%); border-radius: 12px;">
@@ -398,24 +399,21 @@ $(document).ready(function() {
             </div>
             
             <div class="mt-3 p-3 rounded border bg-light">
-                <div class="fw-bold small text-muted mb-2"><i class="fas fa-folder-open text-primary me-1"></i>Status Dokumen Magang (Monitoring):</div>
+                <div class="fw-bold small text-muted mb-2"><i class="fas fa-folder-open text-primary me-1"></i>Status Surat Magang (Monitoring):</div>
                 <div class="row g-2">
                     <div class="col-6">
                         <div class="p-2 rounded bg-white border text-center">
                             <small class="text-muted d-block mb-1">Surat Permohonan</small>
-                            <span class="badge bg-success mb-1"><i class="fas fa-check me-1"></i>Sudah Upload</span>
-                            <div class="mt-1">
-                                <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2 btn-preview-doc" data-tipe="permohonan" data-id="${item.id}" style="font-size:0.72rem;">
-                                    <i class="fas fa-eye me-1"></i>Preview
-                                </button>
-                            </div>
+                            ${dokumenPeserta.surat_permohonan
+                                ? '<span class="badge bg-success mb-1"><i class="fas fa-check me-1"></i>Sudah Diunggah</span><div class="mt-1"><button type="button" class="btn btn-xs btn-outline-primary py-0 px-2 btn-preview-doc" data-tipe="permohonan" data-id="' + item.id + '" style="font-size:0.72rem;"><i class="fas fa-eye me-1"></i>Lihat</button></div>'
+                                : '<span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Belum Diunggah</span>'}
                         </div>
                     </div>
                     <div class="col-6">
                         <div class="p-2 rounded bg-white border text-center">
                             <small class="text-muted d-block mb-1">Surat Balasan Dishub</small>
                             ${(window.getDokumenPesertaById(item.id).surat_balasan) 
-                                ? '<span class="badge bg-success mb-1"><i class="fas fa-check me-1"></i>Diterbitkan</span><div class="mt-1"><button type="button" class="btn btn-xs btn-outline-success py-0 px-2 btn-preview-doc" data-tipe="balasan" data-id="' + item.id + '" style="font-size:0.72rem;"><i class="fas fa-eye me-1"></i>Preview</button></div>'
+                                ? '<span class="badge bg-success mb-1"><i class="fas fa-check me-1"></i>Diterbitkan</span><div class="mt-1"><button type="button" class="btn btn-xs btn-outline-success py-0 px-2 btn-preview-doc" data-tipe="balasan" data-id="' + item.id + '" style="font-size:0.72rem;"><i class="fas fa-eye me-1"></i>Lihat</button></div>'
                                 : '<span class="badge bg-warning text-dark mb-1"><i class="fas fa-clock me-1"></i>Menunggu Pembimbing</span><div class="mt-1 text-muted" style="font-size:0.7rem;">Belum diunggah</div>'}
                         </div>
                     </div>
@@ -424,6 +422,19 @@ $(document).ready(function() {
         `;
         $('#contentDetailPeserta').html(html);
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalDetailPeserta')).show();
+    });
+
+    $(document).on('click', '.btn-preview-doc', function() {
+        var id = $(this).data('id');
+        var item = dataPeserta.find(function(peserta) {
+            return peserta.id == id;
+        });
+        var tipe = $(this).data('tipe');
+        var docs = window.getDokumenPesertaById(id);
+        var surat = tipe === 'permohonan' ? docs.surat_permohonan : docs.surat_balasan;
+        if (item && surat) {
+            window.previewDokumenSweetAlert(tipe, surat, item.nama_lengkap, { allowDownload: false });
+        }
     });
 
     // Tombol Reset Password

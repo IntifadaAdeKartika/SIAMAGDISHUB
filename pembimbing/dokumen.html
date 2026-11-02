@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dokumen Magang - SIAMAG Dishub</title>
+    <title>Surat Magang - SIAMAG Dishub</title>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -51,7 +51,7 @@
                 <i class="fas fa-envelope-open-text"></i> Pengajuan Izin
             </a>
             <a href="dokumen.html" class="active">
-                <i class="fas fa-folder-open"></i> Dokumen Magang
+                <i class="fas fa-folder-open"></i> Surat Magang
             </a>
             <a href="monitoring.html">
                 <i class="fas fa-eye"></i> Monitoring Magang
@@ -81,7 +81,7 @@
                 <button class="btn-sidebar-toggle" id="btnToggleSidebar">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h4>Dokumen Magang</h4>
+                <h4>Surat Magang</h4>
             </div>
             <div class="topbar-right">
                 <button class="btn-notif" id="btnNotif">
@@ -107,10 +107,13 @@
         <div class="content-area">
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                 <div>
-                    <h5 class="page-title mb-1">Pengelolaan Dokumen & Surat Magang</h5>
+                    <h5 class="page-title mb-1">Pengelolaan Surat Magang</h5>
                     <p class="page-subtitle mb-0">Periksa surat permohonan peserta bimbingan dan unggah surat balasan penerimaan resmi Dinas Perhubungan</p>
                 </div>
-                <div>
+                <div class="dokumen-page-actions">
+                    <button class="btn btn-primary btn-sm" type="button" id="btnBukaUploadBalasan">
+                        <i class="fas fa-upload me-1"></i> Upload Surat Balasan
+                    </button>
                     <button class="btn btn-outline-primary btn-sm" id="btnReloadDokumen">
                         <i class="fas fa-rotate me-1"></i> Refresh Data
                     </button>
@@ -207,7 +210,7 @@
             <div class="card table-card">
                 <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
                     <h6 class="fw-bold mb-0 text-dark">
-                        <i class="fas fa-folder-tree text-primary me-2"></i>Daftar Dokumen Magang Peserta Bimbingan
+                        <i class="fas fa-folder-tree text-primary me-2"></i>Daftar Surat Magang Peserta Bimbingan
                     </h6>
                     <small class="text-muted" id="labelUnitPembimbing">-</small>
                 </div>
@@ -221,7 +224,6 @@
                                     <th style="width:22%;">ASAL & DOSEN/GURU</th>
                                     <th style="width:18%;">SURAT PERMOHONAN</th>
                                     <th style="width:18%;">SURAT BALASAN DISHUB</th>
-                                    <th style="width:12%;" class="text-center text-nowrap">AKSI</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -235,7 +237,7 @@
 </div>
 
 <!-- MODAL UPLOAD SURAT BALASAN -->
-<div class="modal fade" id="modalUploadBalasan" tabindex="-1" aria-hidden="true">
+<div class="modal fade modal-upload-surat" id="modalUploadBalasan" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -245,6 +247,12 @@
             <form id="formUploadBalasan">
                 <input type="hidden" id="uploadPesertaId">
                 <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold" for="selectUploadPeserta">Peserta Magang <span class="text-danger">*</span></label>
+                        <select class="form-select" id="selectUploadPeserta" required>
+                            <option value="">Pilih peserta magang</option>
+                        </select>
+                    </div>
                     <div class="p-3 rounded bg-light border mb-3">
                         <div class="small text-muted">Peserta Magang:</div>
                         <h6 class="fw-bold text-dark mb-1" id="uploadPesertaNama">-</h6>
@@ -265,13 +273,13 @@
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Berkas Surat Balasan (PDF) <span class="text-danger">*</span></label>
                         <input type="file" class="form-control" id="inputFileBalasan" accept=".pdf" required>
-                        <small class="text-muted">File PDF surat balasan berkop resmi dinas dan bertandatangan.</small>
+                        <small class="text-muted">PDF maksimal 5 MB. Versi frontend ini menyimpan metadata di browser; file belum dikirim ke server.</small>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
                     <button type="submit" class="btn btn-success btn-sm" id="btnSubmitBalasan">
-                        <i class="fas fa-upload me-1"></i> Terbitkan & Upload Surat
+                        <i class="fas fa-upload me-1"></i> Upload Surat Balasan
                     </button>
                 </div>
             </form>

@@ -4,6 +4,15 @@
 
 $(document).ready(function() {
 
+    function resetModalDetailScroll(event) {
+        event.target.querySelectorAll('.modal-detail-wrapper').forEach(function(wrapper) {
+            wrapper.scrollLeft = 0;
+        });
+    }
+
+    document.addEventListener('show.bs.modal', resetModalDetailScroll);
+    document.addEventListener('shown.bs.modal', resetModalDetailScroll);
+
     // Validasi sesi aktif pengguna
     var user = JSON.parse(sessionStorage.getItem('user') || 'null');
     

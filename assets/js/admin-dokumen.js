@@ -1,7 +1,7 @@
 /**
  * admin-dokumen.js
- * Modul Monitoring Dokumen Magang Seluruh Dinas (Admin)
- * Role: Monitoring Only (Melihat rekap, preview berkas, dan unduh berkas)
+ * Modul Monitoring Surat Magang Seluruh Dinas (Admin)
+ * Role: Monitoring Only (Melihat rekap dan status surat)
  */
 
 $(document).ready(function() {
@@ -107,9 +107,6 @@ $(document).ready(function() {
                             <button type="button" class="btn btn-xs btn-outline-primary btn-preview-permohonan py-0 px-2" data-id="${item.id}" style="font-size:0.75rem;" title="Lihat Berkas Permohonan">
                                 <i class="fas fa-eye me-1"></i>Lihat
                             </button>
-                            <button type="button" class="btn btn-xs btn-outline-secondary btn-unduh-permohonan py-0 px-2" data-id="${item.id}" style="font-size:0.75rem;" title="Unduh File">
-                                <i class="fas fa-download me-1"></i>Unduh
-                            </button>
                         </div>
                     </div>
                 `;
@@ -130,9 +127,6 @@ $(document).ready(function() {
                         <div class="action-buttons mt-1">
                             <button type="button" class="btn btn-xs btn-outline-success btn-preview-balasan py-0 px-2" data-id="${item.id}" style="font-size:0.75rem;" title="Lihat Berkas Balasan">
                                 <i class="fas fa-eye me-1"></i>Lihat
-                            </button>
-                            <button type="button" class="btn btn-xs btn-outline-secondary btn-unduh-balasan py-0 px-2" data-id="${item.id}" style="font-size:0.75rem;" title="Unduh File">
-                                <i class="fas fa-download me-1"></i>Unduh
                             </button>
                         </div>
                     </div>
@@ -229,10 +223,10 @@ $(document).ready(function() {
             </div>
 
             <div class="p-3 rounded border bg-light">
-                <div class="fw-bold small text-muted mb-2"><i class="fas fa-file-pdf text-danger me-1"></i>Aksi Unduh / Preview Berkas:</div>
+                <div class="fw-bold small text-muted mb-2"><i class="fas fa-file-pdf text-danger me-1"></i>Monitoring Berkas (Hanya Lihat):</div>
                 <div class="d-flex gap-2 flex-wrap">
-                    ${permohonan ? '<button class="btn btn-sm btn-outline-primary btn-preview-permohonan" data-id="' + item.id + '"><i class="fas fa-eye me-1"></i>Lihat Permohonan</button><button class="btn btn-sm btn-outline-secondary btn-unduh-permohonan" data-id="' + item.id + '"><i class="fas fa-download me-1"></i>Unduh Permohonan</button>' : '<span class="small text-muted">Permohonan belum diunggah.</span>'}
-                    ${balasan ? '<button class="btn btn-sm btn-outline-success btn-preview-balasan" data-id="' + item.id + '"><i class="fas fa-eye me-1"></i>Lihat Surat Balasan</button><button class="btn btn-sm btn-outline-secondary btn-unduh-balasan" data-id="' + item.id + '"><i class="fas fa-download me-1"></i>Unduh Surat Balasan</button>' : '<span class="small text-muted">Surat balasan belum diterbitkan pembimbing.</span>'}
+                    ${permohonan ? '<button class="btn btn-sm btn-outline-primary btn-preview-permohonan" data-id="' + item.id + '"><i class="fas fa-eye me-1"></i>Lihat Permohonan</button>' : '<span class="small text-muted">Permohonan belum diunggah.</span>'}
+                    ${balasan ? '<button class="btn btn-sm btn-outline-success btn-preview-balasan" data-id="' + item.id + '"><i class="fas fa-eye me-1"></i>Lihat Surat Balasan</button>' : '<span class="small text-muted">Surat balasan belum diterbitkan pembimbing.</span>'}
                 </div>
             </div>
         `;
@@ -248,29 +242,7 @@ $(document).ready(function() {
         var item = window.masterPeserta.find(p => p.id == id);
         var docs = window.getDokumenPesertaById(id);
         if (item && docs.surat_permohonan) {
-            window.previewDokumenSweetAlert('permohonan', docs.surat_permohonan, item.nama);
-        }
-    });
-
-    // Unduh Permohonan
-    $(document).on('click', '.btn-unduh-permohonan', function() {
-        var id = $(this).data('id');
-        var item = window.masterPeserta.find(p => p.id == id);
-        var docs = window.getDokumenPesertaById(id);
-        if (item && docs.surat_permohonan) {
-            window.unduhFileDokumen(
-                docs.surat_permohonan.nama_file,
-                'Surat Permohonan - ' + item.nama,
-                'Nomor: ' + docs.surat_permohonan.nomor_surat + ' | Asal: ' + item.instansi
-            );
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: 'success',
-                title: 'Surat Permohonan berhasil diunduh',
-                showConfirmButton: false,
-                timer: 1500
-            });
+            window.previewDokumenSweetAlert('permohonan', docs.surat_permohonan, item.nama, { allowDownload: false });
         }
     });
 
@@ -280,29 +252,7 @@ $(document).ready(function() {
         var item = window.masterPeserta.find(p => p.id == id);
         var docs = window.getDokumenPesertaById(id);
         if (item && docs.surat_balasan) {
-            window.previewDokumenSweetAlert('balasan', docs.surat_balasan, item.nama);
-        }
-    });
-
-    // Unduh Balasan
-    $(document).on('click', '.btn-unduh-balasan', function() {
-        var id = $(this).data('id');
-        var item = window.masterPeserta.find(p => p.id == id);
-        var docs = window.getDokumenPesertaById(id);
-        if (item && docs.surat_balasan) {
-            window.unduhFileDokumen(
-                docs.surat_balasan.nama_file,
-                'Surat Balasan Dishub - ' + item.nama,
-                'Nomor: ' + docs.surat_balasan.nomor_surat + ' | Dinas Perhubungan Ponorogo'
-            );
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: 'success',
-                title: 'Surat Balasan resmi berhasil diunduh',
-                showConfirmButton: false,
-                timer: 1500
-            });
+            window.previewDokumenSweetAlert('balasan', docs.surat_balasan, item.nama, { allowDownload: false });
         }
     });
 

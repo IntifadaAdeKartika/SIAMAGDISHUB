@@ -1,6 +1,6 @@
 /**
  * pembimbing-dokumen.js
- * Modul Pengelolaan Dokumen Magang Peserta Bimbingan
+ * Modul Pengelolaan Surat Magang Peserta Bimbingan
  * Fitur Pembimbing: Lihat & Unduh Surat Permohonan, Upload & Kelola Surat Balasan Dinas
  */
 
@@ -33,8 +33,14 @@ $(document).ready(function() {
         },
         pageLength: 10,
         columnDefs: [
-            { orderable: false, targets: [3, 4, 5] }
+            { orderable: false, targets: [3, 4] }
         ]
+    });
+
+    dataPesertaBimbingan.forEach(function(item) {
+        $('#selectUploadPeserta').append(
+            $('<option>').val(item.id).text(item.nama + ' · ' + item.nim)
+        );
     });
 
     function updateStatistik() {
@@ -136,33 +142,12 @@ $(document).ready(function() {
                 colBalasan = '<span class="badge badge-pending"><i class="fas fa-clock me-1"></i>Belum Diterbitkan</span>';
             }
 
-            // Aksi Pembimbing
-            var colAksi = '';
-            if (balasan && balasan.status === 'diterbitkan') {
-                colAksi = `
-                    <div class="action-buttons text-center">
-                        <button type="button" class="btn btn-sm btn-outline-secondary btn-aksi btn-upload-balasan" data-id="${item.id}" title="Ganti / Perbarui Surat Balasan">
-                            <i class="fas fa-file-pen text-primary"></i> Ganti
-                        </button>
-                    </div>
-                `;
-            } else {
-                colAksi = `
-                    <div class="action-buttons text-center">
-                        <button type="button" class="btn btn-sm btn-primary btn-upload-balasan py-1 px-2" data-id="${item.id}" style="font-size:0.8rem;">
-                            <i class="fas fa-upload me-1"></i> Upload Balasan
-                        </button>
-                    </div>
-                `;
-            }
-
             table.row.add([
                 idx + 1,
                 colPeserta,
                 colAsal,
                 colPermohonan,
-                colBalasan,
-                colAksi
+                colBalasan
             ]);
         });
         table.draw();
@@ -171,9 +156,7 @@ $(document).ready(function() {
 
     renderTable();
 
-    // Buka Modal Upload Surat Balasan
-    $(document).on('click', '.btn-upload-balasan', function() {
-        var id = $(this).data('id');
+    function isiFormSuratBalasan(id) {
         var item = dataPesertaBimbingan.find(p => p.id == id);
         if (!item) return;
 
@@ -187,18 +170,41 @@ $(document).ready(function() {
         if (balasan) {
             $('#inputNoSuratBalasan').val(balasan.nomor_surat || '');
             $('#inputTglSuratBalasan').val(balasan.tanggal_upload || '');
-            $('#btnSubmitBalasan').html('<i class="fas fa-save me-1"></i> Perbarui Surat Balasan');
+            $('#btnSubmitBalasan').html('<i class="fas fa-upload me-1"></i> Upload Surat Balasan');
         } else {
-            $('#formUploadBalasan')[0].reset();
             var today = new Date().toISOString().split('T')[0];
             var randomNo = '551.1/' + (140 + item.id) + '/405.15/' + new Date().getFullYear();
             $('#inputNoSuratBalasan').val(randomNo);
             $('#inputTglSuratBalasan').val(today);
-            $('#btnSubmitBalasan').html('<i class="fas fa-upload me-1"></i> Terbitkan & Upload Surat');
+            $('#btnSubmitBalasan').html('<i class="fas fa-upload me-1"></i> Upload Surat Balasan');
         }
+        $('#inputFileBalasan').val('');
+    }
 
-        var modalEl = document.getElementById('modalUploadBalasan');
-        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    // Buka form dari tombol di atas tabel dan pilih peserta tujuan.
+    $('#btnBukaUploadBalasan').on('click', function() {
+        $('#formUploadBalasan')[0].reset();
+        $('#selectUploadPeserta').val('');
+        $('#uploadPesertaId').val('');
+        $('#uploadPesertaNama').text('-');
+        $('#uploadPesertaMeta').text('-');
+        $('#inputNoSuratBalasan, #inputTglSuratBalasan').val('');
+        $('#inputFileBalasan').val('');
+        $('#btnSubmitBalasan').html('<i class="fas fa-upload me-1"></i> Upload Surat Balasan');
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalUploadBalasan')).show();
+    });
+
+    $('#selectUploadPeserta').on('change', function() {
+        var id = $(this).val();
+        if (id) {
+            isiFormSuratBalasan(id);
+        } else {
+            $('#uploadPesertaId').val('');
+            $('#uploadPesertaNama').text('-');
+            $('#uploadPesertaMeta').text('-');
+            $('#inputNoSuratBalasan, #inputTglSuratBalasan').val('');
+            $('#inputFileBalasan').val('');
+        }
     });
 
     // Submit Upload Balasan
@@ -206,25 +212,37 @@ $(document).ready(function() {
         e.preventDefault();
         var id = parseInt($('#uploadPesertaId').val());
         var item = dataPesertaBimbingan.find(p => p.id == id);
-        if (!item) return;
+        if (!item) {
+            Swal.fire('Peserta Belum Dipilih', 'Pilih peserta magang yang akan menerima surat balasan.', 'warning');
+            return;
+        }
 
         var noSurat = $('#inputNoSuratBalasan').val().trim();
         var tglSurat = $('#inputTglSuratBalasan').val();
         var fileInput = document.getElementById('inputFileBalasan');
-        var fileName = fileInput.files.length > 0 
-            ? fileInput.files[0].name 
-            : 'Surat_Balasan_Dishub_' + item.nama.replace(/\s+/g, '_') + '.pdf';
+        var file = fileInput.files[0];
 
         if (!noSurat || !tglSurat) {
             Swal.fire('Form Belum Lengkap', 'Nomor surat dan tanggal terbit harus diisi.', 'warning');
             return;
         }
+        if (!file) {
+            Swal.fire('Berkas Belum Dipilih', 'Pilih file surat balasan dalam format PDF.', 'warning');
+            return;
+        }
+        if (!/\.pdf$/i.test(file.name) || (file.type && file.type !== 'application/pdf')) {
+            Swal.fire('Format Tidak Valid', 'Berkas surat balasan harus berformat PDF.', 'warning');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            Swal.fire('Ukuran Berkas Terlalu Besar', 'Ukuran file PDF maksimal 5 MB.', 'warning');
+            return;
+        }
 
-        // Simpan ke storage
         window.simpanSuratBalasan(id, {
             nomor_surat: noSurat,
-            nama_file: fileName,
-            ukuran: '850 KB',
+            nama_file: file.name,
+            ukuran: (file.size / (1024 * 1024)).toFixed(2) + ' MB',
             tanggal_upload: tglSurat
         });
 
@@ -235,8 +253,8 @@ $(document).ready(function() {
 
         Swal.fire({
             icon: 'success',
-            title: 'Surat Balasan Diterbitkan!',
-            text: 'Surat balasan resmi untuk ' + item.nama + ' berhasil diunggah. Peserta kini dapat melihat dan mengunduh berkas surat.',
+            title: 'Data Surat Disimpan',
+            text: 'Metadata surat untuk ' + item.nama + ' tersimpan di browser. File PDF belum dikirim ke server karena backend belum tersedia.',
             confirmButtonColor: '#334EAC'
         });
     });

@@ -1,6 +1,6 @@
 /**
  * peserta-dokumen.js
- * Modul Pengelolaan Dokumen Magang Peserta
+ * Modul Pengelolaan Surat Magang Peserta
  * Fitur: Upload Surat Permohonan & Unduh/Lihat Surat Balasan Dinas
  */
 
@@ -38,13 +38,13 @@ $(document).ready(function() {
             $('#namaFilePermohonan').text(permohonan.nama_file);
             $('#infoMetaPermohonan').text('No: ' + (permohonan.nomor_surat || '-') + ' | Tgl Upload: ' + (permohonan.tanggal_upload || '-'));
             $('#btnPreviewPermohonan, #btnUnduhPermohonan').prop('disabled', false).show();
-            $('#btnUploadPermohonan').html('<i class="fas fa-edit me-1"></i> Ganti Berkas');
+            $('.btn-buka-upload-permohonan').html('<i class="fas fa-upload me-1"></i> Upload Ulang Surat Permohonan');
         } else {
             $('#badgeStatusPermohonan').removeClass('bg-success bg-secondary').addClass('bg-warning text-dark').html('<i class="fas fa-clock me-1"></i>Belum Diunggah');
             $('#boxFilePermohonan').hide();
             $('#boxEmptyPermohonan').show();
             $('#btnPreviewPermohonan, #btnUnduhPermohonan').prop('disabled', true).hide();
-            $('#btnUploadPermohonan').html('<i class="fas fa-cloud-arrow-up me-1"></i> Unggah Surat Sekarang');
+            $('.btn-buka-upload-permohonan').html('<i class="fas fa-upload me-1"></i> Upload Surat Permohonan');
         }
 
         // 2. Surat Balasan Dinas
@@ -66,9 +66,10 @@ $(document).ready(function() {
     renderDokumen();
 
     // Event Buka Modal Upload Permohonan
-    $('#btnUploadPermohonan').on('click', function() {
+    $(document).on('click', '.btn-buka-upload-permohonan', function() {
         var docs = window.getDokumenPesertaById(peserta.id);
         var permohonan = docs.surat_permohonan;
+        $('#inputFilePermohonan').val('');
         if (permohonan) {
             $('#inputNoSuratPermohonan').val(permohonan.nomor_surat || '');
             $('#inputTglSuratPermohonan').val(permohonan.tanggal_upload || '');
@@ -87,20 +88,29 @@ $(document).ready(function() {
         var noSurat = $('#inputNoSuratPermohonan').val().trim();
         var tglSurat = $('#inputTglSuratPermohonan').val();
         var fileInput = document.getElementById('inputFilePermohonan');
-        var fileName = fileInput.files.length > 0 
-            ? fileInput.files[0].name 
-            : 'Surat_Permohonan_' + peserta.nama.replace(/\s+/g, '_') + '.pdf';
+        var file = fileInput.files[0];
 
         if (!noSurat || !tglSurat) {
             Swal.fire('Form Belum Lengkap', 'Harap isi nomor surat dan tanggal surat.', 'warning');
             return;
         }
+        if (!file) {
+            Swal.fire('Berkas Belum Dipilih', 'Pilih file surat permohonan dalam format PDF.', 'warning');
+            return;
+        }
+        if (!/\.pdf$/i.test(file.name) || (file.type && file.type !== 'application/pdf')) {
+            Swal.fire('Format Tidak Valid', 'Berkas surat harus berformat PDF.', 'warning');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            Swal.fire('Ukuran Berkas Terlalu Besar', 'Ukuran file PDF maksimal 5 MB.', 'warning');
+            return;
+        }
 
-        // Simpan data
         window.simpanSuratPermohonan(peserta.id, {
             nomor_surat: noSurat,
-            nama_file: fileName,
-            ukuran: '1.2 MB',
+            nama_file: file.name,
+            ukuran: (file.size / (1024 * 1024)).toFixed(2) + ' MB',
             tanggal_upload: tglSurat
         });
 
@@ -108,11 +118,12 @@ $(document).ready(function() {
         bootstrap.Modal.getOrCreateInstance(modalEl).hide();
 
         renderDokumen();
+        $('#formUploadPermohonan')[0].reset();
 
         Swal.fire({
             icon: 'success',
-            title: 'Berhasil Diunggah!',
-            text: 'Surat Permohonan Magang berhasil disimpan dan diteruskan ke Pembimbing Lapangan (' + pembimbing.nama + ').',
+            title: 'Data Surat Disimpan',
+            text: 'Metadata surat tersimpan di browser. File PDF belum dikirim ke server karena backend belum tersedia.',
             confirmButtonColor: '#334EAC'
         });
     });
