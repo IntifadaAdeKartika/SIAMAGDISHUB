@@ -1140,10 +1140,15 @@ div.dataTables_wrapper div.dataTables_processing {
 /* Consistent, readable key/value layout in detail dialogs. */
 .modal-detail-wrapper {
     width: 100%;
-    overflow: hidden;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
     border: 1px solid var(--border-color);
     border-radius: 8px;
     background: #fff;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x pan-y;
 }
 
 .modal-detail-wrapper .table {
@@ -1234,6 +1239,33 @@ div.dataTables_wrapper div.dataTables_processing {
 
     .modal-detail-wrapper .table td:last-child {
         width: 52% !important;
+    }
+
+    .modal-detail-wrapper::before {
+        content: "Geser ke kanan untuk melihat detail lainnya";
+        display: block;
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        width: max-content;
+        max-width: 100%;
+        padding: 0.35rem 0.6rem;
+        border-bottom: 1px solid #e2e8f0;
+        background: #f8fafc;
+        color: #64748b;
+        font-size: 0.72rem;
+        line-height: 1.4;
+        pointer-events: none;
+    }
+
+    .modal-detail-wrapper .table {
+        min-width: 520px;
+    }
+}
+
+@media print {
+    .modal-detail-wrapper::before {
+        display: none !important;
     }
 }
 
