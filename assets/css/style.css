@@ -24,10 +24,15 @@
     box-sizing: border-box;
 }
 
-html, body {
+html {
     overflow-x: hidden;
     width: 100%;
-    max-width: 100%;
+    position: relative;
+}
+
+body {
+    overflow-x: hidden;
+    width: 100%;
     position: relative;
 }
 
@@ -169,8 +174,7 @@ img {
     display: flex;
     min-height: 100vh;
     width: 100%;
-    max-width: 100%;
-    overflow-x: hidden;
+    /* JANGAN overflow-x: hidden di sini — akan memotong scroll tabel anak */
 }
 
 /* Sidebar */
@@ -322,11 +326,10 @@ img {
     flex: 1 1 auto;
     min-width: 0;
     width: 100%;
-    max-width: 100%;
     margin-left: var(--sidebar-width);
     background: var(--bg-main);
     min-height: 100vh;
-    overflow-x: hidden;
+    /* JANGAN overflow-x: hidden — akan memotong scroll horizontal tabel */
 }
 
 /* Topbar */
@@ -343,7 +346,8 @@ img {
     z-index: 1020;
     min-height: 64px;
     width: 100%;
-    max-width: 100%;
+    /* overflow: hidden di topbar mencegah elemen keluar kiri/kanan */
+    overflow: hidden;
 }
 
 .topbar-left {
@@ -481,9 +485,7 @@ img {
 .content-area {
     padding: 24px;
     min-width: 0;
-    width: 100%;
-    max-width: 100%;
-    overflow-x: hidden;
+    /* JANGAN overflow-x: hidden — akan memotong scroll horizontal tabel */
 }
 
 .page-title {
@@ -598,6 +600,7 @@ img {
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-x: contain;
+    touch-action: pan-x pan-y;
     margin-bottom: 0;
 }
 
@@ -1272,8 +1275,7 @@ div.dataTables_wrapper div.dataTables_processing {
     }
 
     .sidebar-overlay.show {
-        display: block;
-    }
+        display: block;    }
 
     .btn-sidebar-toggle {
         display: inline-flex !important;
@@ -1288,7 +1290,7 @@ div.dataTables_wrapper div.dataTables_processing {
     .main-content {
         margin-left: 0 !important;
         width: 100% !important;
-        max-width: 100vw !important;
+        /* Jangan pakai max-width: 100vw — cukup inherit dari body */
     }
 
     .topbar {
@@ -1306,8 +1308,7 @@ div.dataTables_wrapper div.dataTables_processing {
     /* Page & Area Layout */
     .content-area {
         padding: 16px 14px 28px;
-        width: 100% !important;
-        max-width: 100vw !important;
+        /* Biarkan width mengikuti parent — jangan paksa max-width 100vw */
     }
 
     .page-title {
@@ -1391,10 +1392,37 @@ div.dataTables_wrapper div.dataTables_processing {
 
     /* Tables & Responsive Table Container */
     .table-responsive {
+        /* overflow-x: auto sudah diset di global, cukup tambahkan scrollbar styling */
         border-radius: 6px;
         scrollbar-width: thin;
         scrollbar-color: #cbd5e1 transparent;
         -webkit-overflow-scrolling: touch;
+        /* Pastikan tidak ada parent yang memotong scroll ini */
+        position: relative;
+    }
+
+    .table-responsive::before {
+        content: "Geser tabel ke kanan untuk melihat kolom lainnya";
+        display: block;
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        width: max-content;
+        max-width: 100%;
+        padding: 0.35rem 0.6rem;
+        border-bottom: 1px solid #e2e8f0;
+        background: #f8fafc;
+        color: #64748b;
+        font-size: 0.72rem;
+        line-height: 1.4;
+        pointer-events: none;
+    }
+
+    /* Tabel di dalam tabel-responsive TIDAK boleh dipaksa menyempit */
+    .table-responsive > table,
+    .dataTables_wrapper .table-responsive > table {
+        min-width: 520px; /* lebar minimum tabel agar tidak terlalu sempit */
+        width: 100%;
     }
 
     .table-responsive::-webkit-scrollbar {
@@ -1437,20 +1465,29 @@ div.dataTables_wrapper div.dataTables_processing {
 
     /* DataTables Responsive Controls */
     .dataTables_wrapper {
-        padding: 0 !important;
+        padding: 8px !important;
         width: 100% !important;
-        overflow: hidden !important;
+        min-width: 0;
+        /* Pastikan overflow-x tidak terpotong — scroll ada di .table-responsive */
+        overflow-x: visible !important;
+    }
+
+    /* Inner scroller yang benar-benar menampung tabel */
+    .dataTables_wrapper .dataTables_scroll,
+    .dataTables_wrapper .dataTables_scrollBody {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
     }
 
     .dataTables_wrapper .row {
         margin: 0 !important;
-        gap: 8px;
     }
 
     .dataTables_wrapper .row > [class*="col-"] {
-        padding: 0 !important;
+        padding: 0 4px !important;
         width: 100% !important;
         max-width: 100% !important;
+        flex: 0 0 100%;
     }
 
     .dataTables_wrapper .dataTables_length {
@@ -1540,6 +1577,12 @@ div.dataTables_wrapper div.dataTables_processing {
         padding: 8px 12px;
         font-size: 0.8125rem;
         flex-shrink: 0;
+    }
+}
+
+@media print {
+    .table-responsive::before {
+        display: none !important;
     }
 }
 
