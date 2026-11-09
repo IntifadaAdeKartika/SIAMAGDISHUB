@@ -330,7 +330,14 @@
                             <tbody>${rows.map(function(row) {
                                 var complete = row.permohonan && row.balasan;
                                 return `<tr>
-                                    <td class="archive-participant-cell"><strong>${escapeHtml(row.participant.nama)}</strong><div class="small text-muted">${escapeHtml(row.participant.nim)}</div><div class="small text-muted">${escapeHtml(row.participant.instansi)}</div></td>
+                                    <td class="archive-participant-cell">
+                                        <strong>${escapeHtml(row.participant.nama)}</strong>
+                                        <div class="small text-muted">${escapeHtml(row.participant.nim)}</div>
+                                        <div class="small text-muted">${escapeHtml(row.participant.instansi)}</div>
+                                        <div class="small text-muted"><i class="fas fa-chalkboard-teacher me-1"></i>Pembimbing Akademik: ${escapeHtml(row.participant.pembimbing_akademik || row.participant.dosen_guru_pembimbing || '-')}</div>
+                                        <div class="small text-muted"><i class="fas fa-id-card me-1"></i>NIDN/NIP Pembimbing Akademik: ${escapeHtml(row.participant.nip_pembimbing_akademik || '-')}</div>
+                                        <div class="small text-muted"><i class="fas fa-phone me-1"></i>HP/WA Pembimbing Akademik: ${escapeHtml(row.participant.no_hp_pembimbing_akademik || '-')}</div>
+                                    </td>
                                     <td class="text-center"><span class="badge ${complete ? 'bg-success' : 'bg-secondary'}">${complete ? 'Lengkap' : 'Pending'}</span></td>
                                     <td>${documentActions(row.participant, 'permohonan', row.permohonan, false)}</td>
                                     <td>${documentActions(row.participant, 'balasan', row.balasan, true)}</td>
