@@ -24,6 +24,12 @@ $(document).ready(function() {
             prodi_jurusan: peserta.prodi_jurusan || prodiDefault,
             kelas_semester: peserta.kelas_semester || kelasDefault,
             dosen_guru_pembimbing: peserta.dosen_guru_pembimbing || dosenDefault,
+            pembimbing_akademik: peserta.pembimbing_akademik || dosenDefault,
+            nip_pembimbing_akademik: peserta.nip_pembimbing_akademik || "",
+            no_hp_pembimbing_akademik: peserta.no_hp_pembimbing_akademik || "",
+            file_surat_permohonan: peserta.file_surat_permohonan || null,
+            file_surat_balasan: peserta.file_surat_balasan || null,
+            status_dokumen: peserta.status_dokumen || "pending",
             id_unit_kerja: peserta.unitId,
             nama_unit_kerja: penempatan.unit.nama,
             nama_pembimbing: penempatan.namaPembimbing,
@@ -51,7 +57,7 @@ $(document).ready(function() {
         },
         order: [[0, 'asc']],
         columnDefs: [
-            { orderable: false, targets: [7] }
+            { orderable: false, targets: [8] }
         ]
     });
 
@@ -67,6 +73,9 @@ $(document).ready(function() {
             } else {
                 badgeStatus = '<span class="badge badge-rejected">Tidak Aktif</span>';
             }
+            var badgeDokumen = item.status_dokumen === 'lengkap'
+                ? '<span class="badge bg-success">Lengkap</span>'
+                : '<span class="badge bg-secondary">Pending</span>';
 
             var badgeJenis = item.jenis_peserta === 'siswa' 
                 ? '<span class="badge" style="background:#e8daef; color:#8e44ad; font-size:0.7rem;">Siswa</span>' 
@@ -120,6 +129,7 @@ $(document).ready(function() {
                 colPembimbing,
                 colPeriode,
                 badgeStatus,
+                badgeDokumen,
                 colAksi
             ]);
         });
@@ -220,6 +230,9 @@ $(document).ready(function() {
         var prodi = $('#prodiJurusan').val().trim();
         var kelas = $('#kelasSemester').val().trim();
         var dosen = $('#dosenGuruPembimbing').val().trim();
+        var pembimbingAkademik = $('#pembimbingAkademik').val().trim();
+        var nipPembimbingAkademik = $('#nipPembimbingAkademik').val().trim();
+        var noHpPembimbingAkademik = $('#noHpPembimbingAkademik').val().trim();
         var unitId = $('#idUnitKerja').val();
         var unitNama = $('#idUnitKerja option:selected').text().split('(')[0].trim();
         var pembimbing = window.getMasterPembimbingForUnit(unitId);
@@ -246,6 +259,12 @@ $(document).ready(function() {
                     prodi_jurusan: prodi,
                     kelas_semester: kelas,
                     dosen_guru_pembimbing: dosen,
+                    pembimbing_akademik: pembimbingAkademik,
+                    nip_pembimbing_akademik: nipPembimbingAkademik,
+                    no_hp_pembimbing_akademik: noHpPembimbingAkademik,
+                    file_surat_permohonan: dataPeserta[idx].file_surat_permohonan,
+                    file_surat_balasan: dataPeserta[idx].file_surat_balasan,
+                    status_dokumen: dataPeserta[idx].status_dokumen,
                     no_hp: noHp,
                     id_unit_kerja: unitId,
                     nama_unit_kerja: unitNama,
@@ -274,6 +293,12 @@ $(document).ready(function() {
                 prodi_jurusan: prodi,
                 kelas_semester: kelas,
                 dosen_guru_pembimbing: dosen,
+                pembimbing_akademik: pembimbingAkademik,
+                nip_pembimbing_akademik: nipPembimbingAkademik,
+                no_hp_pembimbing_akademik: noHpPembimbingAkademik,
+                file_surat_permohonan: null,
+                file_surat_balasan: null,
+                status_dokumen: 'pending',
                 no_hp: noHp,
                 id_unit_kerja: unitId,
                 nama_unit_kerja: unitNama,
@@ -308,6 +333,10 @@ $(document).ready(function() {
         $('#asalSekolahKampus').val(item.asal_sekolah_kampus);
         $('#prodiJurusan').val(item.prodi_jurusan);
         $('#kelasSemester').val(item.kelas_semester);
+        $('#dosenGuruPembimbing').val(item.dosen_guru_pembimbing);
+        $('#pembimbingAkademik').val(item.pembimbing_akademik);
+        $('#nipPembimbingAkademik').val(item.nip_pembimbing_akademik);
+        $('#noHpPembimbingAkademik').val(item.no_hp_pembimbing_akademik);
         $('#idUnitKerja').val(item.id_unit_kerja).trigger('change');
         $('#statusPeserta').val(item.status_peserta);
         $('#tanggalMulai').val(item.tanggal_mulai);
@@ -368,6 +397,21 @@ $(document).ready(function() {
                             <td class="fw-bold text-dark py-2" style="color:var(--primary) !important;">${item.dosen_guru_pembimbing || '-'}</td>
                         </tr>
                         <tr>
+                            <td class="text-muted py-2"><i class="fas fa-user-graduate me-2 text-primary" style="width:16px;"></i>Pembimbing Akademik</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="fw-semibold text-dark py-2">${item.pembimbing_akademik || '-'}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-id-card me-2 text-primary" style="width:16px;"></i>NIDN / NIP</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="fw-semibold text-dark py-2">${item.nip_pembimbing_akademik || '-'}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-phone me-2 text-success" style="width:16px;"></i>No. HP Pembimbing Akademik</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="fw-semibold text-dark py-2">${item.no_hp_pembimbing_akademik || '-'}</td>
+                        </tr>
+                        <tr>
                             <td class="text-muted py-2"><i class="fas fa-phone me-2 text-success" style="width:16px;"></i>No. HP / WhatsApp</td>
                             <td class="text-center text-muted py-2">:</td>
                             <td class="fw-semibold text-dark py-2">${item.no_hp || '-'}</td>
@@ -391,6 +435,11 @@ $(document).ready(function() {
                             <td class="text-muted py-2"><i class="fas fa-info-circle me-2 text-info" style="width:16px;"></i>Status Peserta</td>
                             <td class="text-center text-muted py-2">:</td>
                             <td class="py-2">${badgeStatus}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted py-2"><i class="fas fa-folder-open me-2 text-info" style="width:16px;"></i>Status Dokumen</td>
+                            <td class="text-center text-muted py-2">:</td>
+                            <td class="py-2">${item.status_dokumen === 'lengkap' ? '<span class="badge bg-success">Lengkap</span>' : '<span class="badge bg-secondary">Pending</span>'}</td>
                         </tr>
                     </tbody>
                 </table>

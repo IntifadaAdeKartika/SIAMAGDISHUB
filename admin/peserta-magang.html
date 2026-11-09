@@ -190,6 +190,7 @@
                                     <th>Pembimbing</th>
                                     <th>Periode Magang</th>
                                     <th>Status</th>
+                                    <th>Status Dokumen</th>
                                     <th width="14%" class="text-center th-action text-nowrap">Aksi</th>
                                 </tr>
                             </thead>
@@ -274,6 +275,21 @@
                             <div class="mt-1" style="font-size: 0.78rem; color: var(--primary);">
                                 <i class="fas fa-info-circle me-1"></i>Pembimbing Otomatis: <strong id="previewPembimbing">-</strong>
                             </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Nama Dosen/Guru Pembimbing <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="pembimbingAkademik" name="pembimbing_akademik"
+                                   placeholder="Nama Dosen/Guru Pembimbing" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">NIDN/NIP Dosen/Guru <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="nipPembimbingAkademik" name="nip_pembimbing_akademik"
+                                   placeholder="NIDN/NIP Dosen/Guru" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">No. HP Dosen/Guru <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control" id="noHpPembimbingAkademik" name="no_hp_pembimbing_akademik"
+                                   placeholder="08xxxxxxxxxx" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Status Peserta <span class="text-danger">*</span></label>
