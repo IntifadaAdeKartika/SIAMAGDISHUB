@@ -1594,6 +1594,20 @@ div.dataTables_wrapper div.dataTables_processing {
         width: 100%;
     }
 
+    .table-responsive > table.archive-table--mentor {
+        width: 1040px;
+        min-width: 1040px;
+    }
+
+    .archive-table--mentor thead th {
+        padding: 0.7rem 0.8rem;
+        font-size: 0.7rem;
+    }
+
+    .archive-table--mentor tbody td {
+        padding: 0.8rem;
+    }
+
     .table-responsive::-webkit-scrollbar {
         height: 5px;
     }
