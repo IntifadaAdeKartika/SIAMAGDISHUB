@@ -81,6 +81,23 @@ $(document).ready(function() {
         });
     });
 
+    // Keep the shared archive entry available from every role page.
+    var sidebarMenu = document.querySelector('#sidebar .sidebar-menu');
+    if (sidebarMenu && !sidebarMenu.querySelector('.menu-archive-link')) {
+        var archiveLink = document.createElement('a');
+        archiveLink.href = 'dokumen.html';
+        archiveLink.className = 'menu-archive-link';
+        archiveLink.innerHTML = '<i class="fas fa-folder-open"></i> Arsip Dokumen Magang';
+        var otherMenuLabel = Array.prototype.find.call(sidebarMenu.querySelectorAll('.menu-label'), function(label) {
+            return label.textContent.trim().toLowerCase() === 'lainnya';
+        });
+        if (otherMenuLabel) {
+            otherMenuLabel.insertAdjacentElement('afterend', archiveLink);
+        } else {
+            sidebarMenu.appendChild(archiveLink);
+        }
+    }
+
     // ACTIVE MENU
     // Tandai menu sidebar yang aktif berdasarkan halaman sekarang
     var currentPage = window.location.pathname.split('/').pop();

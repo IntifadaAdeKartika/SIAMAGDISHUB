@@ -136,8 +136,26 @@ $(document).ready(function() {
         table.draw();
     }
 
+    function refreshArchiveStatuses() {
+        return Promise.all(dataPeserta.map(function(item) {
+            var participant = window.getMasterPeserta(item.username);
+            if (!participant) return Promise.resolve();
+            return Promise.all([
+                window.arsipDokumen.get(participant, 'permohonan'),
+                window.arsipDokumen.get(participant, 'balasan')
+            ]).then(function(documents) {
+                item.file_surat_permohonan = documents[0] ? documents[0].name : null;
+                item.file_surat_balasan = documents[1] ? documents[1].name : null;
+                item.status_dokumen = documents[0] && documents[1] ? 'lengkap' : 'pending';
+            });
+        })).then(renderTable).catch(function(error) {
+            Swal.fire('Status Arsip Tidak Dapat Diperbarui', error.message, 'error');
+        });
+    }
+
     // Render data awal
     renderTable();
+    refreshArchiveStatuses();
 
     // Event Filter Jenis
     $('#filterJenis').on('change', function() {
@@ -167,14 +185,15 @@ $(document).ready(function() {
 
     // Refresh Table
     $('#btnReloadTable').on('click', function() {
-        renderTable();
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: 'Data berhasil diperbarui',
-            showConfirmButton: false,
-            timer: 1500
+        refreshArchiveStatuses().then(function() {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Data berhasil diperbarui',
+                showConfirmButton: false,
+                timer: 1500
+            });
         });
     });
 

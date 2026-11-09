@@ -1,42 +1,5 @@
 $(document).ready(function() {
     var context = window.pembimbingDemoData.getPesertaContext();
-    var documentObjectUrls = {};
-
-    function renderDocumentActions() {
-        var peserta = context.peserta;
-        var suratPermohonan = peserta.file_surat_permohonan;
-        var suratBalasan = peserta.file_surat_balasan;
-
-        if (suratPermohonan) {
-            $('#suratPermohonanAction').html(
-                '<button type="button" class="btn btn-outline-primary btn-sm btn-view-document" data-document="file_surat_permohonan">' +
-                '<i class="fas fa-download me-1"></i>Lihat / Unduh Surat</button>'
-            );
-        } else {
-            $('#suratPermohonanAction').html(
-                '<button type="button" class="btn btn-primary btn-sm" id="btnUploadSuratPermohonan">' +
-                '<i class="fas fa-upload me-1"></i>Upload Surat</button>'
-            );
-        }
-
-        if (suratBalasan) {
-            $('#suratBalasanAction').html(
-                '<button type="button" class="btn btn-outline-primary btn-sm btn-view-document" data-document="file_surat_balasan">' +
-                '<i class="fas fa-download me-1"></i>Lihat / Unduh Surat Balasan</button>'
-            );
-        } else {
-            $('#suratBalasanAction').html('<span class="small text-muted">Menunggu diunggah oleh Pembimbing</span>');
-        }
-
-        var lengkap = Boolean(suratPermohonan && suratBalasan);
-        peserta.status_dokumen = lengkap ? 'lengkap' : 'pending';
-        $('#statusDokumenBadge')
-            .toggleClass('bg-success', lengkap)
-            .toggleClass('bg-secondary', !lengkap)
-            .text(lengkap ? 'Lengkap' : 'Pending');
-    }
-
-    renderDocumentActions();
     var now = new Date();
     var today = [
         now.getFullYear(),
@@ -62,32 +25,6 @@ $(document).ready(function() {
     $('#statHariHadir').text(attendanceCount);
     $('#statLogbookDiisi').text(context.logbook.length);
     $('#statIzinSakit').text(leaveCount);
-
-    $('#btnUploadSuratPermohonan').on('click', function() {
-        $('#fileSuratPermohonan').trigger('click');
-    });
-
-    $('#fileSuratPermohonan').on('change', function() {
-        var file = this.files && this.files[0];
-        if (!file) return;
-        if (documentObjectUrls.file_surat_permohonan) {
-            URL.revokeObjectURL(documentObjectUrls.file_surat_permohonan);
-        }
-        documentObjectUrls.file_surat_permohonan = URL.createObjectURL(file);
-        context.peserta.file_surat_permohonan = file.name;
-        renderDocumentActions();
-        alert('Surat permohonan "' + file.name + '" berhasil dipilih. Simulasi ini belum mengunggah file ke server.');
-    });
-
-    $(document).on('click', '.btn-view-document', function() {
-        var field = $(this).data('document');
-        var objectUrl = documentObjectUrls[field];
-        if (objectUrl) {
-            window.open(objectUrl, '_blank', 'noopener');
-            return;
-        }
-        alert('Lokasi dokumen tersimpan: ' + context.peserta[field] + '. Unduh akan tersedia setelah backend terhubung.');
-    });
 
     if (todayAttendance) {
         $('#statusHariIniText').text('Presensi hari ini tercatat: ' + todayAttendance.jamMasuk);
