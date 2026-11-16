@@ -1,183 +1,128 @@
-/* pembimbing-dashboard.js
-   Dashboard monitoring dan antrean persetujuan pembimbing lapangan
- */
-
 $(document).ready(function() {
+    var user = null;
+    try { user = JSON.parse(localStorage.getItem('siamag_user') || 'null'); } catch (error) {}
+    window.setUserTopbar(user, 'pembimbing');
 
-    var context = window.pembimbingDemoData.getContext();
-    var antreanVerifikasi = [];
-    var antreanAbsensi = context.absensi.filter(function(item) {
-        return item.statusVerif === 'Menunggu';
-    }).map(function(item) {
-        return {
-            id: 'absensi-' + item.id,
-            dataId: item.id,
-            nama: item.nama,
-            instansi: item.instansi,
-            jenis: 'Absensi',
-            badgeJenis: 'bg-primary',
-            tanggal: item.tanggal,
-            jam: item.jamMasuk,
-            keterangan: 'Status kehadiran: ' + item.status
-        };
-    });
-    var antreanLogbook = context.logbook.filter(function(item) {
-        return item.status === 'Menunggu';
-    }).map(function(item) {
-        return {
-            id: 'logbook-' + item.id,
-            dataId: item.id,
-            nama: item.nama,
-            instansi: item.instansi,
-            jenis: 'Logbook',
-            badgeJenis: 'bg-info text-dark',
-            tanggal: item.tanggal,
-            jam: item.jamMulai + ' WIB',
-            keterangan: item.kegiatan
-        };
-    });
-    antreanVerifikasi = antreanAbsensi.concat(antreanLogbook);
-    var anakBimbingan = context.peserta;
-
-    $('#countAnakBimbingan').text(anakBimbingan.length);
-    $('#userName').text(context.pembimbing.nama);
-    $('#userRole').text(context.unit.nama);
-    $('#userInitial').text(context.pembimbing.nama.charAt(0).toUpperCase());
-    $('#unitDashboard').text(context.unit.nama);
-    $('#emptyAnakBimbingan').toggle(anakBimbingan.length === 0);
-    $('#listAnakBimbingan').html(anakBimbingan.map(function(peserta) {
-        return '<li class="list-group-item px-0 small"><i class="fas fa-user-graduate me-2 text-primary"></i>' +
-            peserta.nama + '<div class="text-muted ms-4">' + context.unit.nama + '</div></li>';
-    }).join(''));
-    $('#countPendingIzin').text(context.izin.filter(function(item) {
-        return item.status === 'Menunggu';
-    }).length);
-
-    // Render tabel verifikasi
-    function renderTabelVerifikasi() {
-        var tbody = $('#tabelMenungguVerifikasi tbody');
-        tbody.empty();
-
-        if (antreanVerifikasi.length === 0) {
-            tbody.append('<tr><td colspan="5" class="text-center py-4 text-muted"><i class="fas fa-check-double text-success fa-2x mb-2 d-block"></i>Semua berkas bimbingan telah diverifikasi!</td></tr>');
-            $('#countPendingAbsen').text('0');
-            $('#countPendingLogbook').text('0');
-            return;
-        }
-
-        var countAbsen = 0;
-        var countLog = 0;
-
-        antreanVerifikasi.forEach(function(item) {
-            if (item.jenis === 'Absensi') countAbsen++;
-            if (item.jenis === 'Logbook') countLog++;
-
-            var tr = `
-                <tr id="row-verif-${item.id}">
-                    <td>
-                        <div class="fw-semibold text-dark">${item.nama}</div>
-                        <small class="text-muted">${item.instansi}</small>
-                    </td>
-                    <td>
-                        <span class="badge ${item.badgeJenis}">${item.jenis}</span>
-                    </td>
-                    <td>
-                        <div>${item.tanggal}</div>
-                        <small class="text-muted">${item.jam}</small>
-                    </td>
-                    <td>
-                        <span class="badge badge-pending">Pending</span>
-                    </td>
-                    <td>
-                        <div class="btn-group btn-group-sm" role="group">
-                            <button type="button" class="btn btn-outline-success btn-approve-dash" data-id="${item.id}" title="Setujui / Paraf Cepat">
-                                <i class="fas fa-check"></i>
-                            </button>
-                            <button type="button" class="btn btn-outline-danger btn-reject-dash" data-id="${item.id}" title="Tolak / Minta Revisi">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-            tbody.append(tr);
+    function escapeHtml(value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, function(character) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
         });
-
-        $('#countPendingAbsen').text(countAbsen);
-        $('#countPendingLogbook').text(countLog);
     }
 
-    renderTabelVerifikasi();
+    function responseRows(response, keys) {
+        return window.apiList(response, keys);
+    }
 
-    // Event Handler: Klik Tombol Centang (Approve)
-    $(document).on('click', '.btn-approve-dash', function() {
-        var id = $(this).data('id');
-        var item = antreanVerifikasi.find(x => x.id === id);
-        if (!item) return;
+    function personData(item) {
+        var participant = item.peserta_magang || item.peserta || item;
+        var account = participant.pengguna || item.pengguna || {};
+        return {
+            name: item.nama_lengkap || item.nama_peserta || account.nama_lengkap ||
+                participant.nama_lengkap || participant.nama || '-',
+            nisn: account.username || participant.username || item.username || item.nisn || '-',
+            school: item.asal_sekolah_kampus || participant.asal_sekolah_kampus ||
+                participant.instansi || item.instansi || '-'
+        };
+    }
 
-        Swal.fire({
-            title: 'Verifikasi & Paraf?',
-            html: `Apakah Anda yakin ingin menyetujui <b>${item.jenis}</b> atas nama <b>${item.nama}</b>?<br><small class="text-muted">${item.keterangan}</small>`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#28a745',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: '<i class="fas fa-check me-1"></i> Ya, Setujui',
-            cancelButtonText: 'Batal'
-        }).then(function(result) {
-            if (result.isConfirmed) {
-                // Hapus dari list antrean
-                antreanVerifikasi = antreanVerifikasi.filter(x => x.id !== id);
-                renderTabelVerifikasi();
+    function isPending(value) {
+        return String(value || '').trim().toLowerCase() === 'pending';
+    }
 
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil Diverifikasi!',
-                    text: `${item.jenis} atas nama ${item.nama} telah disetujui & diparaf digital.`,
-                    timer: 1800,
-                    showConfirmButton: false
-                });
-            }
+    function formatQueueDate(value) {
+        if (!value) return '-';
+        return /[T ]\d{2}:\d{2}/.test(String(value))
+            ? formatTanggalJam(value)
+            : formatTanggal(value);
+    }
+
+    function renderQueue(monitoring, logs, leaves) {
+        var pendingAttendance = monitoring.filter(function(row) {
+            return isPending(row.status_verifikasi_presensi_hari_ini);
         });
-    });
-
-    // Event Handler: Klik Tombol Silang (Reject)
-    $(document).on('click', '.btn-reject-dash', function() {
-        var id = $(this).data('id');
-        var item = antreanVerifikasi.find(x => x.id === id);
-        if (!item) return;
-
-        Swal.fire({
-            title: 'Tolak Verifikasi?',
-            html: `Masukkan catatan penolakan / instruksi revisi untuk <b>${item.nama}</b>:`,
-            input: 'textarea',
-            inputPlaceholder: 'Contoh: Titik presensi tidak jelas / foto kegiatan logbook kurang spesifik...',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc3545',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: '<i class="fas fa-times me-1"></i> Tolak',
-            cancelButtonText: 'Batal',
-            inputValidator: (value) => {
-                if (!value || value.trim() === '') {
-                    return 'Alasan penolakan / revisi wajib diisi!';
-                }
-            }
-        }).then(function(result) {
-            if (result.isConfirmed) {
-                var alasan = result.value;
-                // Hapus dari list antrean
-                antreanVerifikasi = antreanVerifikasi.filter(x => x.id !== id);
-                renderTabelVerifikasi();
-
-                Swal.fire({
-                    icon: 'info',
-                    title: 'Verifikasi Ditolak',
-                    html: `${item.jenis} berhasil ditolak dengan catatan: <br><i>"${alasan}"</i>`,
-                    timer: 2200,
-                    showConfirmButton: false
-                });
-            }
+        var pendingLogs = logs.filter(function(row) {
+            return isPending(row.status_verifikasi);
         });
+        var pendingLeaves = leaves.filter(function(row) {
+            return isPending(row.status);
+        });
+        var tbody = $('#tabelMenungguVerifikasi tbody').empty();
+        $('#countPendingAbsen').text(pendingAttendance.length);
+        $('#countPendingLogbook').text(pendingLogs.length);
+        $('#countPendingIzin').text(pendingLeaves.length);
+        var pending = pendingAttendance.map(function(row) {
+            var person = personData(row);
+            return {
+                name: person.name,
+                school: person.school,
+                type: 'Absensi',
+                date: formatQueueDate(row.tanggal_jam || row.tanggal_presensi_hari_ini ||
+                    row.waktu_presensi_hari_ini),
+                link: 'absensi.html'
+            };
+        }).concat(pendingLogs.map(function(row) {
+            var person = personData(row);
+            return {
+                name: person.name,
+                school: person.school,
+                type: 'Logbook',
+                date: formatQueueDate(row.tanggal || row.created_at),
+                link: 'logbook.html'
+            };
+        })).concat(pendingLeaves.map(function(row) {
+            var person = personData(row);
+            return {
+                name: person.name,
+                school: person.school,
+                type: 'Izin',
+                date: formatQueueDate(row.tanggal_mulai || row.created_at),
+                link: 'pengajuan-izin.html'
+            };
+        })).slice(0, 10);
+        if (!pending.length) {
+            tbody.html('<tr><td colspan="5" class="text-center py-4 text-muted">Belum ada data</td></tr>');
+            return;
+        }
+        pending.forEach(function(row) {
+            var isAttendance = row.type === 'Absensi';
+            tbody.append('<tr><td><strong>' + escapeHtml(row.name) + '</strong><div class="small text-muted">' +
+                escapeHtml(row.school) + '</div></td><td><span class="badge ' +
+                (isAttendance ? 'bg-primary' : row.type === 'Logbook' ? 'bg-info text-dark' : 'bg-warning text-dark') + '">' + row.type +
+                '</span></td><td>' + escapeHtml(row.date) + '</td><td><span class="badge badge-pending">Pending</span></td>' +
+                '<td><a class="btn btn-sm btn-outline-primary" href="' + row.link + '">Lihat Semua</a></td></tr>');
+        });
+    }
+
+    $('#countAnakBimbingan, #countPendingIzin, #countPendingAbsen, #countPendingLogbook').text('—');
+    $('#emptyAnakBimbingan').hide();
+    $('#listAnakBimbingan').html('<li class="list-group-item px-0 text-muted">Memuat data...</li>');
+    $('#tabelMenungguVerifikasi tbody').html(
+        '<tr><td colspan="5" class="text-center py-4 text-muted">Memuat data...</td></tr>');
+
+    Promise.all([
+        window.apiRequest('/monitoring'),
+        window.apiRequest('/pembimbing/logbook'),
+        window.apiRequest('/pembimbing/pengajuan-izin')
+    ]).then(function(results) {
+        var monitoring = responseRows(results[0], ['data', 'monitoring', 'anak_bimbingan', 'peserta_bimbingan']);
+        var logbookRows = responseRows(results[1], ['data', 'logbook', 'logbooks']);
+        var leaveRows = responseRows(results[2], ['data', 'pengajuan_izin', 'pengajuan_izins', 'izin']);
+        $('#countAnakBimbingan').text(monitoring.length);
+        $('#unitDashboard').text(user && (user.unit_kerja || user.unit) || 'Monitoring bimbingan');
+        $('#emptyAnakBimbingan').toggle(monitoring.length === 0);
+        $('#listAnakBimbingan').html(monitoring.map(function(item) {
+            var person = personData(item);
+            return '<li class="list-group-item px-0 small"><i class="fas fa-user-graduate me-2 text-primary"></i>' +
+                '<strong>' + escapeHtml(person.name) + '</strong><div class="text-muted ms-4">' +
+                'NISN: ' + escapeHtml(person.nisn) + ' · ' + escapeHtml(person.school) + '</div></li>';
+        }).join(''));
+        renderQueue(monitoring, logbookRows, leaveRows);
+    }).catch(function(error) {
+        $('#tabelMenungguVerifikasi tbody').html('<tr><td colspan="5" class="text-center text-danger py-4">' +
+            escapeHtml(error.message) + '</td></tr>');
+        $('#listAnakBimbingan').html('<li class="list-group-item px-0 text-danger">' +
+            escapeHtml(error.message) + '</li>');
+        $('#emptyAnakBimbingan').hide();
+        Swal.fire('Dashboard Gagal Dimuat', error.message, 'error');
     });
 });

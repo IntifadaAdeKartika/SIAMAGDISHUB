@@ -1,387 +1,268 @@
-/**
- * pembimbing-logbook.js
- * Modul Verifikasi Logbook & Catatan Pembimbing Lapangan
+/* pembimbing-logbook.js
+   Verifikasi dan koreksi logbook melalui API backend.
  */
 
 $(document).ready(function() {
+    var records = [];
+    var currentId = null;
+    var user = null;
+    try { user = JSON.parse(localStorage.getItem('siamag_user') || 'null'); } catch (error) { user = null; }
+    window.setUserTopbar(user, 'pembimbing');
 
-    var context = window.pembimbingDemoData.getContext();
-    var dataLogbookBimbingan = context.logbook.map(function(item) {
-        return {
-            id: item.id,
-            nim: item.nim,
-            nama_peserta: item.nama,
-            instansi: item.instansi,
-            tanggal: item.tanggal,
-            waktu_mulai: item.jamMulai,
-            waktu_selesai: item.jamSelesai,
-            deskripsi: item.kegiatan,
-            hasil: item.hasil,
-            lampiran: item.lampiran,
-            status_verif: item.status.toLowerCase() === 'menunggu' ? 'menunggu' :
-                item.status.toLowerCase() === 'ditolak' ? 'ditolak' : 'diverifikasi',
-            paraf_oleh: item.status === 'Diverifikasi' ? context.pembimbing.nama : '',
-            catatan: item.catatan
-        };
-    });
-
-    $('#userName').text(context.pembimbing.nama);
-    $('#userRole').text(context.unit.nama);
-    $('#userInitial').text(context.pembimbing.nama.charAt(0).toUpperCase());
-    $('#filterPesertaLogbook').append(context.peserta.map(function(peserta) {
-        return new Option(peserta.nama, peserta.nama);
-    }));
-
-    // Inisialisasi DataTable
     var table = $('#tabelVerifLogbook').DataTable({
         language: {
-            search: "Cari Logbook:",
-            lengthMenu: "Tampilkan _MENU_ data",
-            zeroRecords: "Data logbook bimbingan tidak ditemukan",
-            info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ logbook",
-            infoEmpty: "Menampilkan 0 data",
-            infoFiltered: "(disaring dari _MAX_ total data)",
-            paginate: {
-                first: "Awal",
-                last: "Akhir",
-                next: "Berikutnya",
-                previous: "Sebelumnya"
-            }
+            search: 'Cari Logbook:',
+            lengthMenu: 'Tampilkan _MENU_ data',
+            zeroRecords: 'Belum ada data',
+            info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ logbook',
+            infoEmpty: 'Menampilkan 0 data',
+            infoFiltered: '(disaring dari _MAX_ total data)',
+            paginate: { first: 'Awal', last: 'Akhir', next: 'Berikutnya', previous: 'Sebelumnya' }
         },
         order: [[2, 'desc']],
-        columnDefs: [
-            { orderable: false, targets: [5, 7] }
-        ]
+        columnDefs: [{ orderable: false, targets: [4, 6] }]
     });
 
-    function updateStats() {
-        var total = dataLogbookBimbingan.length;
-        var pending = dataLogbookBimbingan.filter(l => l.status_verif === 'menunggu').length;
-        var diverif = dataLogbookBimbingan.filter(l => l.status_verif === 'diverifikasi').length;
-        var revisi = dataLogbookBimbingan.filter(l => l.status_verif === 'ditolak').length;
+    function apiUrl(path) {
+        if (typeof window.apiUrl === 'function') return window.apiUrl(path);
+        var base = (window.API_BASE || 'http://localhost:8000/backend-api').replace(/\/+$/, '');
+        var cleanPath = String(path || '').replace(/^\/+/, '');
+        return cleanPath ? base + '/' + cleanPath : base;
+    }
 
-        $('#statTotalLogbook').text(total);
-        $('#statPendingLogbook').text(pending);
-        $('#statDiverifikasiLogbook').text(diverif);
-        $('#statRevisiLogbook').text(revisi);
+    function escapeHtml(value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, function(character) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
+        });
+    }
+
+    function fileUrl(path) {
+        if (!path) return '';
+        try {
+            return /^https?:/i.test(path) ? new URL(path).href :
+                new URL(String(path).replace(/^\//, ''), new URL(apiUrl('/')).origin + '/').href;
+        } catch (error) { return ''; }
+    }
+
+    function readResponse(response) {
+        return response.text().then(function(text) {
+            var payload = {};
+            if (text) { try { payload = JSON.parse(text); } catch (error) { payload = {}; } }
+            if (!response.ok) {
+                throw new Error(window.apiResponseMessage(payload, 'Permintaan gagal (HTTP ' + response.status + ').'));
+            }
+            return payload;
+        });
+    }
+
+    function normalize(item) {
+        var participant = item.peserta_magang || item.peserta || {};
+        var account = participant.pengguna || {};
+        return {
+            id: item.id,
+            id_peserta_magang: item.id_peserta_magang || participant.id || '',
+            nama: item.nama_peserta || account.nama_lengkap || participant.nama_lengkap || '-',
+            nim: item.nim || account.username || '',
+            instansi: item.instansi || participant.asal_sekolah_kampus || '-',
+            tanggal: item.tanggal || '',
+            id_absensi: item.id_absensi || '',
+            mulai: item.jam_mulai || '',
+            selesai: item.jam_selesai || '',
+            kegiatan: item.kegiatan || '',
+            foto_kegiatan: item.foto_kegiatan_url || item.foto_kegiatan || '',
+            status: String(item.status_verifikasi || 'pending').toLowerCase(),
+            catatan_pembimbing: item.catatan_pembimbing || '',
+            paraf_pembimbing: item.paraf_pembimbing_url || item.paraf_pembimbing || '',
+            diverifikasi_oleh: item.diverifikasi_oleh || ''
+        };
     }
 
     function renderTable() {
         table.clear();
-        dataLogbookBimbingan.forEach(function(item, idx) {
-            var colPeserta = `
-                <div>
-                    <strong style="color:var(--primary-dark);">${item.nama_peserta}</strong>
-                    <div style="font-size:0.75rem; color:#777;">${item.instansi}</div>
-                </div>
-            `;
-
-            var colWaktu = `
-                <div style="font-size:0.83rem;">
-                    <strong>${item.tanggal}</strong><br>
-                    <small class="text-muted"><i class="far fa-clock me-1"></i>${item.waktu_mulai} - ${item.waktu_selesai}</small>
-                </div>
-            `;
-
-            var colDeskripsi = `
-                <div style="font-size:0.83rem; line-height:1.4; max-width:260px;">
-                    ${item.deskripsi}
-                </div>
-            `;
-
-            var colHasil = `
-                <div style="font-size:0.82rem; color:#444;">
-                    ${item.hasil}
-                </div>
-            `;
-
-            var colLampiran = item.lampiran
-                ? `<span class="badge bg-light text-secondary border">
-                     <i class="fas fa-file-alt text-primary me-1"></i>${item.lampiran}
-                   </span>`
-                : `<span class="text-muted small"><em>-</em></span>`;
-
-            var colStatus = '';
-            if (item.status_verif === 'diverifikasi') {
-                colStatus = `<div class="paraf-badge"><i class="fas fa-signature"></i> Diparaf (${item.paraf_oleh})</div>`;
-            } else if (item.status_verif === 'menunggu') {
-                colStatus = `<span class="badge badge-pending"><i class="fas fa-clock me-1"></i>Menunggu</span>`;
-            } else {
-                colStatus = `<span class="badge badge-rejected"><i class="fas fa-times-circle me-1"></i>Perlu Revisi</span>`;
+        records.forEach(function(item, index) {
+            var status = item.status === 'approved'
+                ? '<span class="badge badge-approved">Approved</span>'
+                : item.status === 'pending'
+                    ? '<span class="badge badge-pending">Pending</span>'
+                    : item.status === 'rejected'
+                        ? '<span class="badge badge-rejected">Rejected</span>'
+                        : '<span class="badge bg-secondary">' + escapeHtml(item.status || '-') + '</span>';
+            var parafUrl = item.status === 'approved' ? fileUrl(item.paraf_pembimbing) : '';
+            if (parafUrl) {
+                status += '<br><img src="' + escapeHtml(parafUrl) +
+                    '" style="height: 30px; margin-top: 5px;" alt="Paraf pembimbing">';
             }
-
-            var colAksi = `
-                <div class="action-buttons text-center">
-                    <button class="btn btn-sm btn-outline-primary btn-aksi btn-detail-logbook" data-id="${item.id}" title="Periksa Detail">
-                        <i class="fas fa-eye me-1"></i> Detail
-                    </button>
-                    ${item.status_verif === 'menunggu' ? `
-                        <button class="btn btn-sm btn-outline-success btn-aksi btn-paraf-logbook" data-id="${item.id}" title="Beri Paraf">
-                            <i class="fas fa-check"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger btn-aksi btn-tolak-logbook" data-id="${item.id}" title="Minta Revisi">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    ` : ''}
-                </div>
-            `;
-
+            var attachmentUrl = fileUrl(item.foto_kegiatan);
+            var attachment = attachmentUrl
+                ? '<a href="' + escapeHtml(attachmentUrl) + '" target="_blank" rel="noopener" class="badge bg-light text-secondary border"><i class="fas fa-image me-1"></i>Lihat Foto</a>'
+                : '<span class="text-muted small">-</span>';
+            var actions = '<button class="btn btn-sm btn-outline-primary btn-detail-logbook" data-id="' +
+                escapeHtml(item.id) + '"><i class="fas fa-eye me-1"></i>Detail</button>';
+            if (item.status === 'pending') {
+                actions += ' <button class="btn btn-sm btn-outline-success btn-paraf-logbook" data-id="' +
+                    escapeHtml(item.id) + '" title="Verifikasi"><i class="fas fa-check"></i></button>' +
+                    ' <button class="btn btn-sm btn-outline-danger btn-tolak-logbook" data-id="' +
+                    escapeHtml(item.id) + '" title="Minta Revisi"><i class="fas fa-rotate-left"></i></button>';
+            }
             table.row.add([
-                idx + 1,
-                colPeserta,
-                colWaktu,
-                colDeskripsi,
-                colHasil,
-                colLampiran,
-                colStatus,
-                colAksi
+                index + 1,
+                '<div><strong>' + escapeHtml(item.nama) + '</strong><div class="small text-muted">' + escapeHtml(item.instansi) + '</div></div>',
+                '<div><strong>' + escapeHtml(item.tanggal) + '</strong><div class="small text-muted">' +
+                    escapeHtml(item.mulai) + ' - ' + escapeHtml(item.selesai) + '</div></div>',
+                '<div class="small">' + escapeHtml(item.kegiatan) + '</div>',
+                attachment,
+                status,
+                '<div class="action-buttons text-center">' + actions + '</div>'
             ]);
         });
         table.draw();
-        updateStats();
+        $('#statTotalLogbook').text(records.length);
+        $('#statPendingLogbook').text(records.filter(function(row) { return row.status === 'pending'; }).length);
+        $('#statDiverifikasiLogbook').text(records.filter(function(row) { return row.status === 'approved'; }).length);
+        $('#statRevisiLogbook').text(records.filter(function(row) {
+            return row.status === 'rejected';
+        }).length);
+        var names = Array.from(new Map(records.map(function(row) { return [row.nim, row.nama]; })).values());
+        var $filter = $('#filterPesertaLogbook').empty().append(new Option('Semua Anak Bimbingan', ''));
+        names.forEach(function(name) { $filter.append(new Option(name, name)); });
     }
 
-    renderTable();
-
-    // Filter Peserta
-    $('#filterPesertaLogbook').on('change', function() {
-        var val = $(this).val();
-        table.column(1).search(val).draw();
-    });
-
-    // Filter Status
-    $('#filterStatusVerifLogbook').on('change', function() {
-        var val = $(this).val();
-        table.column(6).search(val).draw();
-    });
-
-    // Reset Filter
-    $('#btnResetFilterLogbook').on('click', function() {
-        $('#filterPesertaLogbook').val('');
-        $('#filterStatusVerifLogbook').val('');
-        table.search('').columns().search('').draw();
-    });
-
-    // Refresh
-    $('#btnReloadTable').on('click', function() {
-        renderTable();
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: 'Data logbook diperbarui',
-            showConfirmButton: false,
-            timer: 1500
+    function loadLogbook(silent) {
+        $('#btnReloadTable').prop('disabled', true);
+        window.apiSetTableState(table, 'loading');
+        return window.apiRequestAll('/pembimbing/logbook', ['logbook', 'logbooks']).then(function(rows) {
+            records = rows.map(normalize);
+            renderTable();
+            window.apiSetTableState(table, 'loaded');
+            return true;
+        }).catch(function(error) {
+            window.apiSetTableState(table, 'error');
+            if (!silent) Swal.fire('Data Logbook Gagal Dimuat', error.message, 'error');
+            return false;
+        }).then(function(loaded) {
+            $('#btnReloadTable').prop('disabled', false);
+            return loaded;
         });
-    });
+    }
 
-    // Preview Lampiran Foto
-    $(document).on('click', '.btn-lihat-lampiran', function() {
-        var src = $(this).data('src');
-        Swal.fire({
-            title: 'Dokumentasi Bukti Kegiatan',
-            imageUrl: src,
-            imageWidth: 450,
-            imageAlt: 'Bukti Logbook',
-            confirmButtonColor: '#334EAC',
-            confirmButtonText: 'Tutup'
+    function submitCorrection(item, status, note, signature) {
+        var requestOptions;
+        if (status === 'approved') {
+            var formData = new FormData();
+            formData.append('_method', 'PUT');
+            formData.append('status_verifikasi', status);
+            formData.append('catatan_pembimbing', note);
+            formData.append('paraf_pembimbing', signature, signature.name);
+            requestOptions = { method: 'POST', body: formData };
+        } else {
+            requestOptions = {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status_verifikasi: status, catatan_pembimbing: note })
+            };
+        }
+        return window.apiRequest('/koreksi-logbook/' + encodeURIComponent(item.id), requestOptions).then(function(responseData) {
+            return loadLogbook(true).then(function(loaded) {
+                Swal.fire({
+                    icon: loaded ? 'success' : 'warning',
+                    title: loaded ? 'Berhasil' : 'Keputusan Tersimpan, Daftar Belum Diperbarui',
+                    text: window.apiResponseMessage(responseData,
+                        status === 'approved' ? 'Logbook berhasil diverifikasi.' : 'Catatan revisi terkirim.') +
+                        (loaded ? '' : ' Daftar gagal dimuat ulang; silakan tekan tombol muat ulang.')
+                });
+            });
+        }).catch(function(error) {
+            Swal.fire('Koreksi Logbook Gagal', error.message, 'error');
         });
-    });
+    }
 
-    // Tombol Beri Paraf Logbook
-    $(document).on('click', '.btn-paraf-logbook', function() {
-        var id = $(this).data('id');
-        var item = dataLogbookBimbingan.find(l => l.id == id);
-        if (!item) return;
-
+    function requestReview(item, approved) {
         Swal.fire({
-            title: 'Paraf & Verifikasi Logbook?',
-            html: `
-                Verifikasi laporan kegiatan <strong>${item.nama_peserta}</strong> tanggal <strong>${item.tanggal}</strong>?<br><br>
-                <div class="mb-2 text-start">
-                    <label class="small text-muted mb-1">Catatan Apresiasi / Pengarahan (Opsional):</label>
-                    <input type="text" id="catatanParaf" class="form-control form-control-sm" placeholder="Contoh: Laporan baik dan sesuai SOP.">
-                </div>
-                <div class="p-2 border rounded bg-light text-start" style="font-size:0.8rem;">
-                    <i class="fas fa-signature text-success me-1"></i>Paraf Digital: <strong>${context.pembimbing.nama}</strong>
-                </div>
-            `,
+            title: approved ? 'Verifikasi Logbook?' : 'Minta Revisi Logbook?',
+            html: '<label class="form-label text-start w-100" for="catatanLogbook">' +
+                (approved ? 'Catatan Pembimbing (opsional)' : 'Catatan Pembimbing (wajib)') + '</label>' +
+                '<textarea id="catatanLogbook" name="catatan_pembimbing" class="form-control mb-3" rows="3" placeholder="Catatan atau arahan untuk peserta"></textarea>' +
+                (approved
+                    ? '<label class="form-label text-start w-100" for="paraf_pembimbing">Paraf Pembimbing (gambar, maks. 5 MB)</label>' +
+                        '<input id="paraf_pembimbing" name="paraf_pembimbing" type="file" class="form-control" accept="image/*" required aria-label="Pilih gambar paraf pembimbing">'
+                    : ''),
             icon: 'question',
             showCancelButton: true,
-            confirmButtonColor: '#28a745',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: '<i class="fas fa-check me-1"></i> Setujui & Beri Paraf',
-            cancelButtonText: 'Batal'
-        }).then(function(result) {
-            if (result.isConfirmed) {
-                var catatan = $('#catatanParaf').val() || "Laporan kegiatan diverifikasi.";
-                var now = new Date().toISOString().replace('T', ' ').substring(0, 16);
-
-                item.status_verif = "diverifikasi";
-                item.catatan = catatan;
-                item.paraf_oleh = context.pembimbing.nama;
-                item.waktu_paraf = now;
-                renderTable();
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Logbook Berhasil Diparaf!',
-                    text: 'Tanda tangan paraf digital berhasil dibubuhkan pada logbook peserta.',
-                    timer: 1500,
-                    showConfirmButton: false
-                });
-            }
-        });
-    });
-
-    // Tombol Minta Revisi Logbook
-    $(document).on('click', '.btn-tolak-logbook', function() {
-        var id = $(this).data('id');
-        var item = dataLogbookBimbingan.find(l => l.id == id);
-        if (!item) return;
-
-        Swal.fire({
-            title: 'Minta Revisi Logbook?',
-            html: `Berikan catatan koreksi untuk <strong>${item.nama_peserta}</strong>:`,
-            input: 'textarea',
-            inputPlaceholder: 'Tuliskan bagian mana yang perlu diperbaiki / dilengkapi...',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Kirim Catatan Revisi',
+            confirmButtonText: approved ? 'Setujui' : 'Kirim Catatan Revisi',
             cancelButtonText: 'Batal',
-            preConfirm: (catatan) => {
-                if (!catatan || !catatan.trim()) {
-                    Swal.showValidationMessage('Catatan revisi wajib diisi agar peserta tahu bagian yang harus diperbaiki!');
+            preConfirm: function() {
+                var popup = Swal.getPopup();
+                var note = popup.querySelector('#catatanLogbook').value.trim();
+                if (!approved && !note) {
+                    Swal.showValidationMessage('Catatan Pembimbing wajib diisi.');
+                    return false;
                 }
-                return catatan;
+                if (approved) {
+                    var input = popup.querySelector('#paraf_pembimbing');
+                    var file = input && input.files && input.files[0];
+                    if (!file) {
+                        Swal.showValidationMessage('Gambar paraf wajib dipilih.');
+                        return false;
+                    }
+                    if (!file.type || file.type.indexOf('image/') !== 0) {
+                        Swal.showValidationMessage('File paraf harus berupa gambar.');
+                        return false;
+                    }
+                    if (file.size > 5 * 1024 * 1024) {
+                        Swal.showValidationMessage('Ukuran file paraf maksimal 5 MB.');
+                        return false;
+                    }
+                    return { note: note, signature: file };
+                }
+                return note;
             }
         }).then(function(result) {
             if (result.isConfirmed) {
-                item.status_verif = "ditolak";
-                item.catatan = result.value;
-                renderTable();
-
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Permintaan Revisi Terkirim',
-                    text: 'Peserta akan menerima notifikasi catatan revisi dari Anda.',
-                    confirmButtonColor: '#334EAC'
-                });
+                var note = approved ? result.value.note : result.value;
+                var signature = approved ? result.value.signature : null;
+                return submitCorrection(item, approved ? 'approved' : 'rejected', note, signature);
             }
         });
+    }
+
+    $('#filterPesertaLogbook').on('change', function() { table.column(1).search($(this).val()).draw(); });
+    $('#filterStatusVerifLogbook').on('change', function() { table.column(5).search($(this).val()).draw(); });
+    $('#btnResetFilterLogbook').on('click', function() {
+        $('#filterPesertaLogbook, #filterStatusVerifLogbook').val('');
+        table.search('').columns().search('').draw();
     });
+    $('#btnReloadTable').on('click', loadLogbook);
 
-    // Detail Modal Logbook
-    var currentLogbookId = null;
-    $(document).on('click', '.btn-detail-logbook', function() {
-        var id = $(this).data('id');
-        var item = dataLogbookBimbingan.find(l => l.id == id);
+    $(document).on('click', '.btn-paraf-logbook, .btn-tolak-logbook, .btn-detail-logbook', function() {
+        var item = records.find(function(row) { return String(row.id) === String($(this).data('id')); }.bind(this));
         if (!item) return;
+        if ($(this).hasClass('btn-paraf-logbook')) return requestReview(item, true);
+        if ($(this).hasClass('btn-tolak-logbook')) return requestReview(item, false);
 
-        currentLogbookId = id;
-
-        var lampiranHtml = item.lampiran 
-            ? `<div class="p-3 border rounded bg-light text-center">
-                 <i class="fas fa-file-pdf text-danger fa-2x mb-1"></i>
-                 <div class="fw-semibold small">${item.lampiran}</div>
-                 <small class="text-muted">Dokumentasi hasil kegiatan magang</small>
-               </div>`
-            : `<div class="text-muted small"><em>Tidak ada lampiran dokumen</em></div>`;
-
-        var badgeStatus = '';
-        if (item.status_verif === 'diverifikasi') {
-            badgeStatus = `<span class="badge badge-approved"><i class="fas fa-check-circle me-1"></i>Diverifikasi & Diparaf (${item.paraf_oleh})</span>`;
-        } else if (item.status_verif === 'menunggu') {
-            badgeStatus = `<span class="badge badge-pending"><i class="fas fa-clock me-1"></i>Menunggu Verifikasi</span>`;
-        } else {
-            badgeStatus = `<span class="badge badge-rejected"><i class="fas fa-times-circle me-1"></i>Perlu Revisi</span>`;
-        }
-
-        var catatanHtml = item.catatan && item.catatan !== '-'
-            ? `<div class="p-3 rounded mb-3" style="background:#fff3cd; border-left:4px solid #ffc107;">
-                 <strong style="font-size:0.85rem;"><i class="fas fa-comment-dots me-1"></i>Catatan Pembimbing:</strong>
-                 <div style="font-size:0.83rem; color:#664d03; margin-top:2px;">${item.catatan}</div>
-               </div>`
-            : '';
-
-        var html = `
-            ${catatanHtml}
-            <div class="modal-detail-wrapper mb-3">
-                <table class="table table-sm table-striped align-middle mb-0" style="font-size:0.875rem;">
-                    <tbody>
-                        <tr>
-                            <td class="text-muted py-2" style="width:38%;"><i class="fas fa-user-graduate me-2 text-primary" style="width:16px;"></i>Nama Peserta</td>
-                            <td class="text-center text-muted py-2" style="width:5%;">:</td>
-                            <td class="fw-bold text-dark py-2">${item.nama_peserta} <span class="fw-normal text-muted">(${item.instansi})</span></td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted py-2"><i class="fas fa-clock me-2 text-primary" style="width:16px;"></i>Waktu Pelaksanaan</td>
-                            <td class="text-center text-muted py-2">:</td>
-                            <td class="fw-semibold text-dark py-2">${item.tanggal} (${item.waktu_mulai} - ${item.waktu_selesai} WIB)</td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted py-2"><i class="fas fa-info-circle me-2 text-info" style="width:16px;"></i>Status Logbook</td>
-                            <td class="text-center text-muted py-2">:</td>
-                            <td class="py-2">${badgeStatus}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="mb-3">
-                <label class="fw-bold small text-muted mb-1"><i class="fas fa-tasks text-primary me-1"></i>Deskripsi Kegiatan:</label>
-                <div class="p-3 rounded bg-light border" style="font-size:0.85rem; line-height:1.5;">
-                    ${item.deskripsi}
-                </div>
-            </div>
-
-            <div class="mb-3">
-                <label class="fw-bold small text-muted mb-1"><i class="fas fa-bullseye text-success me-1"></i>Hasil / Output Pekerjaan:</label>
-                <div class="p-3 rounded bg-light border" style="font-size:0.85rem; line-height:1.5;">
-                    ${item.hasil}
-                </div>
-            </div>
-
-            <div>
-                <label class="fw-bold small text-muted mb-1"><i class="fas fa-paperclip text-secondary me-1"></i>Dokumen Lampiran Bukti:</label>
-                ${lampiranHtml}
-            </div>
-        `;
-
-        $('#contentModalLogbook').html(html);
-
-        if (item.status_verif === 'menunggu') {
-            $('#btnParafLogbookModal').show();
-            $('#btnTolakLogbookModal').show();
-        } else {
-            $('#btnParafLogbookModal').hide();
-            $('#btnTolakLogbookModal').hide();
-        }
-
-        var modalEl = document.getElementById('modalVerifLogbook');
-        if (modalEl) {
-            var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-            modal.show();
-        }
+        currentId = item.id;
+        var attachmentUrl = fileUrl(item.foto_kegiatan);
+        $('#contentModalLogbook').html(
+            '<div class="mb-3"><strong>Peserta:</strong> ' + escapeHtml(item.nama) + ' (' + escapeHtml(item.instansi) + ')</div>' +
+            '<div class="mb-3"><strong>Waktu:</strong> ' + escapeHtml(item.tanggal) + ' ' + escapeHtml(item.mulai) + '–' + escapeHtml(item.selesai) + '</div>' +
+            '<div class="mb-3"><strong>Status:</strong> ' + escapeHtml(item.status) + '</div>' +
+            '<div class="mb-3"><strong>Kegiatan:</strong><div class="p-3 bg-light rounded">' + escapeHtml(item.kegiatan) + '</div></div>' +
+            '<div class="mb-3"><strong>Catatan Pembimbing:</strong> ' + escapeHtml(item.catatan_pembimbing || '-') + '</div>' +
+            (attachmentUrl ? '<a href="' + escapeHtml(attachmentUrl) + '" target="_blank" rel="noopener">Lihat Foto Kegiatan</a>' : '<span class="text-muted">Tidak ada foto kegiatan</span>')
+        );
+        $('#btnParafLogbookModal, #btnTolakLogbookModal').toggle(item.status === 'pending');
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalVerifLogbook')).show();
     });
 
     $('#btnParafLogbookModal').on('click', function() {
-        var modalEl = document.getElementById('modalVerifLogbook');
-        if (modalEl) {
-            var modal = bootstrap.Modal.getInstance(modalEl);
-            if (modal) modal.hide();
-        }
-        $('.btn-paraf-logbook[data-id="' + currentLogbookId + '"]').trigger('click');
+        var item = records.find(function(row) { return String(row.id) === String(currentId); });
+        bootstrap.Modal.getInstance(document.getElementById('modalVerifLogbook')).hide();
+        if (item) requestReview(item, true);
     });
-
     $('#btnTolakLogbookModal').on('click', function() {
-        var modalEl = document.getElementById('modalVerifLogbook');
-        if (modalEl) {
-            var modal = bootstrap.Modal.getInstance(modalEl);
-            if (modal) modal.hide();
-        }
-        $('.btn-tolak-logbook[data-id="' + currentLogbookId + '"]').trigger('click');
+        var item = records.find(function(row) { return String(row.id) === String(currentId); });
+        bootstrap.Modal.getInstance(document.getElementById('modalVerifLogbook')).hide();
+        if (item) requestReview(item, false);
     });
 
+    loadLogbook();
 });

@@ -74,6 +74,9 @@
             </a>
 
             <div class="menu-label mt-3">Lainnya</div>
+            <a href="dokumen.html">
+                <i class="fas fa-folder-open"></i> Arsip Dokumen Magang
+            </a>
             <a href="laporan.html">
                 <i class="fas fa-file-export"></i> Laporan
             </a>
@@ -99,14 +102,14 @@
             <div class="topbar-right">
                 <button class="btn-notif" id="btnNotif">
                     <i class="far fa-bell"></i>
-                    <span class="notif-badge">3</span>
+                    <span class="notif-badge" style="display:none;"></span>
                 </button>
                 <div class="dropdown user-dropdown">
                     <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
-                        <div class="user-avatar" id="userInitial">A</div>
+                        <div class="user-avatar" id="userInitial">-</div>
                         <div class="d-none d-sm-block">
-                            <div class="fw-semibold small" id="userName">Adi, S.T.</div>
-                            <div class="text-muted" style="font-size:0.75rem;" id="userRole">Seksi Angkutan Orang</div>
+                            <div class="fw-semibold small" id="userName">Memuat...</div>
+                            <div class="text-muted" style="font-size:0.75rem;" id="userRole">Memuat jabatan...</div>
                         </div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -200,9 +203,9 @@
                             <label class="form-label text-muted small mb-1">Status Verifikasi</label>
                             <select class="form-select form-select-sm" id="filterStatusVerifLogbook">
                                 <option value="">Semua Status</option>
-                                <option value="menunggu">Menunggu Verifikasi</option>
-                                <option value="diverifikasi">Diverifikasi & Diparaf</option>
-                                <option value="ditolak">Perlu Revisi / Ditolak</option>
+                                <option value="pending">Pending</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
                             </select>
                         </div>
                         <div class="col-md-4 col-sm-12">
@@ -228,9 +231,8 @@
                                     <th width="4%">No</th>
                                     <th>Peserta Magang</th>
                                     <th>Tanggal & Jam</th>
-                                    <th>Deskripsi Pekerjaan</th>
-                                    <th>Output / Hasil</th>
-                                    <th>Lampiran</th>
+                                    <th>Kegiatan</th>
+                                    <th>Foto Kegiatan</th>
                                     <th>Status & Paraf</th>
                                     <th width="14%" class="text-center th-action text-nowrap">Aksi</th>
                                 </tr>
@@ -277,8 +279,6 @@
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script src="../assets/js/app.js"></script>
-<script src="../assets/js/masterData.js"></script>
-<script src="../assets/js/pembimbing-demo-data.js"></script>
 <script src="../assets/js/pembimbing-logbook.js"></script>
 
 </body>

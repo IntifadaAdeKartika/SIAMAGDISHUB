@@ -115,6 +115,9 @@
             </a>
 
             <div class="menu-label mt-3">Lainnya</div>
+            <a href="dokumen.html">
+                <i class="fas fa-folder-open"></i> Arsip Dokumen Magang
+            </a>
             <a href="laporan.html" class="active">
                 <i class="fas fa-file-export"></i> Laporan
             </a>
@@ -139,15 +142,15 @@
             </div>
             <div class="topbar-right">
                 <button class="btn-notif" id="btnNotif">
-                    <i class="fas fa-bell"></i>
-                    <span class="notif-badge">2</span>
+                    <i class="far fa-bell"></i>
+                    <span class="notif-badge" style="display:none;"></span>
                 </button>
                 <div class="dropdown user-dropdown">
                     <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
-                        <div class="user-avatar" id="userInitial">A</div>
+                        <div class="user-avatar" id="userInitial">-</div>
                         <div class="d-none d-sm-block">
-                            <div style="font-weight:600; line-height:1.2;" id="userName">Adi, S.T.</div>
-                            <div style="font-size:0.72rem; color:#999;" id="userRole">Seksi Angkutan Orang</div>
+                            <div style="font-weight:600; line-height:1.2;" id="userName">Memuat...</div>
+                            <div style="font-size:0.72rem; color:#999;" id="userRole">Memuat jabatan...</div>
                         </div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -164,7 +167,7 @@
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
                 <div>
                     <h5 class="page-title mb-1">Rekap Nilai & Kegiatan Bimbingan</h5>
-                    <p class="page-subtitle mb-0">Cetak rekapitulasi kehadiran dan logbook peserta magang di Seksi Angkutan Orang.</p>
+                    <p class="page-subtitle mb-0">Rekap event absensi dan logbook peserta magang pada unit kerja bimbingan.</p>
                 </div>
                 <div class="btn-aksi-cetak d-flex gap-2">
                     <button class="btn btn-sm btn-outline-secondary" id="btnExportExcel">
@@ -177,7 +180,7 @@
             </div>
 
             <!-- Filter Card -->
-            <div class="card filter-card mb-4">
+            <div class="card filter-card mb-4 no-print">
                 <div class="card-body p-3">
                     <form id="formFilterLaporan" onsubmit="return false;">
                         <div class="row g-3 align-items-end">
@@ -222,7 +225,7 @@
                         <div class="card-body">
                             <div class="stat-info">
                                 <h3 class="text-success" id="statHadir">0</h3>
-                                <p>Kehadiran Tepat Waktu</p>
+                                <p id="labelStatUtama">Event Masuk</p>
                             </div>
                         </div>
                     </div>
@@ -232,7 +235,7 @@
                         <div class="card-body">
                             <div class="stat-info">
                                 <h3 class="text-warning" id="statTerlambat">0</h3>
-                                <p>Keterlambatan Tercatat</p>
+                                <p id="labelStatKedua">Event Keluar</p>
                             </div>
                         </div>
                     </div>
@@ -248,12 +251,12 @@
                                 <thead>
                                     <tr>
                                         <th style="width: 40px;">No</th>
-                                        <th>Tanggal</th>
+                                        <th>Tanggal & Waktu</th>
                                         <th>Mahasiswa / Kampus</th>
-                                        <th>Jam Masuk</th>
-                                        <th>Jam Pulang</th>
-                                        <th>Status Kehadiran</th>
-                                        <th>Keterlambatan</th>
+                                        <th>Jenis Event</th>
+                                        <th>Lokasi</th>
+                                        <th>Koordinat</th>
+                                        <th>Foto Selfie</th>
                                         <th>Status Verifikasi</th>
                                     </tr>
                                 </thead>
@@ -300,8 +303,6 @@
 <!-- App JS -->
 <script src="../assets/js/app.js"></script>
 <!-- Pembimbing Laporan JS -->
-<script src="../assets/js/masterData.js"></script>
-<script src="../assets/js/pembimbing-demo-data.js"></script>
 <script src="../assets/js/pembimbing-laporan.js"></script>
 
 </body>

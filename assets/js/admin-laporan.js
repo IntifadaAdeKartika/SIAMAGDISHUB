@@ -1,343 +1,207 @@
-// Rekapitulasi Laporan Presensi & Logbook Peserta (Admin)
-
 $(document).ready(function() {
+    var attendanceRows = [];
+    var logbookRows = [];
+    var unitRecords = [];
+    var participantRecords = [];
+    var reportLoaded = false;
 
-    // Data Unit Kerja
-    var masterUnitKerja = window.masterUnitKerja;
-
-    // Data Peserta Magang
-    var masterPeserta = window.masterPeserta;
-
-    // Rekapitulasi Presensi
-    var dataRekapPresensi = [
-        {
-            tanggal: "2026-10-14",
-            nim: "220102001",
-            nama: "Intifada Ade Kartika",
-            instansi: "Univ. Muhammadiyah Ponorogo",
-            unitId: 1,
-            unitNama: "Sekretariat",
-            jamMasuk: "07:32",
-            jamPulang: "13:59",
-            status: "Hadir",
-            terlambat: 0,
-            paraf: "Dra. Ida"
-        },
-        {
-            tanggal: "2026-10-14",
-            nim: "220203002",
-            nama: "Ayu Sri",
-            instansi: "Universitas Brawijaya",
-            unitId: 5,
-            unitNama: "Seksi Angkutan Orang",
-            jamMasuk: "07:22",
-            jamPulang: "13:50",
-            status: "Hadir",
-            terlambat: 0,
-            paraf: "Adi, S.T."
-        },
-        {
-            tanggal: "2026-10-14",
-            nim: "220304003",
-            nama: "Siti Aminah",
-            instansi: "SMKN 1 Jenangan Ponorogo",
-            unitId: 5,
-            unitNama: "Seksi Angkutan Orang",
-            jamMasuk: "08:01",
-            jamPulang: "13:55",
-            status: "Terlambat",
-            terlambat: 1,
-            paraf: "Menunggu verifikasi"
-        }
-    ];
-
-    // Rekapitulasi Logbook Kegiatan
-    var dataRekapLogbook = [
-        {
-            tanggal: "2026-10-14",
-            nama: "Intifada Ade Kartika",
-            instansi: "Univ. Muhammadiyah Ponorogo",
-            unitId: 1,
-            unitNama: "Sekretariat",
-            kegiatan: "Membantu mencetak SPMK dan melanjutkan pengembangan frontend sistem absensi magang.",
-            status: "Disetujui",
-            paraf: "Dra. Ida"
-        },
-        {
-            tanggal: "2026-10-14",
-            nama: "Ayu Sri",
-            instansi: "Universitas Brawijaya",
-            unitId: 5,
-            unitNama: "Seksi Angkutan Orang",
-            kegiatan: "Pengarsipan surat masuk dan surat keluar bidang kepegawaian Dishub.",
-            status: "Disetujui",
-            paraf: "Adi, S.T."
-        },
-        {
-            tanggal: "2026-10-14",
-            nama: "Siti Aminah",
-            instansi: "SMKN 1 Jenangan Ponorogo",
-            unitId: 5,
-            unitNama: "Seksi Angkutan Orang",
-            kegiatan: "Membantu mengarsipkan dokumen.",
-            status: "Menunggu",
-            paraf: "-"
-        }
-    ];
-
-    [dataRekapPresensi, dataRekapLogbook].forEach(function(rows) {
-        rows.forEach(function(item) {
-            var penempatan = window.getMasterPenempatanPeserta(item.nim || item.nama);
-            if (!penempatan) return;
-            item.nim = penempatan.peserta.nim;
-            item.nama = penempatan.peserta.nama;
-            item.instansi = penempatan.peserta.instansi;
-            item.unitId = penempatan.unit.id;
-            item.unitNama = penempatan.unit.nama;
-            if (item.paraf !== "-" && item.paraf !== "Menunggu verifikasi") item.paraf = penempatan.namaPembimbing;
+    function escapeHtml(value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, function(character) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
         });
-    });
-
-    // Populate Dropdown Unit Kerja
-    masterUnitKerja.forEach(function(u) {
-        $('#filterUnit').append(new Option(u.nama + " (" + u.kode + ")", u.id));
-    });
-
-    // Populate Dropdown Peserta
-    masterPeserta.forEach(function(p) {
-        $('#filterPeserta').append(new Option(p.nama + " - " + p.instansi, p.id));
-    });
-
-    // Handle Perubahan Unit Kerja -> sesuaikan dropdown peserta
-    $('#filterUnit').on('change', function() {
-        var unitId = $(this).val();
-        $('#filterPeserta').empty().append(new Option("-- Semua Peserta --", ""));
-        
-        masterPeserta.forEach(function(p) {
-            if (!unitId || p.unitId == unitId) {
-                $('#filterPeserta').append(new Option(p.nama + " - " + p.instansi, p.id));
-            }
-        });
-    });
-
-    // Set Default Tanggal (Bulan Ini)
-    var today = new Date();
-    var firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    
-    function toDateInputValue(date) {
-        var local = new Date(date);
-        local.setMinutes(date.getMinutes() - date.getTimezoneOffset());
-        return local.toJSON().slice(0,10);
     }
 
-    if (!$('#tglMulai').val()) $('#tglMulai').val(toDateInputValue(firstDay));
-    if (!$('#tglSelesai').val()) $('#tglSelesai').val(toDateInputValue(today));
+    function relation(row) {
+        var person = row.peserta || row.peserta_magang || {};
+        var unit = row.unit_kerja || row.unit || person.unit_kerja || {};
+        var mentor = row.pembimbing || row.pembimbing_lapangan || {};
+        return {
+            person: person,
+            participantId: row.id_peserta_magang || person.id_peserta_magang || person.id || '',
+            unitId: row.id_unit_kerja || row.unit_id || person.id_unit_kerja || unit.id || '',
+            name: row.nama_peserta || row.nama || person.nama_lengkap || person.nama ||
+                (person.pengguna && person.pengguna.nama_lengkap) || '-',
+            identifier: row.nim || row.username || person.username || person.nim ||
+                (person.pengguna && person.pengguna.username) || '-',
+            organization: row.asal_sekolah_kampus || row.instansi || person.asal_sekolah_kampus || person.instansi || '-',
+            unit: row.nama_unit_kerja || unit.nama_unit || unit.nama || '-',
+            mentor: row.nama_pembimbing || mentor.nama_lengkap || mentor.nama || '-'
+        };
+    }
 
-    // Render Tabel & Statistik
-    function updateLaporan() {
-        var jenisLaporan = $('#jenisLaporan').val();
+    function populateFilters() {
+        var unit = $('#filterUnit').empty().append(new Option('Semua Unit Kerja', ''));
+        unitRecords.forEach(function(row) {
+            unit.append(new Option(row.nama_unit || row.nama || '-', row.id || row.id_unit_kerja));
+        });
+        updateParticipantOptions();
+    }
+
+    function updateParticipantOptions() {
+        var selectedUnit = $('#filterUnit').val();
+        var participant = $('#filterPeserta').empty().append(new Option('Semua Peserta', ''));
+        participantRecords.forEach(function(row) {
+            var info = relation(row);
+            if (!selectedUnit || String(info.unitId) === String(selectedUnit)) {
+                participant.append(new Option(info.name + ' - ' + info.organization, row.id || row.id_peserta_magang));
+            }
+        });
+    }
+
+    function filteredRows(rows, type) {
+        var participantId = $('#filterPeserta').val();
         var unitId = $('#filterUnit').val();
-        var pesertaId = $('#filterPeserta').val();
-        var tglMulai = $('#tglMulai').val();
-        var tglSelesai = $('#tglSelesai').val();
-
-        if (jenisLaporan === 'presensi') {
-            $('#sectionLaporanPresensi').show();
-            $('#sectionLaporanLogbook').hide();
-            renderPresensi(unitId, pesertaId, tglMulai, tglSelesai);
-        } else {
-            $('#sectionLaporanPresensi').hide();
-            $('#sectionLaporanLogbook').show();
-            renderLogbook(unitId, pesertaId, tglMulai, tglSelesai);
-        }
-    }
-
-    function renderPresensi(unitId, pesertaId, tglMulai, tglSelesai) {
-        var filtered = dataRekapPresensi.filter(function(row) {
-            var matchUnit = !unitId || row.unitId == unitId;
-            var matchPeserta = true;
-            if (pesertaId) {
-                var p = masterPeserta.find(item => item.id == pesertaId);
-                if (p) matchPeserta = (row.nim === p.nim);
-            }
-            var matchTgl = true;
-            if (tglMulai && row.tanggal < tglMulai) matchTgl = false;
-            if (tglSelesai && row.tanggal > tglSelesai) matchTgl = false;
-            return matchUnit && matchPeserta && matchTgl;
+        var start = $('#tglMulai').val();
+        var end = $('#tglSelesai').val();
+        return rows.filter(function(row) {
+            var info = relation(row);
+            var date = String(type === 'presensi' ? row.tanggal_jam : row.tanggal || '').slice(0, 10);
+            return (!participantId || String(info.participantId) === String(participantId)) &&
+                (!unitId || String(info.unitId) === String(unitId)) &&
+                (!start || date >= start) && (!end || date <= end);
         });
-
-        // Hitung Statistik
-        var totalHadir = 0;
-        var totalTerlambat = 0;
-        var totalIzin = 0;
-        var totalSakit = 0;
-
-        var tbody = $('#tabelLaporanPresensi tbody');
-        tbody.empty();
-
-        if (filtered.length === 0) {
-            tbody.append('<tr><td colspan="9" class="text-center py-4 text-muted">Tidak ada data rekap presensi untuk filter yang dipilih.</td></tr>');
-        } else {
-            filtered.forEach(function(r, idx) {
-                if (r.status === 'Hadir') {
-                    totalHadir++;
-                } else if (r.status === 'Terlambat' || r.terlambat > 0) {
-                    totalTerlambat++;
-                } else if (r.status === 'Izin') {
-                    totalIzin++;
-                } else if (r.status === 'Sakit') {
-                    totalSakit++;
-                }
-
-                var badgeStatus = 'bg-success';
-                if (r.status.includes('Terlambat')) badgeStatus = 'bg-warning text-dark';
-                else if (r.status === 'Izin') badgeStatus = 'bg-info text-dark';
-                else if (r.status === 'Sakit') badgeStatus = 'bg-danger';
-
-                var parafCell = r.paraf === 'Menunggu verifikasi'
-                    ? '<span class="text-warning"><i class="fas fa-clock me-1"></i>Menunggu verifikasi</span>'
-                    : '<span class="text-success"><i class="fas fa-check-circle me-1"></i>' + r.paraf + '</span>';
-                var tr = `
-                    <tr>
-                        <td class="text-center">${idx + 1}</td>
-                        <td class="text-center">${r.tanggal}</td>
-                        <td>
-                            <div class="fw-bold">${r.nama}</div>
-                            <small class="text-muted">NIM. ${r.nim} | ${r.instansi}</small>
-                        </td>
-                        <td>${r.unitNama}</td>
-                        <td class="text-center font-monospace">${r.jamMasuk}</td>
-                        <td class="text-center font-monospace">${r.jamPulang}</td>
-                        <td class="text-center"><span class="badge ${badgeStatus}">${r.status}</span></td>
-                        <td class="text-center">${r.terlambat > 0 ? r.terlambat + ' mnt' : '-'}</td>
-                        <td class="small">${parafCell}</td>
-                    </tr>
-                `;
-                tbody.append(tr);
-            });
-        }
-
-        // Tampilkan Summary Widget
-        $('#statHadir').text(totalHadir);
-        $('#statTerlambat').text(totalTerlambat);
-        $('#statIzin').text(totalIzin);
-        $('#statSakit').text(totalSakit);
-        $('#statTotalRecord').text(filtered.length);
     }
 
-    function renderLogbook(unitId, pesertaId, tglMulai, tglSelesai) {
-        var filtered = dataRekapLogbook.filter(function(row) {
-            var matchUnit = !unitId || row.unitId == unitId;
-            var matchPeserta = true;
-            if (pesertaId) {
-                var p = masterPeserta.find(item => item.id == pesertaId);
-                if (p) matchPeserta = (row.nama === p.nama);
-            }
-            var matchTgl = true;
-            if (tglMulai && row.tanggal < tglMulai) matchTgl = false;
-            if (tglSelesai && row.tanggal > tglSelesai) matchTgl = false;
-            return matchUnit && matchPeserta && matchTgl;
+    function parafUrl(row) {
+        var paraf = row.paraf_pembimbing_url || row.paraf_pembimbing;
+        if (!paraf) return '';
+        if (typeof paraf === 'object') {
+            return paraf.url || paraf.file_url || paraf.path || paraf.file_path || '';
+        }
+        return String(paraf);
+    }
+
+    function renderAttendance() {
+        var rows = filteredRows(attendanceRows, 'presensi');
+        var tbody = $('#tabelLaporanPresensi tbody').empty();
+        var counts = { masuk: 0, keluar: 0, pending: 0, rejected: 0 };
+        if (!rows.length) tbody.append('<tr><td colspan="9" class="text-center py-4 text-muted">Tidak ada data absensi.</td></tr>');
+        rows.forEach(function(row, index) {
+            var info = relation(row);
+            var status = String(row.status || '').toLowerCase();
+            var verification = String(row.status_verifikasi || 'pending').toLowerCase();
+            if (status in counts) counts[status]++;
+            if (verification === 'pending') counts.pending++;
+            if (verification === 'rejected') counts.rejected++;
+            var verificationClass = verification === 'approved' ? 'bg-success' :
+                verification === 'rejected' ? 'bg-danger' : 'bg-warning text-dark';
+            tbody.append('<tr><td class="text-center">' + (index + 1) + '</td><td class="text-center">' +
+                escapeHtml(formatTanggalJam(row.tanggal_jam || row.created_at)) + '</td><td><div class="fw-bold">' + escapeHtml(info.name) +
+                '</div><small class="text-muted">' + escapeHtml(info.identifier + ' | ' + info.organization) +
+                '</small></td><td>' + escapeHtml(info.unit) + '</td><td class="text-center"><span class="badge ' +
+                (status === 'masuk' ? 'bg-primary' : 'bg-secondary') + '">' + escapeHtml(status) +
+                '</span></td><td>' + escapeHtml(row.lokasi || '-') + '</td><td class="font-monospace">' +
+                escapeHtml(row.latitude) + ', ' + escapeHtml(row.longitude) + '</td><td>' +
+                escapeHtml(row.foto_selfie_url || row.foto_selfie || '-') + '</td><td class="small"><span class="badge ' +
+                verificationClass + '">' + escapeHtml(verification) + '</span></td></tr>');
         });
-
-        var tbody = $('#tabelLaporanLogbook tbody');
-        tbody.empty();
-
-        if (filtered.length === 0) {
-            tbody.append('<tr><td colspan="7" class="text-center py-4 text-muted">Tidak ada data rekap logbook untuk filter yang dipilih.</td></tr>');
-        } else {
-            filtered.forEach(function(r, idx) {
-                var parafCell = r.status === 'Menunggu'
-                    ? '<span class="text-warning"><i class="fas fa-clock me-1"></i>Menunggu verifikasi</span>'
-                    : '<span class="text-success"><i class="fas fa-check-circle me-1"></i>' + r.paraf + '</span>';
-                var tr = `
-                    <tr>
-                        <td class="text-center">${idx + 1}</td>
-                        <td class="text-center">${r.tanggal}</td>
-                        <td>
-                            <div class="fw-bold">${r.nama}</div>
-                            <small class="text-muted">${r.instansi}</small>
-                        </td>
-                        <td>${r.unitNama}</td>
-                        <td>${r.kegiatan}</td>
-                        <td class="text-center"><span class="badge bg-success">${r.status}</span></td>
-                        <td class="small">${parafCell}</td>
-                    </tr>
-                `;
-                tbody.append(tr);
-            });
-        }
-
-        $('#statTotalRecord').text(filtered.length);
+        $('#statHadir').text(counts.masuk);
+        $('#statTerlambat').text(counts.keluar);
+        $('#statIzin').text(counts.pending);
+        $('#statSakit').text(counts.rejected);
+        $('#statTotalRecord').text(rows.length);
     }
 
-    // Trigger Update
-    $('#btnFilter, #jenisLaporan').on('click change', function() {
-        updateLaporan();
-    });
-
-    // Reset Filter
-    $('#btnReset').on('click', function() {
-        $('#filterUnit').val('');
-        $('#filterPeserta').val('');
-        $('#jenisLaporan').val('presensi');
-        $('#tglMulai').val(toDateInputValue(firstDay));
-        $('#tglSelesai').val(toDateInputValue(today));
-        $('#filterUnit').trigger('change');
-        updateLaporan();
-    });
-
-    // Tombol Cetak
-    $('#btnCetakLaporan').on('click', function() {
-        window.print();
-    });
-
-    // Helper: ambil teks bersih dari sel HTML (hapus tag)
-    function stripHtml(html) {
-        var tmp = document.createElement('div');
-        tmp.innerHTML = html;
-        return (tmp.textContent || tmp.innerText || '').trim().replace(/\s+/g, ' ');
-    }
-
-    // Helper: escape nilai CSV
-    function csvEsc(val) {
-        val = String(val).replace(/"/g, '""');
-        if (val.indexOf(',') !== -1 || val.indexOf('"') !== -1 || val.indexOf('\n') !== -1) {
-            val = '"' + val + '"';
-        }
-        return val;
-    }
-
-    // Tombol Export CSV (dibuka sebagai file .csv yang bisa dibuka Excel)
-    $('#btnExportExcel').on('click', function() {
-        var jenis = $('#jenisLaporan').val();
-        var tabel = jenis === 'presensi' ? document.getElementById('tabelLaporanPresensi') : document.getElementById('tabelLaporanLogbook');
-
-        if (!tabel) return;
-
-        var rows = tabel.querySelectorAll('tr');
-        var csvLines = [];
-        rows.forEach(function(row) {
-            var cells = row.querySelectorAll('th, td');
-            var cols = [];
-            cells.forEach(function(cell) {
-                cols.push(csvEsc(stripHtml(cell.innerHTML)));
-            });
-            csvLines.push(cols.join(','));
+    function renderLogbook() {
+        var rows = filteredRows(logbookRows, 'logbook');
+        var tbody = $('#tabelLaporanLogbook tbody').empty();
+        if (!rows.length) tbody.append('<tr><td colspan="7" class="text-center py-4 text-muted">Tidak ada data logbook.</td></tr>');
+        rows.forEach(function(row, index) {
+            var info = relation(row);
+            var status = String(row.status_verifikasi || 'pending').toLowerCase();
+            var statusClass = status === 'approved' ? 'bg-success' :
+                status === 'rejected' ? 'bg-danger' : 'bg-warning text-dark';
+            var paraf = parafUrl(row);
+            tbody.append('<tr><td class="text-center">' + (index + 1) + '</td><td class="text-center">' +
+                escapeHtml(row.tanggal || '') + '</td><td><div class="fw-bold">' + escapeHtml(info.name) +
+                '</div><small class="text-muted">' + escapeHtml(info.organization) + '</small></td><td>' +
+                escapeHtml(info.unit) + '</td><td>' + escapeHtml(row.kegiatan || '-') +
+                '</td><td class="text-center"><span class="badge ' + statusClass + '">' + escapeHtml(status) +
+                '</span></td><td class="small">' + (paraf
+                    ? '<img src="' + escapeHtml(paraf) +
+                        '" alt="Paraf Pembimbing" style="height: 30px; display: block; margin: auto;">'
+                    : '-') + '</td></tr>');
         });
+        $('#statTotalRecord').text(rows.length);
+    }
 
-        var csvContent = '\uFEFF' + csvLines.join('\n'); // BOM untuk Excel UTF-8
-        var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        var url = URL.createObjectURL(blob);
+    function updateReport() {
+        if (!reportLoaded) return;
+        var type = $('#jenisLaporan').val();
+        $('#sectionLaporanPresensi').toggle(type === 'presensi');
+        $('#sectionLaporanLogbook').toggle(type !== 'presensi');
+        if (type === 'presensi') renderAttendance();
+        else renderLogbook();
+    }
+
+    function exportCsv() {
+        var table = document.getElementById($('#jenisLaporan').val() === 'presensi'
+            ? 'tabelLaporanPresensi'
+            : 'tabelLaporanLogbook');
+        var csv = Array.prototype.map.call(table.querySelectorAll('tr'), function(row) {
+            return Array.prototype.map.call(row.querySelectorAll('th,td'), function(cell) {
+                return '"' + String(cell.innerText || '').replace(/"/g, '""') + '"';
+            }).join(',');
+        }).join('\r\n');
+        var url = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }));
         var link = document.createElement('a');
-        var tglSelesai = $('#tglSelesai').val() || new Date().toISOString().slice(0, 10);
-        link.setAttribute('href', url);
-        link.setAttribute('download', 'rekap_' + jenis + '_' + tglSelesai + '.csv');
+        link.href = url;
+        link.download = 'laporan_' + $('#jenisLaporan').val() + '_' + new Date().toISOString().slice(0, 10) + '.csv';
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    });
+        link.remove();
+        window.setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+    }
 
-    // Inisialisasi awal
-    updateLaporan();
+    var today = new Date();
+    var firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    function dateValue(date) {
+        var local = new Date(date);
+        local.setMinutes(local.getMinutes() - local.getTimezoneOffset());
+        return local.toISOString().slice(0, 10);
+    }
+    if (!$('#tglMulai').val()) $('#tglMulai').val(dateValue(firstDay));
+    if (!$('#tglSelesai').val()) $('#tglSelesai').val(dateValue(today));
+
+    $('#filterUnit').on('change', function() {
+        updateParticipantOptions();
+        updateReport();
+    });
+    $('#filterPeserta, #tglMulai, #tglSelesai').on('change', updateReport);
+    $('#btnFilter, #jenisLaporan').on('click change', updateReport);
+    $('#btnReset').on('click', function() {
+        $('#filterUnit, #filterPeserta').val('');
+        $('#jenisLaporan').val('presensi');
+        $('#tglMulai').val(dateValue(firstDay));
+        $('#tglSelesai').val(dateValue(today));
+        updateReport();
+    });
+    $('#btnCetakLaporan').on('click', function() { window.print(); });
+    $('#btnExportExcel').on('click', exportCsv);
+
+    $('#tabelLaporanPresensi tbody').html(
+        '<tr><td colspan="9" class="text-center py-4 text-muted">Memuat data...</td></tr>');
+    $('#tabelLaporanLogbook tbody').html(
+        '<tr><td colspan="7" class="text-center py-4 text-muted">Memuat data...</td></tr>');
+
+    Promise.all([
+        window.apiRequestAll('/admin/unit-kerja', ['unit_kerja', 'units']),
+        window.apiRequestAll('/admin/peserta-magang', ['peserta_magang', 'peserta']),
+        window.apiRequestAll('/admin/absensi', ['absensi']),
+        window.apiRequestAll('/admin/logbook', ['logbook', 'logbooks'])
+    ]).then(function(results) {
+        unitRecords = results[0];
+        participantRecords = results[1];
+        attendanceRows = results[2];
+        logbookRows = results[3];
+        reportLoaded = true;
+        populateFilters();
+        updateReport();
+    }).catch(function(error) {
+        $('#tabelLaporanPresensi tbody').html(
+            '<tr><td colspan="9" class="text-center py-4 text-danger">Data gagal dimuat. Silakan muat ulang halaman.</td></tr>');
+        $('#tabelLaporanLogbook tbody').html(
+            '<tr><td colspan="7" class="text-center py-4 text-danger">Data gagal dimuat. Silakan muat ulang halaman.</td></tr>');
+        Swal.fire('Laporan Gagal Dimuat', error.message, 'error');
+    });
 });

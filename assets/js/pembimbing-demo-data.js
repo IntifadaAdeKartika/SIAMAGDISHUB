@@ -1,238 +1,196 @@
 window.pembimbingDemoData = (function() {
     var attendanceRows = [
         {
-            id: 1,
-            tanggal: "2026-10-14",
-            nim: "220102001",
-            jamMasuk: "07:15:20 WIB",
-            jamPulang: "13:59",
-            status: "Hadir",
-            statusVerif: "Diverifikasi",
-            foto: "selfie_intifada_14sep.jpg",
-            jarak: 18
+            id_absensi: 1,
+            id_peserta_magang: 1,
+            tanggal_jam: "2026-10-14 07:15:20",
+            lokasi: "Kantor Sekretariat Dishub",
+            latitude: -7.8682,
+            longitude: 111.4623,
+            foto_selfie: "selfie_intifada_14okt.jpg",
+            status: "masuk",
+            status_verifikasi: "approved",
+            paraf_pembimbing: "paraf_pembimbing_1.png",
+            keterangan: "Presensi masuk telah diverifikasi."
         },
         {
-            id: 2,
-            tanggal: "2026-10-14",
-            nim: "220203002",
-            jamMasuk: "07:22",
-            jamPulang: "13:50",
-            status: "Hadir",
-            statusVerif: "Diverifikasi",
-            foto: "selfie_ayu_14sep.jpg",
-            jarak: 22
+            id_absensi: 2,
+            id_peserta_magang: 2,
+            tanggal_jam: "2026-10-14 07:22:10",
+            lokasi: "Seksi Angkutan Orang",
+            latitude: -7.8681,
+            longitude: 111.4625,
+            foto_selfie: "selfie_ayu_14okt.jpg",
+            status: "masuk",
+            status_verifikasi: "approved",
+            paraf_pembimbing: "paraf_pembimbing_2.png",
+            keterangan: "Presensi masuk telah diverifikasi."
         },
         {
-            id: 3,
-            tanggal: "2026-10-14",
-            nim: "220304003",
-            jamMasuk: "08:01",
-            jamPulang: "13:55",
-            status: "Terlambat",
-            statusVerif: "Menunggu",
-            foto: "selfie_siti_14sep.jpg",
-            jarak: 28
+            id_absensi: 3,
+            id_peserta_magang: 3,
+            tanggal_jam: "2026-10-14 08:01:45",
+            lokasi: "Seksi Angkutan Orang",
+            latitude: -7.8683,
+            longitude: 111.4622,
+            foto_selfie: "selfie_siti_14okt.jpg",
+            status: "masuk",
+            status_verifikasi: "pending",
+            paraf_pembimbing: null,
+            keterangan: null
         }
     ];
 
     var leaveRows = [
         {
-            id: 1,
-            nim: "220102001",
-            tglPengajuan: "2026-10-14",
-            jenis: "Izin",
-            tglMulai: "2026-10-16",
-            tglSelesai: "2026-10-16",
-            durasi: 1,
-            alasan: "Bimbingan Project Magang dengan Dosen Pembimbing.",
-            status: "Menunggu",
-            fileSurat: "surat_izin_kampus.pdf"
+            id_pengajuan_izin: 1,
+            id_peserta_magang: 1,
+            jenis: "izin",
+            tanggal_mulai: "2026-10-16",
+            tanggal_selesai: "2026-10-16",
+            keterangan: "Bimbingan project magang dengan dosen pembimbing.",
+            file_surat: "surat_izin_kampus.pdf",
+            status: "pending",
+            catatan_pembimbing: null
         },
         {
-            id: 2,
-            nim: "220203002",
-            tglPengajuan: "2026-10-10",
-            jenis: "Sakit",
-            tglMulai: "2026-10-12",
-            tglSelesai: "2026-10-14",
-            durasi: 3,
-            alasan: "Radang pada usus dan membutuhkan penyembuhan sekitar 3 hari.",
-            status: "Disetujui",
-            fileSurat: "surat_keterangan_dokter.pdf",
-            catatan: "Disetujui."
+            id_pengajuan_izin: 2,
+            id_peserta_magang: 2,
+            jenis: "sakit",
+            tanggal_mulai: "2026-10-12",
+            tanggal_selesai: "2026-10-14",
+            keterangan: "Radang pada usus dan membutuhkan penyembuhan sekitar 3 hari.",
+            file_surat: "surat_keterangan_dokter.pdf",
+            status: "approved",
+            catatan_pembimbing: "Disetujui."
         }
     ];
 
     var logbookRows = [
         {
-            id: 1,
+            id_logbook: 1,
+            id_absensi: 1,
+            id_peserta_magang: 1,
             tanggal: "2026-10-14",
-            nim: "220102001",
-            jamMulai: "08:00",
-            jamSelesai: "12:00",
+            jam_mulai: "08:00",
+            jam_selesai: "12:00",
             kegiatan: "Membantu mencetak SPMK dan melanjutkan pengembangan frontend sistem absensi magang.",
-            hasil: "SPMK berhasil dicetak dan frontend sistem absensi magang berhasil diperbarui.",
-            status: "Diverifikasi",
-            catatan: "Pekerjaan rapi dan teliti.",
-            lampiran: "bukti_kegiatan.jpg"
+            foto_kegiatan: "bukti_kegiatan.jpg",
+            status_verifikasi: "approved",
+            catatan_pembimbing: "Pekerjaan rapi dan teliti."
         },
         {
-            id: 2,
+            id_logbook: 2,
+            id_absensi: 2,
+            id_peserta_magang: 2,
             tanggal: "2026-10-14",
-            nim: "220203002",
-            jamMulai: "08:00",
-            jamSelesai: "12:00",
+            jam_mulai: "08:00",
+            jam_selesai: "12:00",
             kegiatan: "Pengarsipan surat masuk dan surat keluar bidang kepegawaian Dishub.",
-            hasil: "15 surat masuk teragenda pada buku register.",
-            status: "Diverifikasi",
-            catatan: "Tertib administrasi.",
-            lampiran: "rekap_surat_masuk.pdf"
+            foto_kegiatan: null,
+            status_verifikasi: "approved",
+            catatan_pembimbing: "Tertib administrasi."
         },
         {
-            id: 3,
+            id_logbook: 3,
+            id_absensi: 3,
+            id_peserta_magang: 3,
             tanggal: "2026-10-14",
-            nim: "220304003",
-            jamMulai: "08:30",
-            jamSelesai: "12:00",
+            jam_mulai: "08:30",
+            jam_selesai: "12:00",
             kegiatan: "Membantu mengarsipkan dokumen.",
-            hasil: "Dokumen berhasil diarsipkan dengan rapi.",
-            status: "Menunggu",
-            catatan: "-",
-            lampiran: "dokumen_arsip.jpg"
+            foto_kegiatan: "dokumen_arsip.jpg",
+            status_verifikasi: "pending",
+            catatan_pembimbing: null
         }
     ];
 
+    function currentUser() {
+        try {
+            return JSON.parse(localStorage.getItem("siamag_user") || "null");
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function participantFor(row) {
+        return window.getMasterPeserta(row.id_peserta_magang);
+    }
+
+    function enrichRows(rows) {
+        return rows.map(function(row) {
+            var participant = participantFor(row);
+            var placement = participant && window.getMasterPenempatanPeserta(participant.id);
+            return Object.assign({}, row, {
+                nama: participant ? participant.nama : 'Peserta #' + row.id_peserta_magang,
+                username: participant ? participant.nim : '-',
+                instansi: participant ? participant.instansi : '-',
+                unitId: placement && placement.unit ? placement.unit.id : null,
+                unitNama: placement && placement.unit ? placement.unit.nama : '-',
+                namaPembimbing: placement ? placement.namaPembimbing : '-'
+            });
+        });
+    }
+
     function getContext() {
-        var user = JSON.parse(sessionStorage.getItem("user") || "null");
-        var nama = user && (user.nama || user.username);
-        var pembimbing = window.masterPembimbing.find(function(item) {
-            return item.nama === nama;
+        var user = currentUser();
+        var name = user && (user.nama_lengkap || user.nama || user.name || user.username);
+        var mentor = window.masterPembimbing.find(function(item) {
+            return item.nama === name;
         }) || window.masterPembimbing.find(function(item) {
             return item.nama === "Adi, S.T.";
         });
+        if (!mentor) throw new Error("Data pembimbing aktif tidak ditemukan di masterData.js.");
 
-        if (!pembimbing) {
-            throw new Error("Data pembimbing aktif tidak ditemukan di masterData.js.");
-        }
+        var unit = window.getMasterUnit(mentor.unitId);
+        if (!unit) throw new Error("Unit kerja pembimbing aktif tidak ditemukan di masterData.js.");
 
-        var unit = window.getMasterUnit(pembimbing.unitId);
-        if (!unit) {
-            throw new Error("Unit kerja pembimbing aktif tidak ditemukan di masterData.js.");
-        }
-
-        var peserta = window.masterPeserta.filter(function(item) {
-            return item.unitId === pembimbing.unitId;
+        var participants = window.masterPeserta.filter(function(item) {
+            return item.unitId === mentor.unitId;
         });
-
-        function mapParticipant(row) {
-            var masterPeserta = window.getMasterPeserta(row.nim);
-            var penempatan = window.getMasterPenempatanPeserta(row.nim);
-            if (!masterPeserta || !penempatan) return null;
-
-            return Object.assign({}, row, {
-                nama: masterPeserta.nama,
-                instansi: masterPeserta.instansi,
-                unitId: penempatan.unit.id,
-                unitNama: penempatan.unit.nama,
-                namaPembimbing: penempatan.namaPembimbing,
-                disetujuiOleh: row.disetujuiOleh ||
-                    (row.status === "Disetujui" ? penempatan.namaPembimbing : "")
+        function assigned(rows) {
+            return enrichRows(rows).filter(function(row) {
+                return row.unitId === mentor.unitId;
             });
         }
 
-        function assignedRows(rows) {
-            return rows.filter(function(row) {
-                var masterPeserta = window.getMasterPeserta(row.nim);
-                return masterPeserta && masterPeserta.unitId === pembimbing.unitId;
-            }).map(mapParticipant).filter(Boolean);
-        }
-
         return {
-            pembimbing: pembimbing,
+            pembimbing: mentor,
             unit: unit,
-            peserta: peserta,
-            absensi: assignedRows(attendanceRows),
-            izin: assignedRows(leaveRows),
-            logbook: assignedRows(logbookRows),
-            semuaAbsensi: attendanceRows.map(mapParticipant).filter(Boolean),
-            semuaLogbook: logbookRows.map(mapParticipant).filter(Boolean)
+            peserta: participants,
+            absensi: assigned(attendanceRows),
+            izin: assigned(leaveRows),
+            logbook: assigned(logbookRows),
+            semuaAbsensi: enrichRows(attendanceRows),
+            semuaLogbook: enrichRows(logbookRows)
         };
     }
 
     function getPesertaContext() {
-        var user = JSON.parse(sessionStorage.getItem("user") || "null");
-        var nama = user && (user.nama || user.username);
-        var peserta = window.getMasterPeserta(nama) || window.masterPeserta[0];
-        if (!peserta) {
-            throw new Error("Data peserta aktif tidak ditemukan di masterData.js.");
-        }
+        var user = currentUser();
+        var name = user && (user.nama_lengkap || user.nama || user.name || user.username);
+        var userProfile = user && user.peserta_magang;
+        var peserta = window.getMasterPeserta((userProfile && userProfile.id) || name) || window.masterPeserta[0];
+        if (!peserta) throw new Error("Data peserta aktif tidak ditemukan di masterData.js.");
 
-        var penempatan = window.getMasterPenempatanPeserta(peserta.nim);
-        if (!penempatan || !penempatan.unit) {
+        var placement = window.getMasterPenempatanPeserta(peserta.id);
+        if (!placement || !placement.unit) {
             throw new Error("Penempatan peserta aktif tidak ditemukan di masterData.js.");
         }
 
-        var absensi = attendanceRows.filter(function(row) {
-            return row.nim === peserta.nim;
-        }).map(function(row) {
-            return {
-                id: row.id,
-                tanggal: row.tanggal,
-                nim: peserta.nim,
-                nama: peserta.nama,
-                instansi: peserta.instansi,
-                jamMasuk: row.jamMasuk.replace(/ WIB$/, ''),
-                jamPulang: row.jamPulang,
-                status: row.status,
-                verifikasi: row.statusVerif,
-                foto: row.foto,
-                jarak: row.jarak,
-                pembimbing: penempatan.namaPembimbing
-            };
-        });
-
-        var izin = leaveRows.filter(function(row) {
-            return row.nim === peserta.nim;
-        }).map(function(row) {
-            return {
-                id: row.id,
-                jenis: row.jenis.toLowerCase(),
-                tanggal_mulai: row.tglMulai,
-                tanggal_selesai: row.tglSelesai,
-                durasi_hari: row.durasi,
-                alasan: row.alasan,
-                file_surat: row.fileSurat,
-                status: row.status.toLowerCase(),
-                catatan_pembimbing: row.catatan || '-',
-                pembimbing: penempatan.namaPembimbing
-            };
-        });
-
-        var logbook = logbookRows.filter(function(row) {
-            return row.nim === peserta.nim;
-        }).map(function(row) {
-            return {
-                id: row.id,
-                tanggal: row.tanggal,
-                waktu_mulai: row.jamMulai,
-                waktu_selesai: row.jamSelesai,
-                deskripsi_kegiatan: row.kegiatan,
-                hasil_kegiatan: row.hasil,
-                file_lampiran: row.lampiran,
-                status_verifikasi: row.status.toLowerCase() === 'diverifikasi' ? 'diverifikasi' :
-                    row.status.toLowerCase() === 'ditolak' ? 'ditolak' : 'menunggu',
-                catatan_pembimbing: row.catatan || '-',
-                pembimbing: penempatan.namaPembimbing
-            };
-        });
+        function ownRows(rows) {
+            return enrichRows(rows).filter(function(row) {
+                return row.id_peserta_magang === peserta.id;
+            });
+        }
 
         return {
             peserta: peserta,
-            unit: penempatan.unit,
-            pembimbing: penempatan.pembimbing,
-            absensi: absensi,
-            izin: izin,
-            logbook: logbook
+            unit: placement.unit,
+            pembimbing: placement.pembimbing,
+            absensi: ownRows(attendanceRows),
+            izin: ownRows(leaveRows),
+            logbook: ownRows(logbookRows)
         };
     }
 

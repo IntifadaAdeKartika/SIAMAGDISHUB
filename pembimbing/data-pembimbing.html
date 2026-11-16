@@ -56,6 +56,9 @@
             </a>
 
             <div class="menu-label mt-3">Lainnya</div>
+            <a href="dokumen.html">
+                <i class="fas fa-folder-open"></i> Arsip Dokumen Magang
+            </a>
             <a href="laporan.html">
                 <i class="fas fa-file-export"></i> Laporan
             </a>
@@ -80,15 +83,15 @@
             </div>
             <div class="topbar-right">
                 <button class="btn-notif" id="btnNotif">
-                    <i class="fas fa-bell"></i>
-                    <span class="notif-badge">3</span>
+                    <i class="far fa-bell"></i>
+                    <span class="notif-badge" style="display:none;"></span>
                 </button>
                 <div class="dropdown user-dropdown">
                     <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
-                        <div class="user-avatar" id="userInitial">A</div>
+                        <div class="user-avatar" id="userInitial">-</div>
                         <div class="d-none d-sm-block">
-                            <div style="font-weight:600; line-height:1.2;" id="userName">Adi, S.T.</div>
-                            <div style="font-size:0.72rem; color:#999;" id="userRole">Seksi Angkutan Orang</div>
+                            <div style="font-weight:600; line-height:1.2;" id="userName">Memuat...</div>
+                            <div style="font-size:0.72rem; color:#999;" id="userRole">Memuat jabatan...</div>
                         </div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -180,11 +183,6 @@
                                 <td class="py-2" id="detailUnit">-</td>
                             </tr>
                             <tr>
-                                <td class="text-muted py-2"><i class="fas fa-door-open me-2 text-secondary" style="width:16px;"></i>Lokasi Ruangan</td>
-                                <td class="text-center text-muted py-2">:</td>
-                                <td class="py-2" id="detailRuangan">-</td>
-                            </tr>
-                            <tr>
                                 <td class="text-muted py-2"><i class="fab fa-whatsapp me-2 text-success" style="width:16px;"></i>No. WhatsApp</td>
                                 <td class="text-center text-muted py-2">:</td>
                                 <td class="py-2" id="detailNoHp">-</td>
@@ -197,7 +195,10 @@
                             <tr>
                                 <td class="text-muted py-2"><i class="fas fa-users me-2 text-info" style="width:16px;"></i>Total Bimbingan</td>
                                 <td class="text-center text-muted py-2">:</td>
-                                <td class="py-2"><span class="badge bg-light text-dark border" id="detailBimbingan">-</span></td>
+                                <td class="py-2">
+                                    <span class="badge bg-light text-dark border" id="detailBimbingan">-</span>
+                                    <ul class="list-group list-group-flush small mt-2" id="detailDaftarPesertaBimbingan" style="max-height:180px;overflow-y:auto;"></ul>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -217,7 +218,6 @@
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script src="../assets/js/app.js"></script>
-<script src="../assets/js/masterData.js"></script>
 <script src="../assets/js/pembimbing-rekan.js"></script>
 
 </body>

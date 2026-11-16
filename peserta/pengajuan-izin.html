@@ -48,6 +48,9 @@
             </a>
 
             <div class="menu-label mt-3">Lainnya</div>
+            <a href="dokumen.html">
+                <i class="fas fa-folder-open"></i> Arsip Dokumen Magang
+            </a>
             <a href="riwayat.html">
                 <i class="fas fa-history"></i> Riwayat
             </a>
@@ -72,15 +75,15 @@
             </div>
             <div class="topbar-right">
                 <button class="btn-notif" id="btnNotif">
-                    <i class="fas fa-bell"></i>
-                    <span class="notif-badge">2</span>
+                    <i class="far fa-bell"></i>
+                    <span class="notif-badge" style="display:none;"></span>
                 </button>
                 <div class="dropdown user-dropdown">
                     <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
-                        <div class="user-avatar" id="userInitial">P</div>
+                        <div class="user-avatar" id="userInitial">-</div>
                         <div class="d-none d-sm-block">
-                            <div style="font-weight:600; line-height:1.2;" id="userName">Peserta Magang</div>
-                            <div style="font-size:0.72rem; color:#999;" id="userRole">Peserta Magang</div>
+                            <div style="font-weight:600; line-height:1.2;" id="userName">Memuat...</div>
+                            <div style="font-size:0.72rem; color:#999;" id="userRole">Memuat...</div>
                         </div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -215,7 +218,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Pembimbing Lapangan</label>
-                            <input type="text" class="form-control" id="pembimbingIzin" value="-" readonly style="background:var(--bg-light);">
+                            <input type="text" class="form-control" id="pembimbingIzin" value="Belum ditentukan" readonly style="background:var(--bg-light);">
                         </div>
 
                         <div class="col-md-6">
@@ -235,14 +238,15 @@
 
                         <div class="col-12">
                             <label class="form-label">Alasan / Keterangan Lengkap <span class="text-danger">*</span></label>
-                            <textarea class="form-control" id="alasanIzin" name="alasan" rows="3" 
+                            <textarea class="form-control" id="alasanIzin" name="keterangan" rows="3"
                                       placeholder="Jelaskan alasan izin / sakit secara rinci..." required></textarea>
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label">Upload Surat Izin / Surat Dokter <span class="text-danger">*</span></label>
-                            <input type="file" class="form-control" id="fileSuratIzin" accept="image/*,.pdf" required>
-                            <small class="text-muted">Wajib mengunggah surat keterangan dokter (jika sakit) atau surat izin resmi dari kampus/sekolah (Format: JPG, PNG, PDF maks. 5MB).</small>
+                            <label class="form-label">Upload Surat Izin / Surat Dokter (Opsional)</label>
+                            <input type="file" class="form-control" id="fileSuratIzin" name="file_surat" accept="image/*,.pdf">
+                            <div id="fileSuratCurrent" class="mt-2 small" style="display:none;"></div>
+                            <small class="text-muted d-block mt-1">Lampiran bersifat opsional sesuai skema database (foto atau PDF).</small>
                         </div>
                     </div>
                 </div>
@@ -282,8 +286,6 @@
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script src="../assets/js/app.js"></script>
-<script src="../assets/js/masterData.js"></script>
-<script src="../assets/js/pembimbing-demo-data.js"></script>
 <script src="../assets/js/peserta-izin.js"></script>
 
 </body>

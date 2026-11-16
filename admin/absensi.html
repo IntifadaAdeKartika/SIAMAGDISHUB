@@ -63,6 +63,9 @@
             </a>
 
             <div class="menu-label mt-3">Lainnya</div>
+            <a href="dokumen.html">
+                <i class="fas fa-folder-open"></i> Arsip Dokumen Magang
+            </a>
             <a href="laporan.html">
                 <i class="fas fa-file-export"></i> Laporan
             </a>
@@ -91,14 +94,14 @@
             <div class="topbar-right">
                 <button class="btn-notif" id="btnNotif">
                     <i class="far fa-bell"></i>
-                    <span class="notif-badge">3</span>
+                    <span class="notif-badge" style="display:none;"></span>
                 </button>
                 <div class="dropdown user-dropdown">
                     <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
-                        <div class="user-avatar" id="userInitial">A</div>
+                        <div class="user-avatar" id="userInitial">-</div>
                         <div class="d-none d-sm-block">
-                            <div class="fw-semibold small" id="userName">Administrator</div>
-                            <div class="text-muted" style="font-size:0.75rem;" id="userRole">Admin Dinas</div>
+                            <div class="fw-semibold small" id="userName">Memuat...</div>
+                            <div class="text-muted" style="font-size:0.75rem;" id="userRole">Memuat...</div>
                         </div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -126,8 +129,8 @@
                                 <i class="fas fa-check"></i>
                             </div>
                             <div class="stat-info">
-                                <h3 id="statHadir">2</h3>
-                                <p>Hadir Tepat Waktu</p>
+                                <h3 id="statHadir">0</h3>
+                                <p>Event Masuk</p>
                             </div>
                         </div>
                     </div>
@@ -139,8 +142,8 @@
                                 <i class="fas fa-clock"></i>
                             </div>
                             <div class="stat-info">
-                                <h3 id="statTerlambat">1</h3>
-                                <p>Terlambat</p>
+                                <h3 id="statTerlambat">0</h3>
+                                <p>Event Keluar</p>
                             </div>
                         </div>
                     </div>
@@ -153,7 +156,7 @@
                             </div>
                             <div class="stat-info">
                                 <h3 id="statLuarRadius">0</h3>
-                                <p>Di Luar Radius</p>
+                                <p>Menunggu Verifikasi</p>
                             </div>
                         </div>
                     </div>
@@ -166,7 +169,7 @@
                             </div>
                             <div class="stat-info">
                                 <h3 id="statIzinSakit">0</h3>
-                                <p>Izin / Sakit</p>
+                                <p>Ditolak</p>
                             </div>
                         </div>
                     </div>
@@ -180,17 +183,15 @@
                         <div class="col-md-5">
                             <label class="form-label text-muted small mb-1">Unit Kerja</label>
                             <select class="form-select form-select-sm" id="filterUnit">
-                                <option value="">Semua Unit Kerja (12 Unit)</option>
+                                <option value="">Semua Unit Kerja</option>
                             </select>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label text-muted small mb-1">Status Presensi</label>
                             <select class="form-select form-select-sm" id="filterStatus">
                                 <option value="">Semua Status</option>
-                                <option value="Hadir">Hadir Tepat Waktu</option>
-                                <option value="Terlambat">Terlambat</option>
-                                <option value="Sakit">Sakit</option>
-                                <option value="Izin">Izin</option>
+                                <option value="masuk">Masuk</option>
+                                <option value="keluar">Keluar</option>
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -214,13 +215,12 @@
                             <thead>
                                 <tr>
                                     <th width="5%">No</th>
-                                    <th>Tanggal</th>
                                     <th>Peserta Magang</th>
                                     <th>Unit & Pembimbing</th>
-                                    <th>Jam Masuk</th>
-                                    <th>Status</th>
-                                    <th>Radius GPS</th>
-                                    <th>Verifikasi</th>
+                                    <th>Tanggal & Waktu</th>
+                                    <th>Jenis Event</th>
+                                    <th>Lokasi / Koordinat</th>
+                                    <th>Status Verifikasi</th>
                                     <th width="10%" class="text-center th-action text-nowrap">Aksi</th>
                                 </tr>
                             </thead>
@@ -245,15 +245,12 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4 text-center">
-                <div id="modalFotoBox" class="mx-auto d-flex align-items-center justify-content-center bg-light border rounded mb-3" style="width: 140px; height: 140px;">
-                    <div class="text-center">
-                        <i class="fas fa-camera text-primary fa-2x mb-1"></i>
-                        <div id="modalFotoNama" style="font-size:0.75rem;" class="text-muted fw-semibold">selfie.jpg</div>
-                    </div>
+                <div id="modalFotoBox" class="mx-auto bg-light border rounded mb-3 overflow-hidden" style="max-width: 100%; max-height: 250px;">
+                    <img id="modalFoto" class="img-fluid rounded" alt="Foto selfie peserta" style="max-height: 250px; object-fit: cover;">
                 </div>
                 <div id="modalNoFoto" class="alert alert-secondary py-3" style="display: none;">
                     <i class="fas fa-file-alt fa-2x mb-1 d-block text-muted"></i>
-                    <small>Tidak ada lampiran foto (Status Izin / Sakit)</small>
+                    <small>Tidak ada foto</small>
                 </div>
 
                 <h5 class="fw-bold mb-1" id="modalNama">-</h5>
@@ -278,12 +275,12 @@
                                 <td class="fw-semibold text-dark py-2" id="modalWaktu">-</td>
                             </tr>
                             <tr>
-                                <td class="text-muted py-2"><i class="fas fa-map-marker-alt me-2 text-danger" style="width:16px;"></i>Lokasi Kantor</td>
+                                <td class="text-muted py-2"><i class="fas fa-map-marker-alt me-2 text-danger" style="width:16px;"></i>Lokasi</td>
                                 <td class="text-center text-muted py-2">:</td>
                                 <td class="fw-semibold text-primary py-2" id="modalLokasiKantor">-</td>
                             </tr>
                             <tr>
-                                <td class="text-muted py-2"><i class="fas fa-crosshairs me-2 text-success" style="width:16px;"></i>Lokasi GPS</td>
+                                <td class="text-muted py-2"><i class="fas fa-crosshairs me-2 text-success" style="width:16px;"></i>Koordinat</td>
                                 <td class="text-center text-muted py-2">:</td>
                                 <td class="fw-semibold text-dark py-2" id="modalRadius">-</td>
                             </tr>
@@ -310,7 +307,6 @@
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script src="../assets/js/app.js"></script>
-    <script src="../assets/js/masterData.js"></script>
 <script src="../assets/js/admin-absensi.js"></script>
 
 </body>

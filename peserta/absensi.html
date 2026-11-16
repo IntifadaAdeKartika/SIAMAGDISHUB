@@ -124,6 +124,9 @@
             </a>
 
             <div class="menu-label mt-3">Lainnya</div>
+            <a href="dokumen.html">
+                <i class="fas fa-folder-open"></i> Arsip Dokumen Magang
+            </a>
             <a href="riwayat.html">
                 <i class="fas fa-history"></i> Riwayat
             </a>
@@ -149,14 +152,14 @@
             <div class="topbar-right">
                 <button class="btn-notif" id="btnNotif">
                     <i class="far fa-bell"></i>
-                    <span class="notif-badge">2</span>
+                    <span class="notif-badge" style="display:none;"></span>
                 </button>
                 <div class="dropdown user-dropdown">
                     <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
-                        <div class="user-avatar" id="userInitial">P</div>
+                        <div class="user-avatar" id="userInitial">-</div>
                         <div class="d-none d-sm-block">
-                            <div class="fw-semibold small" id="userName">Peserta Magang</div>
-                            <div class="text-muted" style="font-size:0.75rem;" id="userRole">Peserta Magang</div>
+                            <div class="fw-semibold small" id="userName">Memuat...</div>
+                            <div class="text-muted" style="font-size:0.75rem;" id="userRole">Memuat...</div>
                         </div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -291,6 +294,11 @@
 
                             <!-- Tombol Aksi Check-in / Check-out -->
                             <div class="d-grid gap-2">
+                                <div>
+                                    <label for="keterangan" class="form-label small mb-1">Keterangan (Opsional)</label>
+                                    <textarea class="form-control form-control-sm" id="keterangan" name="keterangan"
+                                        rows="2" placeholder="Tambahkan keterangan jika diperlukan"></textarea>
+                                </div>
                                 <div class="row g-2">
                                     <div class="col-6">
                                         <button class="btn btn-success w-100 py-2 fw-semibold" id="btnCheckIn" style="font-size:0.88rem;">
@@ -325,13 +333,13 @@
                         <table class="table table-custom table-hover align-middle w-100" id="tabelRiwayatSingkat">
                             <thead>
                                 <tr>
-                                    <th>Hari / Tanggal</th>
-                                    <th>Check-in</th>
-                                    <th>Check-out</th>
+                                    <th>Tanggal &amp; Waktu</th>
+                                    <th>Status Event</th>
+                                    <th>Lokasi</th>
+                                    <th>Koordinat</th>
                                     <th>Foto Selfie</th>
-                                    <th>Jarak Kantor</th>
-                                    <th>Status Hadir</th>
-                                    <th>Verifikasi Pembimbing</th>
+                                    <th>Status Verifikasi</th>
+                                    <th>Keterangan</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -350,8 +358,6 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="../assets/js/app.js"></script>
-<script src="../assets/js/masterData.js"></script>
-<script src="../assets/js/pembimbing-demo-data.js"></script>
 <script src="../assets/js/peserta-absensi.js"></script>
 
 </body>

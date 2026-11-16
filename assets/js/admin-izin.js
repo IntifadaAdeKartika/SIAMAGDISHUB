@@ -1,207 +1,156 @@
-// Monitoring Pengajuan Izin Peserta (Admin)
-
 $(document).ready(function() {
-
-    var masterUnitKerja = window.masterUnitKerja;
-
-    // Data pengajuan izin dan sakit 
-    var dataIzin = [
-        {
-            id: 1,
-            tglPengajuan: "2026-10-14",
-            nim: "220102001",
-            nama: "Intifada Ade Kartika",
-            instansi: "Univ. Muhammadiyah Ponorogo",
-            unitId: 1,
-            unitNama: "Sekretariat",
-            pembimbing: "Dra. Ida",
-            jenis: "Izin",
-            tglMulai: "2026-10-16",
-            tglSelesai: "2026-10-16",
-            durasi: 1,
-            alasan: "Bimbingan Project Magang dengan Dosen Pembimbing.",
-            status: "Menunggu",
-            fileSurat: "surat_izin_kampus.pdf"
-        },
-        {
-            id: 2,
-            tglPengajuan: "2026-10-10",
-            nim: "220203002",
-            nama: "Ayu Sri",
-            instansi: "Universitas Brawijaya",
-            unitId: 5,
-            unitNama: "Seksi Angkutan Orang",
-            pembimbing: "Adi, S.T.",
-            jenis: "Sakit",
-            tglMulai: "2026-10-12",
-            tglSelesai: "2026-10-14",
-            durasi: 3,
-            alasan: "Radang pada usus dan membutuhkan penyembuhan sekitar 3 hari.",
-            status: "Disetujui",
-            fileSurat: "surat_keterangan_dokter.pdf"
-        }
-    ];
-
-    dataIzin.forEach(function(item) {
-        var penempatan = window.getMasterPenempatanPeserta(item.nim);
-        if (!penempatan) return;
-        item.nama = penempatan.peserta.nama;
-        item.instansi = penempatan.peserta.instansi;
-        item.unitId = penempatan.unit.id;
-        item.unitNama = penempatan.unit.nama;
-        item.pembimbing = penempatan.namaPembimbing;
-    });
-
-    masterUnitKerja.forEach(function(u) {
-        $('#filterUnit').append(new Option(u.nama + " (" + u.kode + ")", u.id));
-    });
-
+    var records = [];
     var table = $('#tabelMonitoringIzin').DataTable({
         responsive: true,
         language: {
-            search: "Cari Pengajuan:",
-            lengthMenu: "Tampilkan _MENU_ data",
-            zeroRecords: "Data izin tidak ditemukan",
-            info: "Menampilkan _START_ s/d _END_ dari _TOTAL_ izin",
-            infoEmpty: "Menampilkan 0 data",
-            paginate: { first: "Awal", last: "Akhir", next: "→", previous: "←" }
+            search: 'Cari Pengajuan:',
+            lengthMenu: 'Tampilkan _MENU_ data',
+            zeroRecords: 'Belum ada data',
+            info: 'Menampilkan _START_ s/d _END_ dari _TOTAL_ izin',
+            infoEmpty: 'Menampilkan 0 data',
+            paginate: { first: 'Awal', last: 'Akhir', next: '→', previous: '←' }
         },
         order: [[1, 'desc']]
     });
 
-    function renderData() {
-        table.clear();
-
-        var unitFilter = $('#filterUnit').val();
-        var jenisFilter = $('#filterJenis').val();
-        var statusFilter = $('#filterStatus').val();
-
-        var countTotal = dataIzin.length;
-        var countMenunggu = 0;
-        var countDisetujui = 0;
-
-        dataIzin.forEach(function(item, index) {
-            if (unitFilter && item.unitId != unitFilter) return;
-            if (jenisFilter && item.jenis !== jenisFilter) return;
-            if (statusFilter && item.status !== statusFilter) return;
-
-            if (item.status === 'Menunggu') countMenunggu++;
-            if (item.status === 'Disetujui') countDisetujui++;
-
-            var badgeJenis = item.jenis === 'Sakit' ? 'bg-danger' : 'bg-info text-dark';
-            var badgeStatus = item.status === 'Disetujui' 
-                ? '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Disetujui</span>' 
-                : '<span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Menunggu</span>';
-
-            var btnAksi = `
-                <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary btn-detail-izin" data-id="${item.id}" title="Lihat Berkas Surat & Alasan">
-                        <i class="fas fa-eye"></i> Detail
-                    </button>
-                    ${item.status === 'Menunggu' ? `
-                    <button class="btn btn-outline-success btn-approve-admin" data-id="${item.id}" title="Intervensi Setujui (Admin)">
-                        <i class="fas fa-check"></i>
-                    </button>` : ''}
-                </div>
-            `;
-
-            table.row.add([
-                index + 1,
-                item.tglPengajuan,
-                `<div>
-                    <span class="fw-bold text-dark">${item.nama}</span>
-                    <div class="small text-muted">${item.instansi}</div>
-                 </div>`,
-                `<div class="small fw-semibold text-primary">${item.unitNama}</div>
-                 <div class="small text-muted">Pembimbing: ${item.pembimbing}</div>`,
-                `<span class="badge ${badgeJenis}">${item.jenis}</span>`,
-                `<div>${item.tglMulai} s/d ${item.tglSelesai}</div>
-                 <small class="badge bg-light text-dark border">${item.durasi} Hari</small>`,
-                badgeStatus,
-                btnAksi
-            ]);
+    function escapeHtml(value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, function(character) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
         });
-
-        table.draw();
-
-        $('#statTotalIzin').text(countTotal);
-        $('#statMenungguIzin').text(countMenunggu);
-        $('#statDisetujuiIzin').text(countDisetujui);
     }
 
-    renderData();
+    function participant(item) {
+        var person = item.peserta_magang || item.peserta || {};
+        var account = person.pengguna || {};
+        var placement = person.penempatan || item.penempatan || {};
+        var unit = item.unit_kerja || person.unit_kerja || placement.unit_kerja || {};
+        var mentor = item.pembimbing || item.pembimbing_lapangan || person.pembimbing ||
+            person.pembimbing_lapangan || unit.pembimbing || placement.pembimbing || {};
+        var mentorAccount = mentor.pengguna || mentor.user || {};
+        return {
+            name: item.nama_peserta || account.nama_lengkap || person.nama_lengkap || person.nama || '-',
+            nim: item.nim || account.username || person.nim || '-',
+            school: item.asal_sekolah_kampus || person.asal_sekolah_kampus || person.instansi || '-',
+            unit: item.nama_unit_kerja || unit.nama_unit || unit.nama || '-',
+            unitId: item.id_unit_kerja || person.id_unit_kerja || unit.id || '',
+            mentor: item.nama_pembimbing || mentor.nama_lengkap || mentor.nama ||
+                mentorAccount.nama_lengkap || '-'
+        };
+    }
 
-    $('#filterUnit, #filterJenis, #filterStatus').on('change', function() {
-        renderData();
-    });
+    function render() {
+        var unitFilter = String($('#filterUnit').val() || '');
+        var jenisFilter = $('#filterJenis').val();
+        var statusFilter = $('#filterStatus').val();
+        var visible = records.filter(function(item) {
+            var person = participant(item);
+            return (!unitFilter || String(person.unitId) === unitFilter) &&
+                (!jenisFilter || String(item.jenis || '').toLowerCase() === jenisFilter) &&
+                (!statusFilter || String(item.status || '').toLowerCase() === statusFilter);
+        });
+        table.clear();
+        visible.forEach(function(item, index) {
+            var person = participant(item);
+            var status = String(item.status || 'pending').toLowerCase();
+            var start = item.tanggal_mulai || '';
+            var end = item.tanggal_selesai || '';
+            var duration = start && end ? Math.round((new Date(end) - new Date(start)) / 86400000) + 1 : '-';
+            var statusClass = status === 'approved' ? 'bg-success' :
+                status === 'rejected' ? 'bg-danger' : 'bg-warning text-dark';
+            var typeClass = String(item.jenis).toLowerCase() === 'sakit' ? 'bg-danger' : 'bg-info text-dark';
+            table.row.add([
+                index + 1,
+                escapeHtml(item.created_at ? formatTanggalJam(item.created_at) : formatTanggal(start)),
+                '<div class="fw-bold">' + escapeHtml(person.name) + '</div><div class="small text-muted">' +
+                    escapeHtml(person.school) + '</div>',
+                '<div class="small fw-semibold text-primary">' + escapeHtml(person.unit) +
+                    '</div><div class="small text-muted">Pembimbing: ' + escapeHtml(person.mentor) + '</div>',
+                '<span class="badge ' + typeClass + '">' + escapeHtml(item.jenis || '-') + '</span>',
+                '<div>' + escapeHtml(formatTanggal(start)) + ' s/d ' + escapeHtml(formatTanggal(end)) +
+                    '</div><small class="badge bg-light text-dark border">' +
+                    escapeHtml(duration) + ' Hari</small>',
+                '<span class="badge ' + statusClass + '">' + escapeHtml(status) + '</span>',
+                '<button class="btn btn-sm btn-outline-primary btn-detail-izin" data-id="' +
+                    escapeHtml(item.id || item.id_pengajuan_izin) + '"><i class="fas fa-eye"></i> Detail</button>'
+            ]);
+        });
+        table.draw();
+        $('#statTotalIzin').text(records.length);
+        $('#statMenungguIzin').text(records.filter(function(row) {
+            return String(row.status).toLowerCase() === 'pending';
+        }).length);
+        $('#statDisetujuiIzin').text(records.filter(function(row) {
+            return String(row.status).toLowerCase() === 'approved';
+        }).length);
+    }
 
+    function load() {
+        $('#btnReloadTable').prop('disabled', true);
+        window.apiSetTableState(table, 'loading');
+        return window.apiRequestAll('/admin/pengajuan-izin', ['pengajuan_izin', 'pengajuan_izins']).then(function(rows) {
+            records = rows;
+            render();
+            window.apiSetTableState(table, 'loaded');
+            return true;
+        }).catch(function(error) {
+            window.apiSetTableState(table, 'error');
+            Swal.fire('Data Pengajuan Izin Gagal Dimuat', error.message, 'error');
+            return false;
+        }).then(function() {
+            $('#btnReloadTable').prop('disabled', false);
+        });
+    }
+
+    function loadUnits() {
+        var $filter = $('#filterUnit').prop('disabled', true).empty()
+            .append(new Option('Semua Unit Kerja', ''));
+        return window.apiRequestAll('/admin/unit-kerja', ['unit_kerja', 'units']).then(function(units) {
+            units.forEach(function(unit) {
+                var id = unit.id || unit.id_unit_kerja;
+                var name = unit.nama_unit || unit.nama_unit_kerja || unit.nama || unit.name;
+                if (id != null && name) $filter.append(new Option(name, id));
+            });
+            $filter.prop('disabled', false).removeAttr('title');
+        }).catch(function(error) {
+            $filter.prop('disabled', false);
+            Swal.fire('Unit Kerja Gagal Dimuat', error.message, 'error');
+        });
+    }
+
+    $('#filterJenis, #filterStatus, #filterUnit').on('change', render);
     $('#btnResetFilter').on('click', function() {
-        $('#filterUnit').val('');
-        $('#filterJenis').val('');
-        $('#filterStatus').val('');
-        renderData();
+        $('#filterUnit, #filterJenis, #filterStatus').val('');
+        render();
     });
-
-    // Modal Detail Izin
+    $('#btnReloadTable').on('click', load);
     $(document).on('click', '.btn-detail-izin', function() {
-        var id = $(this).data('id');
-        var item = dataIzin.find(x => x.id === id);
+        var item = records.find(function(row) {
+            return String(row.id || row.id_pengajuan_izin) === String($(this).data('id'));
+        }.bind(this));
         if (!item) return;
-
-        $('#modalNama').text(item.nama);
-        $('#modalNimInstansi').text(item.nim + " - " + item.instansi);
-        $('#modalUnit').text(item.unitNama);
-        $('#modalPembimbing').text(item.pembimbing);
-        $('#modalJenis').html(item.jenis === 'Sakit' ? '<span class="badge bg-danger">Sakit</span>' : '<span class="badge bg-info text-dark">Izin</span>');
-        $('#modalPeriode').text(item.tglMulai + " s/d " + item.tglSelesai + " (" + item.durasi + " Hari)");
-        $('#modalAlasan').text(item.alasan);
-        $('#modalStatus').html(item.status === 'Disetujui' ? '<span class="badge bg-success">Disetujui oleh ' + item.disetujuiOleh + '</span>' : '<span class="badge bg-warning text-dark">Menunggu Persetujuan</span>');
-        $('#modalCatatan').text(item.catatanPersetujuan);
-
-        if (item.fileBukti) {
-            $('#modalBuktiNama').text(item.fileBukti);
+        var person = participant(item);
+        $('#modalNama').text(person.name);
+        $('#modalNimInstansi').text(person.nim + ' - ' + person.school);
+        $('#modalUnit').text(person.unit);
+        $('#modalPembimbing').text('Pembimbing: ' + person.mentor);
+        $('#modalJenis').text(item.jenis || '-');
+        $('#modalPeriode').text('(' + formatTanggal(item.tanggal_mulai) + ' s/d ' +
+            formatTanggal(item.tanggal_selesai) + ')');
+        $('#modalAlasan').text(item.keterangan || '-');
+        $('#modalStatus').text(item.status || '-');
+        $('#modalCatatan').text(item.catatan_pembimbing || '-');
+        var file = item.file_surat_url || item.file_surat;
+        if (file) {
+            $('#modalBuktiNama').text(file);
             $('#modalBuktiBox').show();
             $('#modalNoBukti').hide();
         } else {
             $('#modalBuktiBox').hide();
             $('#modalNoBukti').show();
         }
-
-        var modalEl = document.getElementById('modalDetailIzin');
-        if (modalEl) {
-            var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-            modal.show();
-        }
+        var modal = document.getElementById('modalDetailIzin');
+        if (modal) bootstrap.Modal.getOrCreateInstance(modal).show();
     });
-
-    // Intervensi Setujui Izin oleh Admin
-    $(document).on('click', '.btn-approve-admin', function() {
-        var id = $(this).data('id');
-        var item = dataIzin.find(x => x.id === id);
-        if (!item) return;
-
-        Swal.fire({
-            title: 'Setujui Pengajuan Izin?',
-            html: `Setujui pengajuan ${item.jenis} atas nama <b>${item.nama}</b>?<br><small class="text-muted">Tindakan ini sebagai administrator dinas jika pembimbing berhalangan.</small>`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#28a745',
-            confirmButtonText: 'Ya, Setujui',
-            cancelButtonText: 'Batal'
-        }).then(function(res) {
-            if (res.isConfirmed) {
-                item.status = 'Disetujui';
-                item.disetujuiOleh = 'Administrator Dinas';
-                item.catatanPersetujuan = 'Disetujui melalui intervensi Administrator.';
-                renderData();
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil Disetujui!',
-                    text: 'Pengajuan izin telah disetujui.',
-                    timer: 1800,
-                    showConfirmButton: false
-                });
-            }
-        });
-    });
+    loadUnits();
+    load();
 });

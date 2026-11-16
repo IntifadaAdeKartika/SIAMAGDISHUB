@@ -117,6 +117,40 @@ window.masterPembimbing = [
   { id: 12, nama: "Drs. Joko", unitId: 12 }
 ];
 
+window.masterUnitKerja.forEach(function(unit) {
+  unit.id_unit_kerja = unit.id;
+  unit.kode_unit = unit.kode;
+  unit.nama_unit = unit.nama;
+  unit.id_induk = unit.parentId;
+  unit.status = "aktif";
+});
+
+window.masterPeserta.forEach(function(peserta) {
+  peserta.id_peserta_magang = peserta.id;
+  peserta.id_unit_kerja = peserta.unitId;
+  peserta.asal_sekolah_kampus = peserta.instansi;
+  peserta.status = peserta.status_peserta;
+  peserta.pengguna = {
+    username: peserta.nim,
+    nama_lengkap: peserta.nama,
+    no_hp: peserta.no_hp,
+    status: "aktif"
+  };
+});
+
+window.masterPembimbing.forEach(function(pembimbing) {
+  pembimbing.id_pembimbing = pembimbing.id;
+  pembimbing.id_unit_kerja = pembimbing.unitId;
+  pembimbing.nip = pembimbing.nip || "";
+  pembimbing.jabatan = pembimbing.jabatan || "Pembimbing Lapangan";
+  pembimbing.status = "aktif";
+  pembimbing.pengguna = {
+    nama_lengkap: pembimbing.nama,
+    username: pembimbing.nip || "",
+    status: "aktif"
+  };
+});
+
 window.getMasterUnit = function(id) {
   return window.masterUnitKerja.find(function(unit) {
     return unit.id == id;

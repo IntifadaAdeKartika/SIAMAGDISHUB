@@ -62,6 +62,9 @@
             </a>
 
             <div class="menu-label mt-3">Lainnya</div>
+            <a href="dokumen.html">
+                <i class="fas fa-folder-open"></i> Arsip Dokumen Magang
+            </a>
             <a href="laporan.html">
                 <i class="fas fa-file-export"></i> Laporan
             </a>
@@ -90,14 +93,14 @@
             <div class="topbar-right">
                 <button class="btn-notif" id="btnNotif">
                     <i class="far fa-bell"></i>
-                    <span class="notif-badge">3</span>
+                    <span class="notif-badge" style="display:none;"></span>
                 </button>
                 <div class="dropdown user-dropdown">
                     <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
-                        <div class="user-avatar" id="userInitial">A</div>
+                        <div class="user-avatar" id="userInitial">-</div>
                         <div class="d-none d-sm-block">
-                            <div class="fw-semibold small" id="userName">Admin</div>
-                            <div class="text-muted" style="font-size:0.75rem;" id="userRole">Administrator</div>
+                            <div class="fw-semibold small" id="userName">Memuat...</div>
+                            <div class="text-muted" style="font-size:0.75rem;" id="userRole">Memuat...</div>
                         </div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -133,7 +136,7 @@
                                 <i class="fas fa-user-tie"></i>
                             </div>
                             <div class="stat-info">
-                                <h3 id="totalPembimbing">12</h3>
+                                <h3 id="totalPembimbing">0</h3>
                                 <p>Total Pembimbing</p>
                             </div>
                         </div>
@@ -146,7 +149,7 @@
                                 <i class="fas fa-check-circle"></i>
                             </div>
                             <div class="stat-info">
-                                <h3 id="totalAktif">12</h3>
+                                <h3 id="totalAktif">0</h3>
                                 <p>Pembimbing Aktif</p>
                             </div>
                         </div>
@@ -159,7 +162,7 @@
                                 <i class="fas fa-building"></i>
                             </div>
                             <div class="stat-info">
-                                <h3 id="totalUnitTerisi">12 / 12</h3>
+                                <h3 id="totalUnitTerisi">0 / 0</h3>
                                 <p>Unit Kerja Terwakili</p>
                             </div>
                         </div>
@@ -209,6 +212,7 @@
             <form id="formPembimbing" autocomplete="off">
                 <div class="modal-body">
                     <input type="hidden" id="pembimbingId" name="id">
+                    <input type="hidden" id="usernamePembimbing" name="username">
 
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -220,36 +224,24 @@
                         <div class="col-md-6">
                             <label class="form-label">Nama Lengkap & Gelar <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="namaPembimbing" name="nama_lengkap" 
-                                   placeholder="Contoh: Adi, S.T." required>
+                                   placeholder="Masukkan nama lengkap" required maxlength="100">
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">Jabatan Struktural / Fungsional <span class="text-danger">*</span></label>
+                            <label class="form-label">Jabatan Struktural / Fungsional</label>
                             <input type="text" class="form-control" id="jabatanPembimbing" name="jabatan" 
-                                   placeholder="Contoh: Pembimbing Lapangan" required>
+                                   placeholder="Contoh: Pembimbing Lapangan" maxlength="50">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">No. Handphone <span class="text-danger">*</span></label>
+                            <label class="form-label">No. Handphone</label>
                             <input type="tel" class="form-control" id="noHpPembimbing" name="no_hp" 
-                                   placeholder="Contoh: 081234567890" required>
+                                   placeholder="Contoh: 081234567890" maxlength="15">
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label">Bidang / Seksi yang Diwakili <span class="text-danger">*</span></label>
                             <select class="form-select" id="idUnitKerjaPembimbing" name="id_unit_kerja" required>
                                 <option value="">-- Pilih Unit Kerja --</option>
-                                <option value="1">Sekretariat</option>
-                                <option value="2">Sub Bagian Umum Dan Kepegawaian</option>
-                                <option value="3">Sub Bagian Keuangan Dan Penyusunan Program</option>
-                                <option value="4">Bidang Angkutan</option>
-                                <option value="5">Seksi Angkutan Orang</option>
-                                <option value="6">Seksi Angkutan Barang</option>
-                                <option value="7">Bidang Lalu Lintas, Sarana, Prasarana</option>
-                                <option value="8">Seksi Perparkiran</option>
-                                <option value="9">Seksi Manajemen Rekayasa Lalu Lintas</option>
-                                <option value="10">Seksi Penerangan Jalan Umum</option>
-                                <option value="11">Bidang Pengendalian Operasional Lalu Lintas & Angkutan Jalan</option>
-                                <option value="12">UPT Pengujian Kendaraan Bermotor</option>
                             </select>
                             <small class="text-muted"><i class="fas fa-exclamation-triangle me-1 text-warning"></i>1 Bidang hanya dapat diwakili oleh 1 Pembimbing.</small>
                         </div>
@@ -260,7 +252,6 @@
                                 <option value="tidak aktif">Tidak Aktif</option>
                             </select>
                         </div>
-
                         <div class="col-md-6">
                             <label class="form-label">Tanggal Mulai Tugas</label>
                             <input type="date" class="form-control" id="tglMulaiTugas" name="tanggal_mulai_tugas">
@@ -271,10 +262,10 @@
                         </div>
 
                         <div class="col-12" id="boxPasswordPembimbing">
-                            <div class="p-2 border rounded" style="background:var(--bg-light); font-size:0.8rem;">
-                                <i class="fas fa-key me-1 text-primary"></i> <strong>Password Akun:</strong> 
-                                Default password untuk akun pembimbing baru adalah: <code>pembimbing123</code>.
-                            </div>
+                            <label class="form-label">Password Awal Akun <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="passwordPembimbing" name="password"
+                                   autocomplete="new-password" required>
+                            <small class="text-muted">Password akun pengguna, disimpan sebagai hash oleh sistem.</small>
                         </div>
                     </div>
                 </div>
@@ -314,7 +305,7 @@
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script src="../assets/js/app.js"></script>
-<script src="../assets/js/masterData.js"></script>
+<script src="../assets/js/admin-api.js"></script>
 <script src="../assets/js/admin-pembimbing.js"></script>
 
 </body>

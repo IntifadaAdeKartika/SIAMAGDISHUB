@@ -43,13 +43,11 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.06);
             transform: translateY(-2px);
         }
-        .monitoring-card-list > .card-body {
-            padding: 1rem !important;
-        }
         .bimbingan-card .card-body {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            align-items: flex-start;
+            gap: 0.85rem;
             padding: 1rem !important;
         }
         .bimbingan-card-header {
@@ -58,13 +56,14 @@
             justify-content: space-between;
             gap: 0.75rem;
             min-width: 0;
+            width: 100%;
         }
         .bimbingan-card-identity {
             min-width: 0;
         }
         .bimbingan-card-identity h6 {
-            margin: 0 0 0.25rem;
-            font-size: 0.95rem;
+            margin: 0 0 0.3rem;
+            font-size: 1rem;
             font-weight: 700;
             color: #172033;
             overflow-wrap: anywhere;
@@ -72,7 +71,7 @@
         .bimbingan-card-identity p {
             margin: 0;
             color: #64748b;
-            font-size: 0.78rem;
+            font-size: 0.82rem;
             line-height: 1.45;
             overflow-wrap: anywhere;
         }
@@ -80,48 +79,51 @@
             flex: 0 0 auto;
             display: inline-flex;
             align-items: center;
-            gap: 0.35rem;
-            padding: 0.3rem 0.5rem;
+            gap: 0.25rem;
+            padding: 0.28rem 0.5rem;
             border: 1px solid #dbeafe;
-            border-radius: 7px;
+            border-radius: 999px;
             background: #eff6ff;
             color: #1d4ed8;
-            font-size: 0.72rem;
+            font-size: 0.68rem;
             font-weight: 600;
             white-space: nowrap;
         }
         .bimbingan-card-activity {
-            display: grid;
+            display: flex;
+            flex-wrap: wrap;
             gap: 0.5rem;
-            padding-top: 0.75rem;
+            width: 100%;
+            padding-top: 0.7rem;
             border-top: 1px solid #eef2f7;
         }
-        .bimbingan-card-activity-row {
-            display: grid;
-            grid-template-columns: minmax(100px, 1fr) minmax(0, 1.5fr) minmax(48px, 0.45fr);
+        .monitoring-status {
+            display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
-            font-size: 0.8rem;
-        }
-        .bimbingan-card-activity-label {
-            color: #64748b;
-            white-space: nowrap;
-        }
-        .bimbingan-card-activity-label i {
-            width: 1rem;
-            color: var(--primary);
-        }
-        .bimbingan-card-activity-row strong {
-            color: #334155;
+            gap: 0.4rem;
+            max-width: 100%;
+            padding: 0.38rem 0.55rem;
+            border-radius: 7px;
+            font-size: 0.75rem;
             font-weight: 600;
-            text-align: left;
+            line-height: 1.3;
             overflow-wrap: anywhere;
         }
-        .bimbingan-card-time {
+        .monitoring-status-success {
+            background: #ecfdf3;
+            color: #15803d;
+        }
+        .monitoring-status-danger {
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+        .monitoring-status-pending {
+            background: #fffbeb;
+            color: #b45309;
+        }
+        .monitoring-status-muted {
+            background: #f1f5f9;
             color: #64748b;
-            font-size: 0.75rem;
-            white-space: nowrap;
-            text-align: right;
         }
         #tab-lintas .card-header {
             flex-wrap: wrap;
@@ -177,17 +179,9 @@
             min-height: 36px;
         }
         @media (max-width: 575.98px) {
-            .monitoring-card-list > .card-body {
-                padding: 0.75rem !important;
-            }
             .bimbingan-card .card-body {
-                gap: 0.75rem;
+                gap: 0.7rem;
                 padding: 0.875rem !important;
-            }
-            .bimbingan-card-activity-row {
-                grid-template-columns: minmax(88px, 0.9fr) minmax(0, 1.2fr) minmax(42px, 0.45fr);
-                gap: 0.35rem;
-                font-size: 0.75rem;
             }
             .nav-tabs {
                 flex-wrap: nowrap;
@@ -254,6 +248,9 @@
             </a>
 
             <div class="menu-label mt-3">Lainnya</div>
+            <a href="dokumen.html">
+                <i class="fas fa-folder-open"></i> Arsip Dokumen Magang
+            </a>
             <a href="laporan.html">
                 <i class="fas fa-file-export"></i> Laporan
             </a>
@@ -279,14 +276,14 @@
             <div class="topbar-right">
                 <button class="btn-notif" id="btnNotif">
                     <i class="far fa-bell"></i>
-                    <span class="notif-badge">3</span>
+                    <span class="notif-badge" style="display:none;"></span>
                 </button>
                 <div class="dropdown user-dropdown">
                     <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
-                        <div class="user-avatar" id="userInitial">A</div>
+                        <div class="user-avatar" id="userInitial">-</div>
                         <div class="d-none d-sm-block">
-                            <div class="fw-semibold small" id="userName">Adi, S.T.</div>
-                            <div class="text-muted" style="font-size:0.75rem;" id="userRole">Seksi Angkutan Orang</div>
+                            <div class="fw-semibold small" id="userName">Memuat...</div>
+                            <div class="text-muted" style="font-size:0.75rem;" id="userRole">Memuat jabatan...</div>
                         </div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -339,7 +336,7 @@
                     </div>
 
                     <!-- Cards Anak Bimbingan Realtime -->
-                    <div class="card table-card monitoring-card-list mb-4">
+                    <div class="card table-card mb-4">
                         <div class="card-body">
                             <div class="empty-state py-5" id="emptyInternalMonitoring" style="display:none;">
                                 <i class="fas fa-user-graduate"></i>
@@ -363,9 +360,6 @@
                                     <label class="form-label text-muted small mb-1">Unit Kerja</label>
                                     <select class="form-select form-select-sm" id="filterUnitLintas">
                                         <option value="">Semua Unit Kerja Dishub</option>
-                                        <option value="Sub Bagian Umum Dan Kepegawaian">Sub Bagian Umum Dan Kepegawaian (UMPEG)</option>
-                                        <option value="Seksi Angkutan Orang">Seksi Angkutan Orang (ANGOR)</option>
-                                        <option value="UPT Pengujian Kendaraan Bermotor">UPT Pengujian Kendaraan Bermotor (UPT-PKB)</option>
                                     </select>
                                 </div>
                                 <div class="col-md-4 col-sm-6">
@@ -425,6 +419,21 @@
     </div><!-- /.main-content -->
 </div><!-- /.wrapper -->
 
+<div class="modal fade" id="modalDetailMonitoring" tabindex="-1" aria-labelledby="modalDetailMonitoringLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalDetailMonitoringLabel">Detail Peserta Magang</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="modal-body" id="detailMonitoringBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Scripts -->
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -432,8 +441,6 @@
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script src="../assets/js/app.js"></script>
-<script src="../assets/js/masterData.js"></script>
-<script src="../assets/js/pembimbing-demo-data.js"></script>
 <script src="../assets/js/pembimbing-monitoring.js"></script>
 
 </body>

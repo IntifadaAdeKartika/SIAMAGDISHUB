@@ -48,6 +48,9 @@
             </a>
 
             <div class="menu-label mt-3">Lainnya</div>
+            <a href="dokumen.html">
+                <i class="fas fa-folder-open"></i> Arsip Dokumen Magang
+            </a>
             <a href="riwayat.html">
                 <i class="fas fa-history"></i> Riwayat
             </a>
@@ -72,15 +75,15 @@
             </div>
             <div class="topbar-right">
                 <button class="btn-notif" id="btnNotif">
-                    <i class="fas fa-bell"></i>
-                    <span class="notif-badge">2</span>
+                    <i class="far fa-bell"></i>
+                    <span class="notif-badge" style="display:none;"></span>
                 </button>
                 <div class="dropdown user-dropdown">
                     <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
-                        <div class="user-avatar" id="userInitial">P</div>
+                        <div class="user-avatar" id="userInitial">-</div>
                         <div class="d-none d-sm-block">
-                            <div style="font-weight:600; line-height:1.2;" id="userName">Peserta Magang</div>
-                            <div style="font-size:0.72rem; color:#999;" id="userRole">Peserta Magang</div>
+                            <div style="font-weight:600; line-height:1.2;" id="userName">Memuat...</div>
+                            <div style="font-size:0.72rem; color:#999;" id="userRole">Memuat...</div>
                         </div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -171,9 +174,9 @@
                             <label class="form-label text-muted small mb-1">Filter Status Verifikasi</label>
                             <select class="form-select form-select-sm" id="filterStatusLogbook">
                                 <option value="">Semua Status</option>
-                                <option value="diverifikasi">Diverifikasi</option>
-                                <option value="menunggu">Menunggu</option>
-                                <option value="ditolak">Perlu Revisi / Ditolak</option>
+                                <option value="approved">Diverifikasi</option>
+                                <option value="pending">Menunggu</option>
+                                <option value="rejected">Ditolak / Perlu Revisi</option>
                             </select>
                         </div>
                         <div class="col-md-4 col-sm-6">
@@ -203,8 +206,7 @@
                                     <th width="5%">No</th>
                                     <th width="15%">Tanggal & Waktu</th>
                                     <th>Deskripsi Kegiatan</th>
-                                    <th>Output / Hasil</th>
-                                    <th width="10%">Lampiran</th>
+                                    <th width="10%">Foto Kegiatan</th>
                                     <th width="15%">Status & Paraf</th>
                                     <th width="12%" class="text-center th-action text-nowrap">Aksi</th>
                                 </tr>
@@ -232,6 +234,10 @@
             <form id="formLogbook" autocomplete="off">
                 <div class="modal-body">
                     <input type="hidden" id="logbookId" name="id">
+                    <input type="hidden" id="idAbsensiLogbook" name="id_absensi">
+                    <div class="alert alert-info py-2 small" id="absensiLogbookNotice" style="display:none;">
+                        Logbook harus dihubungkan dengan record absensi (masuk) pada tanggal kegiatan. Lakukan check-in terlebih dahulu.
+                    </div>
 
                     <div class="row g-3">
                         <div class="col-md-4">
@@ -240,31 +246,26 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Waktu Mulai <span class="text-danger">*</span></label>
-                            <input type="time" class="form-control" id="waktuMulai" name="waktu_mulai" required value="08:00">
+                            <input type="time" class="form-control" id="waktuMulai" name="jam_mulai" required value="08:00">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Waktu Selesai <span class="text-danger">*</span></label>
-                            <input type="time" class="form-control" id="waktuSelesai" name="waktu_selesai" required value="15:00">
+                            <input type="time" class="form-control" id="waktuSelesai" name="jam_selesai" required value="15:00">
                         </div>
 
                         <div class="col-12">
                             <label class="form-label">Deskripsi Pekerjaan / Kegiatan <span class="text-danger">*</span></label>
-                            <textarea class="form-control" id="deskripsiKegiatan" name="deskripsi_kegiatan" rows="3" 
+                            <textarea class="form-control" id="deskripsiKegiatan" name="kegiatan" rows="3"
                                       placeholder="Uraikan detail pekerjaan yang Anda lakukan hari ini..." required></textarea>
                             <small class="text-muted">Contoh: Memperbaiki fitur deteksi lokasi untuk absensi.</small>
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label">Hasil / Output Kegiatan <span class="text-danger">*</span></label>
-                            <textarea class="form-control" id="hasilKegiatan" name="hasil_kegiatan" rows="2" 
-                                      placeholder="Apa hasil atau output dari kegiatan tersebut..." required></textarea>
+                            <label class="form-label">Foto Kegiatan (Opsional)</label>
+                            <input type="file" class="form-control" id="fotoKegiatan" name="foto_kegiatan" accept="image/*">
+                            <small class="text-muted">Unggah foto kegiatan bila diperlukan.</small>
                         </div>
 
-                        <div class="col-12">
-                            <label class="form-label">Upload Foto / Bukti Dokumentasi Kegiatan</label>
-                            <input type="file" class="form-control" id="fileLampiran" accept="image/*,.pdf">
-                            <small class="text-muted">Format: JPG, PNG, atau PDF (Maks. 5MB).</small>
-                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -303,8 +304,6 @@
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script src="../assets/js/app.js"></script>
-<script src="../assets/js/masterData.js"></script>
-<script src="../assets/js/pembimbing-demo-data.js"></script>
 <script src="../assets/js/peserta-logbook.js"></script>
 
 </body>

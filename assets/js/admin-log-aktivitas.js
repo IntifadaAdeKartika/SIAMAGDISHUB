@@ -1,171 +1,121 @@
-/* Riwayat aktivitas seluruh pengguna (Admin, Pembimbing, Peserta)
-mencakup login, presensi, verifikasi logbook, CRUD data master, dan ekspor data. */
-
+/* Audit trail Admin dari backend. */
 $(document).ready(function() {
-
-    // Log aktivitas sistem audit trail
-    var dataLogAktivitas = [
-        {
-            id: 1,
-            waktu: "2026-10-14 07:32:20",
-            pengguna: window.masterPeserta[0].nama,
-            role: "peserta_magang",
-            aktivitas: "Presensi Masuk",
-            modul: "Presensi",
-            keterangan: "Check-in presensi masuk dalam radius 18 meter",
-            ipAddress: "192.168.1.105",
-            tipeBadge: "bg-success"
-        },
-        {
-            id: 2,
-            waktu: "2026-10-14 08:30:12",
-            pengguna: window.masterPembimbing[4].nama,
-            role: "pembimbing",
-            aktivitas: "Verifikasi Presensi",
-            modul: "Absensi Bimbingan",
-            keterangan: "Paraf presensi masuk Intifada Ade Kartika",
-            ipAddress: "192.168.1.42",
-            tipeBadge: "bg-primary"
-        },
-        {
-            id: 3,
-            waktu: "2026-10-14 09:00:15",
-            pengguna: "Admin Dishub",
-            role: "admin",
-            aktivitas: "Monitoring Absensi",
-            modul: "Absensi Peserta",
-            keterangan: "Melihat daftar presensi peserta magang hari ini",
-            ipAddress: "192.168.1.10",
-            tipeBadge: "bg-dark"
-        }
-    ];
-
+    var records = [];
     var table = $('#tabelLogAktivitas').DataTable({
         responsive: true,
         language: {
-            search: "Cari Log:",
-            lengthMenu: "Tampilkan _MENU_ data",
-            zeroRecords: "Log aktivitas tidak ditemukan",
-            info: "Menampilkan _START_ s/d _END_ dari _TOTAL_ log",
-            infoEmpty: "Menampilkan 0 log",
-            paginate: { first: "Awal", last: "Akhir", next: "→", previous: "←" }
+            search: 'Cari Log:',
+            lengthMenu: 'Tampilkan _MENU_ data',
+            zeroRecords: 'Log aktivitas tidak ditemukan',
+            info: 'Menampilkan _START_ s/d _END_ dari _TOTAL_ log',
+            infoEmpty: 'Menampilkan 0 log',
+            paginate: { first: 'Awal', last: 'Akhir', next: '→', previous: '←' }
         },
-        order: [[1, 'desc']]
+        order: [[1, 'desc']],
+        columnDefs: [{ orderable: false, targets: [6] }]
     });
 
-    function renderData() {
-        table.clear();
+    function escapeHtml(value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, function(character) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
+        });
+    }
 
+    function normalize(item) {
+        var user = item.pengguna && typeof item.pengguna === 'object'
+            ? item.pengguna
+            : (item.user && typeof item.user === 'object' ? item.user : {});
+        var role = item.role || user.role || user.peran || 'peserta_magang';
+        if (role && typeof role === 'object') {
+            role = role.slug || role.name || role.nama_role || role.nama || 'peserta_magang';
+        }
+        return Object.assign({}, item, {
+            id: item.id,
+            waktu: item.dibuat_pada || item.created_at || item.waktu || item.timestamp || '',
+            pengguna: item.nama_pengguna || item.pengguna_nama || user.nama_lengkap || user.nama || user.name || '-',
+            role: String(role).toLowerCase(),
+            aktivitas: item.aksi || item.aktivitas || item.action || item.event || '-',
+            keterangan: item.deskripsi || item.keterangan || item.description || item.message || '-',
+            ipAddress: item.ip_address || item.ip || item.client_ip || '-',
+            userAgent: item.user_agent || item.userAgent || '-'
+        });
+    }
+
+    function renderTable() {
         var roleFilter = $('#filterRole').val();
-
-        dataLogAktivitas.forEach(function(item, index) {
-            if (roleFilter && item.role !== roleFilter) return;
-
-            var badgeRole = 'bg-secondary';
-            var roleText = 'Peserta Magang';
-            if (item.role === 'admin') {
-                badgeRole = 'bg-dark';
-                roleText = 'Administrator';
-            } else if (item.role === 'pembimbing') {
-                badgeRole = 'bg-primary';
-                roleText = 'Pembimbing';
-            }
-
-            var btnDetail = `
-                <button class="btn btn-sm btn-outline-info btn-detail-audit" data-id="${item.id}" title="Detail Audit Trail">
-                    <i class="fas fa-search-plus"></i>
-                </button>
-            `;
-
+        var filtered = records.filter(function(item) { return !roleFilter || item.role === roleFilter; });
+        table.clear();
+        filtered.forEach(function(item, index) {
+            var roleLabel = item.role === 'admin' ? 'Administrator' :
+                (item.role === 'pembimbing' ? 'Pembimbing' : 'Peserta Magang');
+            var roleClass = item.role === 'admin' ? 'bg-dark' : (item.role === 'pembimbing' ? 'bg-primary' : 'bg-secondary');
             table.row.add([
                 index + 1,
-                `<span class="font-monospace small">${item.waktu}</span>`,
-                `<div>
-                    <span class="fw-semibold text-dark">${item.pengguna}</span>
-                    <div><span class="badge ${badgeRole}" style="font-size:0.65rem;">${roleText}</span></div>
-                 </div>`,
-                `<span class="badge ${item.tipeBadge}">${item.aktivitas}</span>`,
-                `<span class="small fw-semibold text-secondary">${item.modul}</span>`,
-                `<div class="small text-muted text-truncate" style="max-width: 280px;" title="${item.keterangan}">${item.keterangan}</div>`,
-                `<span class="badge bg-light text-dark font-monospace border">${item.ipAddress}</span>`,
-                btnDetail
+                '<span class="font-monospace small">' + escapeHtml(formatTanggalJam(item.waktu)) + '</span>',
+                '<div><span class="fw-bold">' + escapeHtml(item.pengguna) + '</span><div><span class="badge ' + roleClass + '">' + roleLabel + '</span></div></div>',
+                '<span class="badge bg-primary">' + escapeHtml(item.aktivitas) + '</span>',
+                '<div class="small text-muted text-truncate" style="max-width:280px" title="' + escapeHtml(item.keterangan) + '">' + escapeHtml(item.keterangan) + '</div>',
+                '<span class="badge bg-light text-dark font-monospace border">' + escapeHtml(item.ipAddress) + '</span>',
+                '<button class="btn btn-sm btn-outline-info btn-detail-audit" data-id="' + escapeHtml(item.id) + '" title="Detail Audit"><i class="fas fa-search-plus"></i></button>'
             ]);
         });
-
         table.draw();
-        $('#statTotalAudit').text(dataLogAktivitas.length);
+        $('#statTotalAudit').text(filtered.length);
     }
 
-    renderData();
+    function loadAudit() {
+        $('#btnExportLog').prop('disabled', true);
+        window.apiSetTableState(table, 'loading');
+        return window.apiRequestAll('/admin/log-aktivitas', ['audit', 'logs', 'activities']).then(function(rows) {
+            records = rows.map(normalize);
+            renderTable();
+            window.apiSetTableState(table, 'loaded');
+            $('#btnExportLog').prop('disabled', false);
+            return true;
+        }).catch(function(error) {
+            window.apiSetTableState(table, 'error');
+            Swal.fire('Log Aktivitas Gagal Dimuat', error.message, 'error');
+            return false;
+        }).then(function() {
+            $('#btnExportLog').prop('disabled', records.length === 0);
+        });
+    }
 
-    $('#filterRole').on('change', function() {
-        renderData();
-    });
-
-    // Detail Audit Trail
+    $('#filterRole').on('change', renderTable);
     $(document).on('click', '.btn-detail-audit', function() {
-        var id = $(this).data('id');
-        var item = dataLogAktivitas.find(x => x.id === id);
+        var item = records.find(function(row) { return String(row.id) === String($(this).data('id')); }.bind(this));
         if (!item) return;
-
         Swal.fire({
-            title: '<i class="fas fa-shield-alt text-primary me-2"></i>Detail Audit Trail Log',
-            html: `
-                <div class="text-start bg-light p-3 rounded small">
-                    <p class="mb-1"><b>Waktu Kejadian:</b> ${item.waktu} WIB</p>
-                    <p class="mb-1"><b>Akun Pengguna:</b> ${item.pengguna} (${item.role})</p>
-                    <p class="mb-1"><b>Aksi / Aktivitas:</b> ${item.aktivitas}</p>
-                    <p class="mb-1"><b>Modul Sistem:</b> ${item.modul}</p>
-                    <p class="mb-1"><b>Alamat IP Client:</b> ${item.ipAddress}</p>
-                    <hr class="my-2">
-                    <p class="mb-0"><b>Deskripsi Lengkap:</b><br>${item.keterangan}</p>
-                </div>
-            `,
-            confirmButtonText: 'Tutup',
-            confirmButtonColor: '#334EAC'
+            title: 'Detail Audit Trail',
+            html: '<div class="text-start bg-light p-3 rounded small">' +
+                '<p><b>Waktu:</b> ' + escapeHtml(formatTanggalJam(item.waktu)) + '</p>' +
+                '<p><b>Pengguna:</b> ' + escapeHtml(item.pengguna) + ' (' + escapeHtml(item.role) + ')</p>' +
+                '<p><b>Aktivitas:</b> ' + escapeHtml(item.aktivitas) + '</p>' +
+                '<p><b>IP Address:</b> ' + escapeHtml(item.ipAddress) + '</p>' +
+                '<p><b>User Agent:</b><br>' + escapeHtml(item.userAgent) + '</p>' +
+                '<hr><p class="mb-0"><b>Keterangan:</b><br>' + escapeHtml(item.keterangan) + '</p></div>',
+            confirmButtonText: 'Tutup'
         });
     });
 
-    function escapeCsv(value) {
-        var text = String(value == null ? '' : value).replace(/"/g, '""');
-        return '"' + text + '"';
-    }
-
-    // Export Log
     $('#btnExportLog').on('click', function() {
-        var roleFilter = $('#filterRole').val();
-        var rows = dataLogAktivitas.filter(function(item) {
-            return !roleFilter || item.role === roleFilter;
-        });
-        var csvRows = [
-            ['Waktu', 'Pengguna', 'Role', 'Aktivitas', 'Modul', 'Keterangan', 'IP Address']
-        ];
-
-        rows.forEach(function(item) {
-            csvRows.push([
-                item.waktu,
-                item.pengguna,
-                item.role,
-                item.aktivitas,
-                item.modul,
-                item.keterangan,
-                item.ipAddress
-            ]);
-        });
-
-        var csvContent = '\uFEFF' + csvRows.map(function(row) {
-            return row.map(escapeCsv).join(',');
-        }).join('\r\n');
-        var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        var url = URL.createObjectURL(blob);
+        var rows = records.filter(function(item) { return !$('#filterRole').val() || item.role === $('#filterRole').val(); });
+        var csv = [['Waktu', 'Pengguna', 'Role', 'Aktivitas', 'Keterangan', 'IP Address']]
+            .concat(rows.map(function(item) {
+                return [item.waktu, item.pengguna, item.role, item.aktivitas, item.keterangan, item.ipAddress];
+            }))
+            .map(function(row) {
+                return row.map(function(value) { return '"' + String(value == null ? '' : value).replace(/"/g, '""') + '"'; }).join(',');
+            }).join('\r\n');
+        var url = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }));
         var link = document.createElement('a');
         link.href = url;
         link.download = 'log_aktivitas_' + new Date().toISOString().slice(0, 10) + '.csv';
         document.body.appendChild(link);
         link.click();
         link.remove();
-        window.setTimeout(function() {
-            URL.revokeObjectURL(url);
-        }, 1000);
+        window.setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
     });
+
+    loadAudit();
 });

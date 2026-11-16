@@ -1,10 +1,55 @@
+// =====================================================================
+//  SIAMAG – Login Handler
+//  Fase 0: Integrasi autentikasi nyata dengan Laravel backend API
+// =====================================================================
+
+/** Base URL API Laravel – diekspos global agar bisa dipakai file JS lain */
+if (typeof window.API_BASE === 'undefined') {
+    window.API_BASE = 'http://localhost:8000/backend-api';
+}
+
+/** Peta redirect berdasarkan role yang dikembalikan API */
+var ROLE_REDIRECT = {
+    'admin':          'admin/dashboard.html',
+    'pembimbing':     'pembimbing/dashboard.html',
+    'peserta':        'peserta/dashboard.html',
+    'peserta_magang': 'peserta/dashboard.html',
+    'peserta magang': 'peserta/dashboard.html'
+};
+
 $(document).ready(function() {
 
-    // Toggle password
+    function readStoredUser() {
+        try {
+            return JSON.parse(localStorage.getItem('token') ? localStorage.getItem('user') : localStorage.getItem('siamag_user') || 'null');
+        } catch (error) {
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            localStorage.removeItem('siamag_user');
+            localStorage.removeItem('siamag_token');
+            return null;
+        }
+    }
+
+    // Jika sudah login (token masih ada), langsung redirect sesuai role
+    var existingToken = localStorage.getItem('token') || localStorage.getItem('siamag_token');
+    var existingUser  = readStoredUser();
+    if (existingToken && existingUser && ROLE_REDIRECT[String(existingUser.role || '').trim().toLowerCase()]) {
+        window.location.href = ROLE_REDIRECT[String(existingUser.role).trim().toLowerCase()];
+        return;
+    }
+
+    // ── Ingat saya: isi otomatis username jika pernah dicentang ──────
+    var savedUsername = localStorage.getItem('siamag_remember_user');
+    if (savedUsername) {
+        $('#username').val(savedUsername);
+        $('#rememberMe').prop('checked', true);
+    }
+
+    // ── Toggle visibilitas password ──────────────────────────────────
     window.togglePass = function() {
         var input = $('#password');
-        var icon = $('#iconEye');
-        
+        var icon  = $('#iconEye');
         if (input.attr('type') === 'password') {
             input.attr('type', 'text');
             icon.removeClass('fa-eye').addClass('fa-eye-slash');
@@ -14,102 +59,136 @@ $(document).ready(function() {
         }
     };
 
-    // Submit form login
+    // ── Submit form login ────────────────────────────────────────────
     $('#formLogin').on('submit', function(e) {
         e.preventDefault();
-        
-        var username = $.trim($('#username').val());
-        var password = $.trim($('#password').val());
 
-        // Validasi kosong
+        var username = $.trim($('#username').val());
+        var password = $('#password').val();
+
+        // Validasi input kosong
         if (username === '') {
             showError('Username tidak boleh kosong!');
             $('#username').focus();
             return;
         }
-        if (password === '') {
+        if ($.trim(password) === '') {
             showError('Password tidak boleh kosong!');
             $('#password').focus();
             return;
         }
 
-        // Loading state
+        // Tampilkan loading state pada tombol
         var btn = $('#btnLogin');
         btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Memproses...');
+        $('#alertError').addClass('d-none');
 
-        // diganti AJAX ke PHP backend
-        // $.ajax({
-        //     url: 'api/auth/login.php',
-        //     type: 'POST',
-        //     data: { username: username, password: password },
-        //     dataType: 'json',
-        //     success: function(res) {
-        //         if (res.status === 'success') {
-        //             // redirect sesuai role
-        //             window.location.href = res.redirect;
-        //         } else {
-        //             showError(res.message);
-        //             resetBtn();
-        //         }
-        //     },
-        //     error: function() {
-        //         showError('Terjadi kesalahan. Coba lagi nanti.');
-        //         resetBtn();
-        //     }
-        // });
+        // ── Panggil API Login ──────────────────────────────────────
+        fetch(window.API_BASE.replace(/\/$/, '') + '/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept':       'application/json'
+            },
+            body: JSON.stringify({ username: username, password: password })
+        })
+        .then(function(res) {
+            return res.text().then(function(body) {
+                var data = {};
+                if (body) {
+                    try {
+                        data = JSON.parse(body);
+                    } catch (error) {
+                        data = {};
+                    }
+                }
+                return { response: res, data: data };
+            });
+        })
+        .then(function(result) {
+            var response = result.response;
+            var payload = result.data;
+            var data = payload.data && typeof payload.data === 'object'
+                ? payload.data
+                : payload;
 
-        // Otentikasi akun demo (Admin, Pembimbing, Peserta Magang)
-        setTimeout(function() {
-            var accounts = {
-                'admin':       { pass: 'admin123',       role: 'admin',          redirect: 'admin/dashboard.html' },
-                'pembimbing':  { pass: 'pembimbing123',  role: 'pembimbing',     nama: window.masterPembimbing[4].nama, redirect: 'pembimbing/dashboard.html' },
-                'peserta':     { pass: 'peserta123',     role: 'peserta_magang', nama: window.masterPeserta[0].nama, redirect: 'peserta/dashboard.html' }
-            };
+            if (response.ok && typeof data.token === 'string' && data.token &&
+                data.user && typeof data.user === 'object' &&
+                ROLE_REDIRECT[String(data.user.role || '').trim().toLowerCase()]) {
+                // ── Simpan token & user ke localStorage ───────────
+                try {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('siamag_token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    localStorage.setItem('siamag_user', JSON.stringify(data.user));
 
-            var akun = accounts[username];
+                    // Ingat saya: simpan atau hapus username
+                    if ($('#rememberMe').is(':checked')) {
+                        localStorage.setItem('siamag_remember_user', username);
+                    } else {
+                        localStorage.removeItem('siamag_remember_user');
+                    }
+                } catch (error) {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    localStorage.removeItem('siamag_token');
+                    localStorage.removeItem('siamag_user');
+                    showError('Browser tidak dapat menyimpan sesi login. Periksa pengaturan penyimpanan.');
+                    resetBtn();
+                    return;
+                }
 
-            if (akun && akun.pass === password) {
-                // Inisialisasi sesi pengguna
-                sessionStorage.setItem('user', JSON.stringify({
-                    username: username,
-                    role: akun.role,
-                    nama: akun.nama || username.charAt(0).toUpperCase() + username.slice(1)
-                }));
+                var redirectUrl = ROLE_REDIRECT[String(data.user.role).trim().toLowerCase()];
 
                 Swal.fire({
-                    icon: 'success',
-                    title: 'Login Berhasil!',
-                    text: 'Mengalihkan ke dashboard...',
-                    timer: 1500,
+                    icon:              'success',
+                    title:             'Login Berhasil!',
+                    text:              'Mengalihkan ke dashboard...',
+                    timer:             1500,
                     showConfirmButton: false,
                     allowOutsideClick: false
                 }).then(function() {
-                    window.location.href = akun.redirect;
+                    window.location.href = redirectUrl;
                 });
-            } else {
-                showError('Username atau password salah!');
-            }
 
+            } else if (response.status === 401 || response.status === 422) {
+                // Kredensial salah atau validasi gagal
+                showError(payload.message || data.message || 'Username atau password salah!');
+                resetBtn();
+            } else if (response.ok) {
+                showError('Respons login tidak memuat token, data pengguna, atau role yang valid.');
+                resetBtn();
+            } else {
+                // Respons tidak terduga dari server
+                showError(payload.message || 'Terjadi kesalahan pada server (HTTP ' +
+                    response.status + '). Coba lagi nanti.');
+                resetBtn();
+            }
+        })
+        .catch(function() {
+            // Koneksi gagal / server mati / CORS error
+            showError('Tidak dapat terhubung ke server. Pastikan backend sudah berjalan.');
             resetBtn();
-        }, 1200);
-        // END SIMULASI 
+        });
     });
 
+    // ── Helper: tampilkan pesan error ───────────────────────────────
     function showError(msg) {
         $('#alertError').removeClass('d-none');
         $('#alertMsg').text(msg);
     }
 
+    // ── Helper: reset tombol login ──────────────────────────────────
     function resetBtn() {
         $('#btnLogin').prop('disabled', false).html('<i class="fas fa-sign-in-alt me-1"></i> Masuk');
     }
 
-    // Sembunyikan alert pas user ngetik lagi
+    // Sembunyikan alert saat user mulai mengetik kembali
     $('#username, #password').on('input', function() {
         $('#alertError').addClass('d-none');
     });
 
-    // Quick demo role autofill
+    // ── Quick-fill tombol demo role (hapus di production jika perlu) ─
     $('.btn-quick-role').on('click', function() {
         var user = $(this).data('user');
         var pass = $(this).data('pass');

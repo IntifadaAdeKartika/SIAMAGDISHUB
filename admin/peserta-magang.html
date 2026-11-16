@@ -62,6 +62,9 @@
             </a>
 
             <div class="menu-label mt-3">Lainnya</div>
+            <a href="dokumen.html">
+                <i class="fas fa-folder-open"></i> Arsip Dokumen Magang
+            </a>
             <a href="laporan.html">
                 <i class="fas fa-file-export"></i> Laporan
             </a>
@@ -89,15 +92,15 @@
             </div>
             <div class="topbar-right">
                 <button class="btn-notif" id="btnNotif">
-                    <i class="fas fa-bell"></i>
-                    <span class="notif-badge"> </span>
+                    <i class="far fa-bell"></i>
+                    <span class="notif-badge" style="display:none;"></span>
                 </button>
                 <div class="dropdown user-dropdown">
                     <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
-                        <div class="user-avatar" id="userInitial">A</div>
+                        <div class="user-avatar" id="userInitial">-</div>
                         <div class="d-none d-sm-block">
-                            <div style="font-weight:600; line-height:1.2;" id="userName">Admin</div>
-                            <div style="font-size:0.72rem; color:#999;" id="userRole">Administrator</div>
+                            <div style="font-weight:600; line-height:1.2;" id="userName">Memuat...</div>
+                            <div style="font-size:0.72rem; color:#999;" id="userRole">Memuat...</div>
                         </div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -140,18 +143,6 @@
                             <label class="form-label text-muted small mb-1">Penempatan</label>
                             <select class="form-select form-select-sm" id="filterUnit">
                                 <option value="">Semua Unit Kerja</option>
-                                <option value="Sekretariat">Sekretariat</option>
-                                <option value="Sub Bagian Umum Dan Kepegawaian">Sub Bagian Umum Dan Kepegawaian</option>
-                                <option value="Sub Bagian Keuangan Dan Penyusunan Program">Sub Bagian Keuangan Dan Penyusunan Program</option>
-                                <option value="Bidang Angkutan">Bidang Angkutan</option>
-                                <option value="Seksi Angkutan Orang">Seksi Angkutan Orang</option>
-                                <option value="Seksi Angkutan Barang">Seksi Angkutan Barang</option>
-                                <option value="Bidang Lalu Lintas, Sarana, Prasarana">Bidang Lalu Lintas, Sarana, Prasarana</option>
-                                <option value="Seksi Perparkiran">Seksi Perparkiran</option>
-                                <option value="Seksi Manajemen Rekayasa Lalu Lintas">Seksi Manajemen Rekayasa Lalu Lintas</option>
-                                <option value="Seksi Penerangan Jalan Umum">Seksi Penerangan Jalan Umum</option>
-                                <option value="Bidang Pengendalian Operasional">Bidang Pengendalian Operasional LL & AJ</option>
-                                <option value="UPT Pengujian Kendaraan Bermotor">UPT Pengujian Kendaraan Bermotor</option>
                             </select>
                         </div>
                         <div class="col-md-3 col-sm-6">
@@ -230,46 +221,39 @@
                         <div class="col-md-6">
                             <label class="form-label" id="labelUsername">Username / NISN <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="usernamePeserta" name="username" 
-                                   placeholder="Contoh: 0012345678" required>
+                                   placeholder="Contoh: 0012345678" required maxlength="100">
                             <small class="text-muted" id="hintUsername">Untuk siswa: NISN. Untuk mahasiswa: Kode Kampus+NIM.</small>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="namaLengkap" name="nama_lengkap" 
-                                   placeholder="Nama lengkap sesuai KTP/KTM" required>
+                                   placeholder="Nama lengkap sesuai KTP/KTM" required maxlength="100">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">No. Handphone <span class="text-danger">*</span></label>
+                            <label class="form-label">No. Handphone</label>
                             <input type="tel" class="form-control" id="noHp" name="no_hp" 
-                                   placeholder="081234567890" required>
+                                   placeholder="081234567890" maxlength="15">
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label">Asal Sekolah / Kampus <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="asalSekolahKampus" name="asal_sekolah_kampus" 
-                                   placeholder="Contoh: SMKN 1 Jenangan / Univ. Muhammadiyah Ponorogo" required>
+                                   placeholder="Contoh: SMKN 1 Jenangan / Univ. Muhammadiyah Ponorogo" required maxlength="100">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Jurusan / Prodi</label>
+                            <label class="form-label">Jurusan / Prodi <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="prodiJurusan" name="prodi_jurusan" 
-                                   placeholder="Rekayasa Perangkat Lunak / Teknik Informatika">
+                                   placeholder="Rekayasa Perangkat Lunak / Teknik Informatika" maxlength="50">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Kelas / Semester</label>
+                            <label class="form-label">Kelas / Semester <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="kelasSemester" name="kelas_semester" 
-                                   placeholder="Kelas XII RPL 1 / Semester 7">
+                                   placeholder="Kelas XII RPL 1 / Semester 7" required maxlength="20">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Dosen / Guru Pembimbing <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="dosenGuruPembimbing" name="dosen_guru_pembimbing" 
-                                   placeholder="Contoh: Dr. Bambang Sutikno, M.Kom. / Drs. Eko Prasetyo" required>
-                            <small class="text-muted">Dosen atau Guru Pembimbing dari instansi asal.</small>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Unit Kerja Penempatan <span class="text-danger">*</span></label>
-                            <select class="form-select" id="idUnitKerja" name="id_unit_kerja" required>
+                            <label class="form-label">Bidang Penempatan (Unit Kerja) <span class="text-danger">*</span></label>
+                            <select class="form-select" id="id_unit_kerja" name="id_unit_kerja" required>
                                 <option value="">-- Pilih Unit Kerja --</option>
                             </select>
                             <div class="mt-1" style="font-size: 0.78rem; color: var(--primary);">
@@ -279,41 +263,40 @@
                         <div class="col-md-6">
                             <label class="form-label">Nama Dosen/Guru Pembimbing <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="pembimbingAkademik" name="pembimbing_akademik"
-                                   placeholder="Nama Dosen/Guru Pembimbing" required>
+                                   placeholder="Nama Dosen/Guru Pembimbing" required maxlength="100">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">NIDN/NIP Dosen/Guru <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="nipPembimbingAkademik" name="nip_pembimbing_akademik"
-                                   placeholder="NIDN/NIP Dosen/Guru" required>
+                                   placeholder="NIDN/NIP Dosen/Guru" required maxlength="50">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">No. HP Dosen/Guru <span class="text-danger">*</span></label>
                             <input type="tel" class="form-control" id="noHpPembimbingAkademik" name="no_hp_pembimbing_akademik"
-                                   placeholder="08xxxxxxxxxx" required>
+                                   placeholder="08xxxxxxxxxx" required maxlength="15">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Status Peserta <span class="text-danger">*</span></label>
                             <select class="form-select" id="statusPeserta" name="status_peserta" required>
                                 <option value="aktif">Aktif</option>
                                 <option value="belum mulai">Belum Mulai</option>
-                                <option value="tidak aktif">Tidak Aktif / Selesai</option>
+                                <option value="tidak aktif">Tidak Aktif</option>
                             </select>
                         </div>
-
                         <div class="col-md-6">
                             <label class="form-label">Tanggal Mulai Magang <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" id="tanggalMulai" name="tanggal_mulai" required>
+                            <input type="date" class="form-control" id="tanggalMulai" name="tanggal_mulai">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Tanggal Selesai Magang <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" id="tanggalSelesai" name="tanggal_selesai" required>
+                            <input type="date" class="form-control" id="tanggalSelesai" name="tanggal_selesai">
                         </div>
 
                         <div class="col-12" id="boxPassword">
-                            <div class="p-2 border rounded" style="background:var(--bg-light); font-size:0.8rem;">
-                                <i class="fas fa-key me-1 text-primary"></i> <strong>Password Akun:</strong> 
-                                <span id="textPasswordInfo">Default password untuk akun baru adalah: <code>magang123</code> (bisa diganti peserta setelah login).</span>
-                            </div>
+                            <label class="form-label">Password Awal Akun <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="passwordPeserta" name="password"
+                                   autocomplete="new-password" required>
+                            <small class="text-muted">Password akun pengguna, disimpan sebagai hash oleh sistem.</small>
                         </div>
                     </div>
                 </div>
@@ -353,8 +336,7 @@
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script src="../assets/js/app.js"></script>
-<script src="../assets/js/masterData.js"></script>
-<script src="../assets/js/arsip-dokumen.js"></script>
+<script src="../assets/js/admin-api.js"></script>
 <script src="../assets/js/admin-peserta.js"></script>
 
 </body>

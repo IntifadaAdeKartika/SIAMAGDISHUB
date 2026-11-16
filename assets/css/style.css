@@ -1400,11 +1400,7 @@ div.dataTables_wrapper div.dataTables_processing {
     }
 }
 
-@media print {
-    .modal-detail-wrapper::before {
-        display: none !important;
-    }
-}
+/* modal-detail-wrapper::before hidden in global @media print below */
 
 /* EQUAL HEIGHT CARDS IN A ROW */
 .row > [class*="col-"] > .card.h-100,
@@ -1587,16 +1583,36 @@ div.dataTables_wrapper div.dataTables_processing {
         pointer-events: none;
     }
 
-    /* Tabel di dalam tabel-responsive TIDAK boleh dipaksa menyempit */
+    /* Tabel di dalam tabel-responsive & DataTables TIDAK boleh dipaksa menyempit */
+    .table-responsive,
+    .dataTables_wrapper > .row:nth-child(2),
+    .dataTables_wrapper > .row:nth-child(2) > [class*="col-"],
+    .dataTables_wrapper [class*="col-"]:has(> table),
+    .dataTables_wrapper [class*="col-"]:has(> .table) {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
     .table-responsive > table,
-    .dataTables_wrapper .table-responsive > table {
-        min-width: 520px; /* lebar minimum tabel agar tidak terlalu sempit */
-        width: 100%;
+    .table-responsive table.dataTable,
+    .dataTables_wrapper table.dataTable,
+    .dataTables_wrapper table.table-custom,
+    .table-card .table-custom {
+        width: max-content !important;
+        min-width: 700px !important;
+    }
+
+    .modal-detail-wrapper table {
+        width: 100% !important;
+        min-width: 100% !important;
+        table-layout: fixed !important;
     }
 
     .table-responsive > table.archive-table--mentor {
-        width: 1040px;
-        min-width: 1040px;
+        width: 1040px !important;
+        min-width: 1040px !important;
     }
 
     .archive-table--mentor thead th {
@@ -1763,11 +1779,7 @@ div.dataTables_wrapper div.dataTables_processing {
     }
 }
 
-@media print {
-    .table-responsive::before {
-        display: none !important;
-    }
-}
+/* table-responsive::before hidden in global @media print below */
 
 /* Breakpoint 576px: Mobile Portrait (Smartphones) */
 @media (max-width: 576px) {
@@ -1948,4 +1960,48 @@ div.dataTables_wrapper div.dataTables_processing {
     .login-title {
         font-size: 1.15rem;
     }
+}
+
+
+
+/* =============================================================
+   GLOBAL PRINT STYLES
+   ============================================================= */
+@media print {
+    /* 1. Sembunyikan semua yang ber-class no-print (Paginasi, Filter, Tombol) */
+    .no-print, .sidebar, .topbar, .navbar, .btn,
+    .dataTables_filter, .dataTables_length, .dataTables_paginate,
+    .dataTables_info, .pagination, .page-item {
+        display: none !important;
+    }
+
+    /* 2. Hancurkan scrollbar & paksa background putih */
+    body, html, .container, .container-fluid, .card, .card-body, .table-responsive {
+        overflow: visible !important;
+        background: #fff !important;
+        margin: 0 !important; padding: 0 !important;
+        box-shadow: none !important; border: none !important;
+    }
+
+    /* 3. PAKSA JUDUL MUNCUL DAN DI TENGAH */
+    .card-header {
+        display: block !important;
+        background: transparent !important;
+        border: none !important;
+    }
+    .card-header * {
+        display: block !important;
+        text-align: center !important;
+        font-weight: bold !important;
+        font-size: 16px !important;
+        color: #000 !important;
+    }
+    /* Sembunyikan tombol yang mungkin ada di dalam card-header */
+    .card-header button, .card-header .btn { display: none !important; }
+
+    /* 4. Rapikan Tabel */
+    table { width: 100% !important; border-collapse: collapse !important; table-layout: auto !important; }
+    th, td { border: 1px solid #000 !important; padding: 5px !important; font-size: 11px !important; color: #000 !important; }
+    th *, td * { font-weight: normal !important; }
+    table img { max-width: 50px !important; max-height: 30px !important; object-fit: contain !important; }
 }

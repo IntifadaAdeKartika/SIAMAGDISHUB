@@ -63,6 +63,9 @@
             </a>
 
             <div class="menu-label mt-3">Lainnya</div>
+            <a href="dokumen.html">
+                <i class="fas fa-folder-open"></i> Arsip Dokumen Magang
+            </a>
             <a href="laporan.html">
                 <i class="fas fa-file-export"></i> Laporan
             </a>
@@ -91,14 +94,14 @@
             <div class="topbar-right">
                 <button class="btn-notif" id="btnNotif">
                     <i class="far fa-bell"></i>
-                    <span class="notif-badge">3</span>
+                    <span class="notif-badge" style="display:none;"></span>
                 </button>
                 <div class="dropdown user-dropdown">
                     <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
-                        <div class="user-avatar" id="userInitial">A</div>
+                        <div class="user-avatar" id="userInitial">-</div>
                         <div class="d-none d-sm-block">
-                            <div class="fw-semibold small" id="userName">Administrator</div>
-                            <div class="text-muted" style="font-size:0.75rem;" id="userRole">Admin Dinas</div>
+                            <div class="fw-semibold small" id="userName">Memuat...</div>
+                            <div class="text-muted" style="font-size:0.75rem;" id="userRole">Memuat...</div>
                         </div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -126,7 +129,7 @@
                                 <i class="fas fa-book"></i>
                             </div>
                             <div class="stat-info">
-                                <h3 id="statTotalLog">3</h3>
+                                <h3 id="statTotalLog">0</h3>
                                 <p>Total Logbook</p>
                             </div>
                         </div>
@@ -139,7 +142,7 @@
                                 <i class="fas fa-check-double"></i>
                             </div>
                             <div class="stat-info">
-                                <h3 id="statDiverif">2</h3>
+                                <h3 id="statDiverif">0</h3>
                                 <p>Sudah Diverifikasi</p>
                             </div>
                         </div>
@@ -152,7 +155,7 @@
                                 <i class="fas fa-hourglass-half"></i>
                             </div>
                             <div class="stat-info">
-                                <h3 id="statMenunggu">1</h3>
+                                <h3 id="statMenunggu">0</h3>
                                 <p>Menunggu Verifikasi</p>
                             </div>
                         </div>
@@ -167,15 +170,16 @@
                         <div class="col-md-6">
                             <label class="form-label text-muted small mb-1">Unit Kerja</label>
                             <select class="form-select form-select-sm" id="filterUnit">
-                                <option value="">-- Semua Unit Kerja (12 Unit) --</option>
+                                <option value="">Semua Unit Kerja</option>
                             </select>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label text-muted small mb-1">Status Verifikasi</label>
                             <select class="form-select form-select-sm" id="filterStatus">
                                 <option value="">-- Semua Status --</option>
-                                <option value="Diverifikasi">Sudah Diverifikasi</option>
-                                <option value="Menunggu">Menunggu Verifikasi</option>
+                                <option value="approved">Approved</option>
+                                <option value="pending">Pending</option>
+                                <option value="rejected">Rejected</option>
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -271,12 +275,7 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="fw-bold text-dark small mb-1"><i class="fas fa-bullseye text-success me-1"></i>Output / Hasil Kerja:</label>
-                    <div class="p-3 bg-light rounded text-dark small" id="modalHasil">-</div>
-                </div>
-
-                <div class="mb-2">
-                    <label class="fw-bold text-dark small mb-1"><i class="fas fa-comment-dots text-warning me-1"></i>Catatan Pembimbing Lapangan:</label>
+                    <label class="fw-bold text-dark small mb-1"><i class="fas fa-comment-dots text-warning me-1"></i>Catatan Pembimbing:</label>
                     <div class="p-3 bg-warning-subtle text-dark border border-warning rounded small" id="modalCatatanPembimbing">-</div>
                 </div>
 
@@ -295,7 +294,6 @@
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script src="../assets/js/app.js"></script>
-<script src="../assets/js/masterData.js"></script>
 <script src="../assets/js/admin-logbook.js"></script>
 
 </body>

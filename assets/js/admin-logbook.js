@@ -1,183 +1,179 @@
-// SIAMAG DISHUB - Monitoring Logbook Harian Peserta (Admin)
-
 $(document).ready(function() {
-
-    // Data Unit Kerja
-    var masterUnitKerja = window.masterUnitKerja;
-
-    // Data Logbook Peserta Magang
-    var dataLogbook = [
-        {
-            id: 1,
-            tanggal: "2026-10-14",
-            nim: "220102001",
-            nama: "Intifada Ade Kartika",
-            instansi: "Univ. Muhammadiyah Ponorogo",
-            unitId: 1,
-            unitNama: "Sekretariat",
-            pembimbing: "Dra. Ida",
-            jamMulai: "08:00",
-            jamSelesai: "12:00",
-            kegiatan: "Membantu mencetak SPMK dan melanjutkan pengembangan frontend sistem absensi magang.",
-            hasil: "SPMK berhasil dicetak dan frontend sistem absensi magang berhasil diperbarui.",
-            status: "Diverifikasi",
-            catatan: "Pekerjaan rapi dan teliti.",
-            lampiran: "bukti_kegiatan.jpg"
-        },
-        {
-            id: 2,
-            tanggal: "2026-10-14",
-            nim: "220203002",
-            nama: "Ayu Sri",
-            instansi: "Universitas Brawijaya",
-            unitId: 5,
-            unitNama: "Seksi Angkutan Orang",
-            pembimbing: "Adi, S.T.",
-            jamMulai: "08:00",
-            jamSelesai: "12:00",
-            kegiatan: "Pengarsipan surat masuk dan surat keluar bidang kepegawaian Dishub.",
-            hasil: "15 surat masuk teragenda pada buku register.",
-            status: "Diverifikasi",
-            catatan: "Tertib administrasi.",
-            lampiran: "rekap_surat_masuk.pdf"
-        },
-        {
-            id: 3,
-            tanggal: "2026-10-14",
-            nim: "220304003",
-            nama: "Siti Aminah",
-            instansi: "SMKN 1 Jenangan Ponorogo",
-            unitId: 5,
-            unitNama: "Seksi Angkutan Orang",
-            pembimbing: "Adi, S.T.",
-            jamMulai: "08:30",
-            jamSelesai: "12:00",
-            kegiatan: "Membantu mengarsipkan dokumen.",
-            hasil: "Dokumen berhasil diarsipkan dengan rapi.",
-            status: "Menunggu",
-            catatan: "-",
-            lampiran: "dokumen_arsip.jpg"
-        }
-    ];
-
-    dataLogbook.forEach(function(item) {
-        var penempatan = window.getMasterPenempatanPeserta(item.nim);
-        if (!penempatan) return;
-        item.nama = penempatan.peserta.nama;
-        item.instansi = penempatan.peserta.instansi;
-        item.unitId = penempatan.unit.id;
-        item.unitNama = penempatan.unit.nama;
-        item.pembimbing = penempatan.namaPembimbing;
-    });
-
-    // Populate filter unit kerja
-    masterUnitKerja.forEach(function(u) {
-        $('#filterUnit').append(new Option(u.nama + " (" + u.kode + ")", u.id));
-    });
-
-    // Inisialisasi DataTable
+    var records = [];
     var table = $('#tabelMonitoringLogbook').DataTable({
         responsive: true,
         language: {
-            search: "Cari Jurnal/Peserta:",
-            lengthMenu: "Tampilkan _MENU_ data",
-            zeroRecords: "Data logbook tidak ditemukan",
-            info: "Menampilkan _START_ s/d _END_ dari _TOTAL_ logbook",
-            infoEmpty: "Menampilkan 0 data",
-            paginate: { first: "Awal", last: "Akhir", next: "→", previous: "←" }
+            search: 'Cari Jurnal/Peserta:',
+            lengthMenu: 'Tampilkan _MENU_ data',
+            zeroRecords: 'Belum ada data',
+            info: 'Menampilkan _START_ s/d _END_ dari _TOTAL_ logbook',
+            infoEmpty: 'Menampilkan 0 data',
+            paginate: { first: 'Awal', last: 'Akhir', next: '→', previous: '←' }
         },
         order: [[1, 'desc']]
     });
 
-    function renderData() {
-        table.clear();
-
-        var unitFilter = $('#filterUnit').val();
-        var statusFilter = $('#filterStatus').val();
-
-        var totalDiverif = 0;
-        var totalMenunggu = 0;
-
-        dataLogbook.forEach(function(item, index) {
-            if (unitFilter && item.unitId != unitFilter) return;
-            if (statusFilter && item.status !== statusFilter) return;
-
-            if (item.status === 'Diverifikasi') totalDiverif++;
-            if (item.status === 'Menunggu') totalMenunggu++;
-
-            var badgeStatus = item.status === 'Diverifikasi'
-                ? '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Diverifikasi</span>'
-                : '<span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Menunggu</span>';
-
-            var btnAksi = `
-                <button class="btn btn-sm btn-outline-primary btn-detail-log" data-id="${item.id}" title="Lihat Uraian & Foto Bukti">
-                    <i class="fas fa-eye"></i> Detail
-                </button>
-            `;
-
-            table.row.add([
-                index + 1,
-                item.tanggal,
-                `<div>
-                    <span class="fw-bold text-dark">${item.nama}</span>
-                    <div class="small text-muted">${item.instansi}</div>
-                 </div>`,
-                `<div class="small fw-semibold text-primary">${item.unitNama}</div>
-                 <div class="small text-muted">Pembimbing: ${item.pembimbing}</div>`,
-                `<div class="text-truncate" style="max-width: 280px;" title="${item.kegiatan}">${item.kegiatan}</div>`,
-                badgeStatus,
-                btnAksi
-            ]);
+    function escapeHtml(value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, function(character) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
         });
-
-        table.draw();
-
-        $('#statTotalLog').text(dataLogbook.length);
-        $('#statDiverif').text(totalDiverif);
-        $('#statMenunggu').text(totalMenunggu);
     }
 
-    renderData();
+    function participant(item) {
+        var person = item.peserta_magang || item.peserta || {};
+        var account = person.pengguna || {};
+        var placement = person.penempatan || item.penempatan || {};
+        var unit = item.unit_kerja || person.unit_kerja || placement.unit_kerja || {};
+        var mentor = item.pembimbing || item.pembimbing_lapangan || person.pembimbing ||
+            person.pembimbing_lapangan || unit.pembimbing || placement.pembimbing || {};
+        var mentorAccount = mentor.pengguna || mentor.user || {};
+        return {
+            name: item.nama_peserta || account.nama_lengkap || person.nama_lengkap || person.nama || '-',
+            nim: item.nim || account.username || person.nim || '-',
+            school: item.asal_sekolah_kampus || person.asal_sekolah_kampus || person.instansi || '-',
+            unit: item.nama_unit_kerja || unit.nama_unit || unit.nama || '-',
+            unitId: item.id_unit_kerja || person.id_unit_kerja || unit.id || '',
+            mentor: item.nama_pembimbing || mentor.nama_lengkap || mentor.nama ||
+                mentorAccount.nama_lengkap || '-'
+        };
+    }
 
-    $('#filterUnit, #filterStatus').on('change', function() {
-        renderData();
-    });
+    function statusLabel(status) {
+        return {
+            pending: 'Pending',
+            approved: 'Approved',
+            rejected: 'Rejected'
+        }[String(status || '').toLowerCase()] || status || '-';
+    }
 
+    function documentFileUrl(path) {
+        var value = String(path || '').trim();
+        if (/^https?:\/\//i.test(value)) return value;
+        var apiOrigin = String(window.API_BASE || window.location.origin).match(/^(https?:\/\/[^/]+)/i);
+        return apiOrigin && value ? apiOrigin[1] + '/' + value.replace(/^\/+/, '') : '';
+    }
+
+    function render() {
+        var unitFilter = String($('#filterUnit').val() || '');
+        var statusFilter = $('#filterStatus').val();
+        var visible = records.filter(function(item) {
+            var person = participant(item);
+            return (!unitFilter || String(person.unitId) === unitFilter) &&
+                (!statusFilter || String(item.status_verifikasi || item.status || '').toLowerCase() === statusFilter);
+        });
+        table.clear();
+        visible.forEach(function(item, index) {
+            var person = participant(item);
+            var status = String(item.status_verifikasi || item.status || 'pending').toLowerCase();
+            var badge = status === 'approved' ? 'bg-success' :
+                status === 'rejected' ? 'bg-danger' : 'bg-warning text-dark';
+            table.row.add([
+                index + 1,
+                escapeHtml(item.tanggal || '-'),
+                '<div class="fw-bold">' + escapeHtml(person.name) + '</div><div class="small text-muted">' +
+                    escapeHtml(person.school + ' · ' + person.nim) + '</div>',
+                '<div class="small fw-semibold text-primary">' + escapeHtml(person.unit) +
+                    '</div><div class="small text-muted">Pembimbing: ' + escapeHtml(person.mentor) + '</div>',
+                '<div class="text-truncate" style="max-width:280px" title="' + escapeHtml(item.kegiatan || '') + '">' +
+                    escapeHtml(item.kegiatan || '-') + '</div>',
+                '<span class="badge ' + badge + '">' + escapeHtml(statusLabel(status)) + '</span>',
+                '<button class="btn btn-sm btn-outline-primary btn-detail-log" data-id="' +
+                    escapeHtml(item.id || item.id_logbook) + '"><i class="fas fa-eye"></i> Detail</button>'
+            ]);
+        });
+        table.draw();
+        $('#statTotalLog').text(records.length);
+        $('#statDiverif').text(records.filter(function(row) {
+            return String(row.status_verifikasi || row.status).toLowerCase() === 'approved';
+        }).length);
+        $('#statMenunggu').text(records.filter(function(row) {
+            return String(row.status_verifikasi || row.status).toLowerCase() === 'pending';
+        }).length);
+    }
+
+    function load() {
+        $('#btnReloadTable').prop('disabled', true);
+        window.apiSetTableState(table, 'loading');
+        return window.apiRequestAll('/admin/logbook', ['logbook', 'logbooks']).then(function(rows) {
+            records = rows;
+            render();
+            window.apiSetTableState(table, 'loaded');
+            return true;
+        }).catch(function(error) {
+            window.apiSetTableState(table, 'error');
+            Swal.fire('Data Logbook Gagal Dimuat', error.message, 'error');
+            return false;
+        }).then(function() {
+            $('#btnReloadTable').prop('disabled', false);
+        });
+    }
+
+    function loadUnits() {
+        var $filter = $('#filterUnit').prop('disabled', true).empty()
+            .append(new Option('Semua Unit Kerja', ''));
+        return window.apiRequestAll('/admin/unit-kerja', ['unit_kerja', 'units']).then(function(units) {
+            units.forEach(function(unit) {
+                var id = unit.id || unit.id_unit_kerja;
+                var name = unit.nama_unit || unit.nama_unit_kerja || unit.nama || unit.name;
+                if (id != null && name) $filter.append(new Option(name, id));
+            });
+            $filter.prop('disabled', false).removeAttr('title');
+        }).catch(function(error) {
+            $filter.prop('disabled', false);
+            Swal.fire('Unit Kerja Gagal Dimuat', error.message, 'error');
+        });
+    }
+
+    $('#filterStatus, #filterUnit').on('change', render);
     $('#btnResetFilter').on('click', function() {
-        $('#filterUnit').val('');
-        $('#filterStatus').val('');
-        renderData();
+        $('#filterUnit, #filterStatus').val('');
+        render();
     });
-
-    // Detail Modal Logbook
+    $('#btnReloadTable').on('click', load);
     $(document).on('click', '.btn-detail-log', function() {
-        var id = $(this).data('id');
-        var item = dataLogbook.find(x => x.id === id);
+        var item = records.find(function(row) {
+            return String(row.id || row.id_logbook) === String($(this).data('id'));
+        }.bind(this));
         if (!item) return;
-
-        $('#modalNama').text(item.nama);
-        $('#modalNimInstansi').text(item.nim + " - " + item.instansi);
-        $('#modalUnit').text(item.unitNama);
-        $('#modalPembimbing').text(item.pembimbing);
-        $('#modalTanggal').text(item.tanggal + " (" + item.jamMulai + " - " + item.jamSelesai + " WIB)");
-        $('#modalUraian').text(item.kegiatan);
-        $('#modalHasil').text(item.hasil);
-        $('#modalCatatanPembimbing').text(item.catatanPembimbing);
-        $('#modalStatus').html(item.status === 'Diverifikasi' ? '<span class="badge bg-success">Diverifikasi & Diparaf</span>' : '<span class="badge bg-warning text-dark">Menunggu Verifikasi</span>');
-        
-        if (item.foto) {
-            $('#modalFotoNama').text(item.foto);
+        var person = participant(item);
+        $('#modalNama').text(person.name);
+        $('#modalNimInstansi').text(person.nim + ' - ' + person.school);
+        $('#modalUnit').text(person.unit);
+        $('#modalPembimbing').text('Pembimbing: ' + person.mentor);
+        $('#modalTanggal').text((item.tanggal || '-') + ' (' + (item.jam_mulai || '-') + ' - ' + (item.jam_selesai || '-') + ')');
+        $('#modalUraian').text(item.kegiatan || '-');
+        $('#modalCatatanPembimbing').text(item.catatan_pembimbing == null || item.catatan_pembimbing === ''
+            ? '-' : item.catatan_pembimbing);
+        $('#modalStatus').text(statusLabel(item.status_verifikasi || item.status));
+        var file = item.foto_kegiatan_url || item.foto_kegiatan;
+        if (file) {
+            var filePath = typeof file === 'string'
+                ? file
+                : file.url || file.file_url || file.path || file.file_path || '';
+            var fileName = typeof file === 'string'
+                ? filePath.split('/').pop()
+                : file.name || file.filename || filePath.split('/').pop() || 'Lampiran kegiatan';
+            var fileUrl = documentFileUrl(filePath);
+            var fileType = typeof file === 'object' ? String(file.mime_type || file.type || '').toLowerCase() : '';
+            if (fileUrl && (fileType.indexOf('image/') === 0 || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(filePath))) {
+                $('#modalFotoNama').html('<img src="' + escapeHtml(fileUrl) + '" alt="Foto kegiatan" ' +
+                    'class="img-fluid rounded" style="max-height:320px;">');
+            } else if (fileUrl && (fileType === 'application/pdf' || /\.pdf$/i.test(filePath))) {
+                $('#modalFotoNama').html('<a class="btn btn-outline-danger btn-sm" href="' +
+                    escapeHtml(fileUrl) + '" target="_blank" rel="noopener noreferrer">' +
+                    '<i class="fas fa-file-pdf me-1"></i>Lihat Dokumen PDF</a>');
+            } else {
+                $('#modalFotoNama').text(fileName || 'Lampiran kegiatan');
+            }
             $('#modalFotoBox').show();
             $('#modalNoFoto').hide();
         } else {
             $('#modalFotoBox').hide();
             $('#modalNoFoto').show();
         }
-
-        var modalEl = document.getElementById('modalDetailLogbook');
-        if (modalEl) {
-            var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-            modal.show();
-        }
+        var modal = document.getElementById('modalDetailLogbook');
+        if (modal) bootstrap.Modal.getOrCreateInstance(modal).show();
     });
+    loadUnits();
+    load();
 });

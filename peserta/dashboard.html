@@ -48,6 +48,9 @@
             </a>
 
             <div class="menu-label mt-3">Lainnya</div>
+            <a href="dokumen.html">
+                <i class="fas fa-folder-open"></i> Arsip Dokumen Magang
+            </a>
             <a href="riwayat.html">
                 <i class="fas fa-history"></i> Riwayat
             </a>
@@ -72,15 +75,15 @@
             </div>
             <div class="topbar-right">
                 <button class="btn-notif" id="btnNotif">
-                    <i class="fas fa-bell"></i>
-                    <span class="notif-badge">0</span>
+                    <i class="far fa-bell"></i>
+                    <span class="notif-badge" style="display:none;"></span>
                 </button>
                 <div class="dropdown user-dropdown">
                     <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
-                        <div class="user-avatar" id="userInitial">I</div>
+                        <div class="user-avatar" id="userInitial">-</div>
                         <div class="d-none d-sm-block">
-                            <div style="font-weight:600; line-height:1.2;" id="userName">Intifada Ade Kartika</div>
-                            <div style="font-size:0.72rem; color:#999;" id="userRole">Peserta Magang</div>
+                            <div style="font-weight:600; line-height:1.2;" id="userName">Memuat...</div>
+                            <div style="font-size:0.72rem; color:#999;" id="userRole">Memuat...</div>
                         </div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -95,7 +98,7 @@
             <h5 class="page-title">Halo, <span id="greetingName">Peserta</span>!</h5>
             <p class="page-subtitle mb-1"><span id="participantUnit"></span></p>
             <div class="small mb-3 text-muted">
-                <i class="fas fa-chalkboard-teacher me-1 text-primary"></i>Dosen / Guru Pembimbing: <strong class="text-dark" id="dosenPembimbingText">-</strong>
+                <i class="fas fa-user-tie me-1 text-primary"></i>Pembimbing Lapangan: <strong class="text-dark" id="pembimbingLapanganText">-</strong>
             </div>
 
             <!-- Info Status Hari Ini -->
@@ -164,7 +167,7 @@
                             </div>
                             <div class="stat-info">
                                 <h3 id="statHariHadir">0</h3>
-                                <p>Hari Hadir</p>
+                                <p>Event Presensi</p>
                             </div>
                         </div>
                     </div>
@@ -202,7 +205,7 @@
                                 <i class="fas fa-hourglass-half"></i>
                             </div>
                             <div class="stat-info">
-                                <h3>-</h3>
+                                <h3 id="statSisaHariMagang">-</h3>
                                 <p>Sisa Hari Magang</p>
                             </div>
                         </div>
@@ -222,10 +225,10 @@
                                 <table class="table table-custom">
                                     <thead>
                                         <tr>
-                                            <th>Hari / Tanggal</th>
-                                            <th>Check-in</th>
-                                            <th>Check-out</th>
-                                            <th>Status</th>
+                                            <th>Tanggal & Waktu</th>
+                                            <th>Jenis Event</th>
+                                            <th>Status Verifikasi</th>
+                                            <th>Lokasi</th>
                                         </tr>
                                     </thead>
                                     <tbody id="dashboardAttendanceRows"></tbody>
@@ -260,8 +263,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="../assets/js/app.js"></script>
-<script src="../assets/js/masterData.js"></script>
-<script src="../assets/js/pembimbing-demo-data.js"></script>
 <script src="../assets/js/peserta-dashboard.js"></script>
 
 </body>

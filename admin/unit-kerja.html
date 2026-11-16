@@ -62,6 +62,9 @@
             </a>
 
             <div class="menu-label mt-3">Lainnya</div>
+            <a href="dokumen.html">
+                <i class="fas fa-folder-open"></i> Arsip Dokumen Magang
+            </a>
             <a href="laporan.html">
                 <i class="fas fa-file-export"></i> Laporan
             </a>
@@ -90,14 +93,14 @@
             <div class="topbar-right">
                 <button class="btn-notif" id="btnNotif">
                     <i class="far fa-bell"></i>
-                    <span class="notif-badge"> </span>
+                    <span class="notif-badge" style="display:none;"></span>
                 </button>
                 <div class="dropdown user-dropdown">
                     <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
-                        <div class="user-avatar" id="userInitial">A</div>
+                        <div class="user-avatar" id="userInitial">-</div>
                         <div class="d-none d-sm-block">
-                            <div class="fw-semibold small" id="userName">Admin</div>
-                            <div class="text-muted" style="font-size:0.75rem;" id="userRole">Administrator</div>
+                            <div class="fw-semibold small" id="userName">Memuat...</div>
+                            <div class="text-muted" style="font-size:0.75rem;" id="userRole">Memuat...</div>
                         </div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -206,13 +209,13 @@
                         <div class="col-md-6">
                             <label class="form-label">Kode Unit (Unik) <span class="text-danger">*</span></label>
                             <input type="text" class="form-control text-uppercase" id="kodeUnit" name="kode_unit" 
-                                   placeholder="Contoh: ANGOR / PARKIR" required maxlength="10">
+                                   placeholder="Contoh: SEKRET, UMPEG, KEUPROG" required maxlength="10">
                             <small class="text-muted">Sesuai SOP Dishub: SEKRET, UMPEG, ANGOR, LLSP, dll.</small>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Nama Unit Kerja <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="namaUnit" name="nama_unit" 
-                                   placeholder="Contoh: Seksi Angkutan Orang" required>
+                                   placeholder="Contoh: Seksi Angkutan Orang" required maxlength="100">
                         </div>
 
                         <div class="col-md-6">
@@ -222,7 +225,7 @@
                                 <option value="sub_bagian">Sub Bagian</option>
                                 <option value="bidang">Bidang</option>
                                 <option value="sekretariat">Sekretariat</option>
-                                <option value="upt">UPT (Unit Pelaksana Teknis)</option>
+                                <option value="upt">UPT</option>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -234,7 +237,7 @@
 
                         <div class="col-md-6">
                             <label class="form-label">Pembimbing Penanggung Jawab</label>
-                            <select class="form-select" id="pembimbingUnit" name="id_pembimbing">
+                            <select class="form-select" id="id_pembimbing" name="id_pembimbing">
                                 <option value="">-- Belum Ditentukan --</option>
                             </select>
                             <small class="text-muted">1 Unit Kerja diwakili 1 Pembimbing Lapangan.</small>
@@ -284,7 +287,7 @@
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script src="../assets/js/app.js"></script>
-<script src="../assets/js/masterData.js"></script>
+<script src="../assets/js/admin-api.js"></script>
 <script src="../assets/js/admin-unit.js"></script>
 
 </body>

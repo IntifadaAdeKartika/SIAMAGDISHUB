@@ -161,6 +161,9 @@
             </a>
 
             <div class="menu-label mt-3">Lainnya</div>
+            <a href="dokumen.html">
+                <i class="fas fa-folder-open"></i> Arsip Dokumen Magang
+            </a>
             <a href="laporan.html" class="active">
                 <i class="fas fa-file-export"></i> Laporan
             </a>
@@ -189,14 +192,14 @@
             <div class="topbar-right">
                 <button class="btn-notif" id="btnNotif">
                     <i class="far fa-bell"></i>
-                    <span class="notif-badge">3</span>
+                    <span class="notif-badge" style="display:none;"></span>
                 </button>
                 <div class="dropdown user-dropdown">
                     <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
-                        <div class="user-avatar" id="userInitial">A</div>
+                        <div class="user-avatar" id="userInitial">-</div>
                         <div class="d-none d-sm-block">
-                            <div class="fw-semibold small" id="userName">Administrator</div>
-                            <div class="text-muted" style="font-size:0.75rem;" id="userRole">Admin Dinas</div>
+                            <div class="fw-semibold small" id="userName">Memuat...</div>
+                            <div class="text-muted" style="font-size:0.75rem;" id="userRole">Memuat...</div>
                         </div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -216,16 +219,16 @@
                 </div>
                 <div class="btn-aksi-cetak d-flex gap-2">
                     <button class="btn btn-sm btn-outline-secondary" id="btnExportExcel">
-                        Ekspor Excel
+                        Unduh Excel
                     </button>
                     <button class="btn btn-sm btn-primary" id="btnCetakLaporan">
-                        Cetak Laporan
+                        Unduh PDF
                     </button>
                 </div>
             </div>
 
             <!-- Filter Panel -->
-            <div class="card filter-card mb-4">
+            <div class="card filter-card mb-4 no-print">
                 <div class="card-body p-3">
                     <form id="formFilterLaporan" onsubmit="return false;">
                         <div class="row g-3 align-items-end">
@@ -270,7 +273,7 @@
             </div>
 
             <!-- Ringkasan Statistik Singkat -->
-            <div class="row g-3 mb-4 filter-card">
+            <div class="row g-3 mb-4 filter-card no-print">
                 <div class="col-md-3 col-6">
                     <div class="card stat-card">
                         <div class="card-body">
@@ -278,8 +281,8 @@
                                 <i class="fas fa-user-check"></i>
                             </div>
                             <div class="stat-info">
-                                <h3 id="statHadir">2</h3>
-                                <p>Hadir Tepat Waktu</p>
+                                <h3 id="statHadir">0</h3>
+                                <p>Event Masuk</p>
                             </div>
                         </div>
                     </div>
@@ -291,8 +294,8 @@
                                 <i class="fas fa-clock"></i>
                             </div>
                             <div class="stat-info">
-                                <h3 id="statTerlambat">1</h3>
-                                <p>Total Terlambat</p>
+                                <h3 id="statTerlambat">0</h3>
+                                <p>Event Keluar</p>
                             </div>
                         </div>
                     </div>
@@ -305,7 +308,7 @@
                             </div>
                             <div class="stat-info">
                                 <h3 id="statIzin">0</h3>
-                                <p>Izin Disetujui</p>
+                                <p>Verifikasi Pending</p>
                             </div>
                         </div>
                     </div>
@@ -318,7 +321,7 @@
                             </div>
                             <div class="stat-info">
                                 <h3 id="statSakit">0</h3>
-                                <p>Total Sakit</p>
+                                <p>Verifikasi Ditolak</p>
                             </div>
                         </div>
                     </div>
@@ -334,14 +337,14 @@
                                 <thead>
                                     <tr class="text-center">
                                         <th style="width: 40px;">No</th>
-                                        <th>Tanggal</th>
+                                        <th>Tanggal & Waktu</th>
                                         <th>Nama Peserta / Instansi</th>
                                         <th>Unit Kerja Penempatan</th>
-                                        <th>Masuk</th>
-                                        <th>Pulang</th>
-                                        <th>Status Kehadiran</th>
-                                        <th>Keterlambatan</th>
-                                        <th>Paraf Pembimbing</th>
+                                        <th>Jenis Event</th>
+                                        <th>Lokasi</th>
+                                        <th>Koordinat</th>
+                                        <th>Foto Selfie</th>
+                                        <th>Status Verifikasi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -391,8 +394,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <!-- App JS -->
 <script src="../assets/js/app.js"></script>
-<!-- Laporan JS -->
-<script src="../assets/js/masterData.js"></script>
+<script src="../assets/js/admin-api.js"></script>
 <script src="../assets/js/admin-laporan.js"></script>
 
 </body>

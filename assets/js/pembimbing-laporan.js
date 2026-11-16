@@ -3,45 +3,129 @@
 */
 
 $(document).ready(function() {
+    var anakBimbingan = [];
+    var dataKehadiran = [];
+    var dataLogbook = [];
+    var reportLoaded = false;
 
-    var context = window.pembimbingDemoData.getContext();
-    var anakBimbingan = context.peserta;
+    function escapeHtml(value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, function(character) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
+        });
+    }
 
-    // Rekapitulasi kehadiran bimbingan
-    var dataKehadiran = context.absensi.map(function(item) {
+    function personInfo(row, isParticipant) {
+        var nestedParticipant = row.peserta_magang || row.peserta;
+        var participant = nestedParticipant || row;
+        var account = participant.pengguna || {};
         return {
-            tanggal: item.tanggal,
-            nim: item.nim,
-            nama: item.nama,
-            instansi: item.instansi,
-            jamMasuk: item.jamMasuk,
-            jamPulang: item.jamPulang,
-            status: item.status,
-            terlambat: item.status === 'Terlambat' ? 1 : 0,
-            paraf: item.statusVerif === 'Diverifikasi' ? context.pembimbing.nama : 'Menunggu verifikasi'
+            id: row.id_peserta_magang || row.peserta_id ||
+                (nestedParticipant && nestedParticipant.id) || (isParticipant ? participant.id : '') || '',
+            nama: row.nama_peserta || row.nama || account.nama_lengkap || participant.nama_lengkap || participant.nama || '-',
+            nim: row.nim || row.username || participant.nim || account.username || participant.username || '-',
+            instansi: row.asal_sekolah_kampus || row.instansi || participant.asal_sekolah_kampus || participant.instansi || '-'
         };
-    });
+    }
 
-    // Rekapitulasi logbook bimbingan
-    var dataLogbook = context.logbook.map(function(item) {
-        return {
-            tanggal: item.tanggal,
-            nim: item.nim,
-            nama: item.nama,
-            instansi: item.instansi,
-            kegiatan: item.kegiatan,
-            catatan: item.catatan,
-            status: item.status === 'Diverifikasi' ? 'Disetujui' : item.status
-        };
-    });
+    function normalizeRows(rows) {
+        return rows.map(function(row) {
+            var person = personInfo(row);
+            return Object.assign({}, row, person, {
+                id_peserta_magang: person.id
+            });
+        });
+    }
 
-    // Populate dropdown anak bimbingan
-    anakBimbingan.forEach(function(p) {
-        $('#filterPeserta').append(new Option(p.nama + " (" + p.instansi + ")", p.nim));
-    });
-    $('#userName').text(context.pembimbing.nama);
-    $('#userRole').text(context.unit.nama);
-    $('#userInitial').text(context.pembimbing.nama.charAt(0).toUpperCase());
+    function reportEndpoint(jenis) {
+        return jenis === 'presensi' ? '/pembimbing/rekap-absensi' : '/pembimbing/logbook';
+    }
+
+    function reportArrayKeys(jenis) {
+        return jenis === 'presensi'
+            ? ['absensi', 'rekap_absensi', 'data_absensi', 'presensi', 'rekap_presensi']
+            : ['logbook', 'logbooks'];
+    }
+
+    function dateParameter(selector) {
+        var value = String($(selector).val() || '');
+        return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : '';
+    }
+
+    function reportRequestUrl(jenis) {
+        var params = new URLSearchParams();
+        params.set('tanggal_mulai', dateParameter('#tglMulai'));
+        params.set('tanggal_selesai', dateParameter('#tglSelesai'));
+        params.set('jenis_laporan', jenis === 'presensi' ? 'absensi' : 'logbook');
+        var participantId = $('#filterPeserta').val();
+        if (participantId) params.set('id_peserta_magang', participantId);
+        return reportEndpoint(jenis) + '?' + params.toString();
+    }
+
+    function loadReport() {
+        $('#btnFilter').prop('disabled', true);
+        $('#tabelLaporanPresensi tbody').html(
+            '<tr><td colspan="8" class="text-center py-4 text-muted">Memuat data...</td></tr>');
+        $('#tabelLaporanLogbook tbody').html(
+            '<tr><td colspan="6" class="text-center py-4 text-muted">Memuat data...</td></tr>');
+        return Promise.all([
+            window.apiRequestAll('/pembimbing/rekap-absensi', reportArrayKeys('presensi')),
+            window.apiRequestAll('/pembimbing/logbook', reportArrayKeys('logbook'))
+        ]).then(function(results) {
+            dataKehadiran = normalizeRows(results[0]);
+            dataLogbook = normalizeRows(results[1]);
+
+            var seen = Object.create(null);
+            anakBimbingan = dataKehadiran.concat(dataLogbook).map(function(row) {
+                return personInfo(row);
+            }).filter(function(person) {
+                if (!person.id || seen[String(person.id)]) return false;
+                seen[String(person.id)] = true;
+                return true;
+            });
+            var $filter = $('#filterPeserta').empty().append(new Option('Semua Anak Bimbingan', ''));
+            anakBimbingan.forEach(function(person) {
+                $filter.append(new Option(person.nama + ' (' + person.instansi + ')', person.id));
+            });
+
+            reportLoaded = true;
+            renderLaporan();
+        }).catch(function(error) {
+            $('#tabelLaporanPresensi tbody').html(
+                '<tr><td colspan="8" class="text-center py-4 text-danger">' + escapeHtml(error.message) + '</td></tr>');
+            $('#tabelLaporanLogbook tbody').html(
+                '<tr><td colspan="6" class="text-center py-4 text-danger">' + escapeHtml(error.message) + '</td></tr>');
+            Swal.fire('Laporan Gagal Dimuat', error.message, 'error');
+        }).then(function() {
+            $('#btnFilter').prop('disabled', false);
+        });
+    }
+
+    function applyFilters() {
+        var jenis = $('#jenisLaporan').val();
+        var table = jenis === 'presensi' ? '#tabelLaporanPresensi' : '#tabelLaporanLogbook';
+        var colspan = jenis === 'presensi' ? 8 : 6;
+        var message = '<tr><td colspan="' + colspan +
+            '" class="text-center py-4 text-muted">Memuat data...</td></tr>';
+        $(table + ' tbody').html(message);
+        $('#btnFilter').prop('disabled', true);
+        return window.apiRequestAll(reportRequestUrl(jenis), reportArrayKeys(jenis))
+            .then(function(rows) {
+                if (jenis === 'presensi') {
+                    dataKehadiran = normalizeRows(rows);
+                } else {
+                    dataLogbook = normalizeRows(rows);
+                }
+                reportLoaded = true;
+                renderLaporan();
+            }).catch(function(error) {
+                $(table + ' tbody').html(
+                    '<tr><td colspan="' + colspan + '" class="text-center py-4 text-danger">' +
+                    escapeHtml(error.message) + '</td></tr>');
+                Swal.fire('Laporan Gagal Dimuat', error.message, 'error');
+            }).then(function() {
+                $('#btnFilter').prop('disabled', false);
+            });
+    }
 
     // Default Tanggal
     var today = new Date();
@@ -55,77 +139,88 @@ $(document).ready(function() {
     if (!$('#tglSelesai').val()) $('#tglSelesai').val(toDateInput(today));
 
     function renderLaporan() {
+        if (!reportLoaded) return;
         var jenis = $('#jenisLaporan').val();
         var nim = $('#filterPeserta').val();
         var tglMulai = $('#tglMulai').val();
         var tglSelesai = $('#tglSelesai').val();
 
         if (jenis === 'presensi') {
+            $('#labelStatUtama').text('Event Masuk');
+            $('#labelStatKedua').text('Event Keluar');
             $('#sectionLaporanPresensi').show();
             $('#sectionLaporanLogbook').hide();
             
             var filtered = dataKehadiran.filter(function(r) {
-                var mNim = !nim || r.nim === nim;
+                var mNim = !nim || String(r.id || r.id_peserta_magang) === String(nim);
                 var mTgl = true;
-                if (tglMulai && r.tanggal < tglMulai) mTgl = false;
-                if (tglSelesai && r.tanggal > tglSelesai) mTgl = false;
+                var date = String(r.tanggal_jam || r.tanggal || r.tanggal_presensi || '').slice(0, 10);
+                if (tglMulai && date < tglMulai) mTgl = false;
+                if (tglSelesai && date > tglSelesai) mTgl = false;
                 return mNim && mTgl;
             });
 
             var tbody = $('#tabelLaporanPresensi tbody');
             tbody.empty();
 
-            var hadir = 0, lambat = 0;
+            var masuk = 0, keluar = 0;
             if (filtered.length === 0) {
                 tbody.append('<tr><td colspan="8" class="text-center py-4 text-muted">Tidak ada data presensi.</td></tr>');
             } else {
                 filtered.forEach(function(r, idx) {
-                    if (r.status.includes('Hadir')) hadir++;
-                    if (r.terlambat > 0) lambat++;
-
-                    var badge = r.terlambat > 0 ? 'bg-warning text-dark' : 'bg-success';
-                    var paraf = r.paraf === 'Menunggu verifikasi'
-                        ? `<span class="small text-warning"><i class="fas fa-clock me-1"></i>${r.paraf}</span>`
-                        : `<span class="small text-success"><i class="fas fa-check-double me-1"></i>${r.paraf}</span>`;
+                    var attendanceType = String(r.status || r.status_presensi || r.status_event || '').toLowerCase();
+                    if (attendanceType === 'masuk') masuk++;
+                    if (attendanceType === 'keluar') keluar++;
+                    var statusClass = r.status_verifikasi === 'approved' ? 'badge-approved' :
+                        r.status_verifikasi === 'rejected' ? 'badge-rejected' : 'badge-pending';
+                    var coordinates = r.latitude != null && r.longitude != null
+                        ? escapeHtml(r.latitude) + ', ' + escapeHtml(r.longitude)
+                        : '-';
+                    var photoUrl = r.foto_selfie_url || r.foto_selfie || '';
+                    var photo = photoUrl
+                        ? '<a href="' + escapeHtml(photoUrl) + '" target="_blank" rel="noopener noreferrer">Lihat foto</a>'
+                        : '-';
                     var tr = `
                         <tr>
                             <td class="text-center">${idx + 1}</td>
-                            <td class="text-center">${r.tanggal}</td>
+                            <td class="text-center">${escapeHtml(formatTanggalJam(r.tanggal_jam || r.tanggal || r.tanggal_presensi || r.created_at))}</td>
                             <td>
-                                <div class="fw-bold">${r.nama}</div>
-                                <small class="text-muted">NIM. ${r.nim} | ${r.instansi}</small>
+                                <div class="fw-bold">${escapeHtml(r.nama)}</div>
+                                <small class="text-muted">NIM. ${escapeHtml(r.nim)} | ${escapeHtml(r.instansi)}</small>
                             </td>
-                            <td class="text-center font-monospace">${r.jamMasuk}</td>
-                            <td class="text-center font-monospace">${r.jamPulang}</td>
-                            <td class="text-center"><span class="badge ${badge}">${r.status}</span></td>
-                            <td class="text-center">${r.terlambat > 0 ? r.terlambat + ' mnt' : '-'}</td>
-                            <td>${paraf}</td>
+                            <td class="text-center">${escapeHtml(r.status || r.status_presensi || r.status_event || '-')}</td>
+                            <td>${escapeHtml(r.lokasi || '-')}</td>
+                            <td class="font-monospace">${coordinates}</td>
+                            <td>${photo}</td>
+                            <td><span class="badge ${statusClass}">${escapeHtml(r.status_verifikasi || 'pending')}</span></td>
                         </tr>
                     `;
                     tbody.append(tr);
                 });
             }
 
-            $('#statHadir').text(hadir);
-            $('#statTerlambat').text(lambat);
+            $('#statHadir').text(masuk);
+            $('#statTerlambat').text(keluar);
         } else {
             $('#sectionLaporanPresensi').hide();
             $('#sectionLaporanLogbook').show();
+            $('#labelStatUtama').text('Total Logbook');
+            $('#labelStatKedua').text('Logbook Disetujui');
 
             var filteredLog = dataLogbook.filter(function(r) {
-                var mNama = true;
-                if (nim) {
-                    var m = anakBimbingan.find(x => x.nim === nim);
-                    if (m) mNama = (r.nama === m.nama);
-                }
+                var mNama = !nim || String(r.id || r.id_peserta_magang) === String(nim);
                 var mTgl = true;
-                if (tglMulai && r.tanggal < tglMulai) mTgl = false;
-                if (tglSelesai && r.tanggal > tglSelesai) mTgl = false;
+                var date = String(r.tanggal || '').slice(0, 10);
+                if (tglMulai && date < tglMulai) mTgl = false;
+                if (tglSelesai && date > tglSelesai) mTgl = false;
                 return mNama && mTgl;
             });
 
             var tbodyLog = $('#tabelLaporanLogbook tbody');
             tbodyLog.empty();
+            var approvedLogbook = filteredLog.filter(function(row) {
+                return String(row.status_verifikasi || '').toLowerCase() === 'approved';
+            }).length;
 
             if (filteredLog.length === 0) {
                 tbodyLog.append('<tr><td colspan="6" class="text-center py-4 text-muted">Tidak ada data logbook.</td></tr>');
@@ -134,29 +229,32 @@ $(document).ready(function() {
                     var tr = `
                         <tr>
                             <td class="text-center">${idx + 1}</td>
-                            <td class="text-center">${r.tanggal}</td>
+                            <td class="text-center">${escapeHtml(r.tanggal)}</td>
                             <td>
-                                <div class="fw-bold">${r.nama}</div>
-                                <small class="text-muted">${r.instansi}</small>
+                                <div class="fw-bold">${escapeHtml(r.nama)}</div>
+                                <small class="text-muted">${escapeHtml(r.instansi)}</small>
                             </td>
-                            <td>${r.kegiatan}</td>
-                            <td class="small text-muted">${r.catatan}</td>
-                            <td class="text-center"><span class="badge bg-success">${r.status}</span></td>
+                            <td>${escapeHtml(r.kegiatan)}</td>
+                            <td class="small text-muted">${escapeHtml(r.catatan_pembimbing || '-')}</td>
+                            <td class="text-center"><span class="badge ${r.status_verifikasi === 'approved' ? 'bg-success' : (r.status_verifikasi === 'rejected' ? 'bg-danger' : 'bg-warning text-dark')}">${escapeHtml(r.status_verifikasi || 'pending')}</span></td>
                         </tr>
                     `;
                     tbodyLog.append(tr);
                 });
             }
+            $('#statHadir').text(filteredLog.length);
+            $('#statTerlambat').text(approvedLogbook);
         }
     }
 
-    $('#btnFilter, #jenisLaporan').on('click change', renderLaporan);
+    $('#btnFilter').on('click', applyFilters);
+    $('#jenisLaporan').on('change', renderLaporan);
     $('#btnReset').on('click', function() {
         $('#filterPeserta').val('');
         $('#jenisLaporan').val('presensi');
         $('#tglMulai').val(toDateInput(firstDay));
         $('#tglSelesai').val(toDateInput(today));
-        renderLaporan();
+        applyFilters();
     });
 
     $('#btnCetakLaporan').on('click', function() {
@@ -208,5 +306,5 @@ $(document).ready(function() {
         URL.revokeObjectURL(url);
     });
 
-    renderLaporan();
+    loadReport();
 });

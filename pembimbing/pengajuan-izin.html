@@ -56,6 +56,9 @@
             </a>
 
             <div class="menu-label mt-3">Lainnya</div>
+            <a href="dokumen.html">
+                <i class="fas fa-folder-open"></i> Arsip Dokumen Magang
+            </a>
             <a href="laporan.html">
                 <i class="fas fa-file-export"></i> Laporan
             </a>
@@ -80,15 +83,15 @@
             </div>
             <div class="topbar-right">
                 <button class="btn-notif" id="btnNotif">
-                    <i class="fas fa-bell"></i>
-                    <span class="notif-badge">3</span>
+                    <i class="far fa-bell"></i>
+                    <span class="notif-badge" style="display:none;"></span>
                 </button>
                 <div class="dropdown user-dropdown">
                     <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
-                        <div class="user-avatar" id="userInitial">Y</div>
+                        <div class="user-avatar" id="userInitial">-</div>
                         <div class="d-none d-sm-block">
-                            <div style="font-weight:600; line-height:1.2;" id="userName">Adi, S.T.</div>
-                            <div style="font-size:0.72rem; color:#999;" id="userRole">Seksi Angkutan Orang</div>
+                            <div style="font-weight:600; line-height:1.2;" id="userName">Memuat...</div>
+                            <div style="font-size:0.72rem; color:#999;" id="userRole">Memuat jabatan...</div>
                         </div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -182,9 +185,9 @@
                             <label class="form-label text-muted small mb-1">Status Persetujuan</label>
                             <select class="form-select form-select-sm" id="filterStatusIzin">
                                 <option value="">Semua Status</option>
-                                <option value="menunggu">Menunggu Persetujuan</option>
-                                <option value="disetujui">Disetujui</option>
-                                <option value="ditolak">Ditolak</option>
+                                <option value="pending">Pending</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
                             </select>
                         </div>
                         <div class="col-md-4 col-sm-12">
@@ -212,7 +215,7 @@
                                     <th>Jenis</th>
                                     <th>Periode Izin</th>
                                     <th>Durasi</th>
-                                    <th>Alasan Permohonan</th>
+                                    <th>Keterangan Permohonan</th>
                                     <th>Surat Bukti</th>
                                     <th>Status Persetujuan</th>
                                     <th width="14%" class="text-center th-action text-nowrap">Aksi</th>
@@ -260,8 +263,6 @@
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script src="../assets/js/app.js"></script>
-<script src="../assets/js/masterData.js"></script>
-<script src="../assets/js/pembimbing-demo-data.js"></script>
 <script src="../assets/js/pembimbing-izin.js"></script>
 
 </body>

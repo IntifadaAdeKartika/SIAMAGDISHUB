@@ -1,328 +1,450 @@
 /* peserta-izin.js
-   Modul Pengajuan Izin & Sakit Peserta Magang
+   Pengajuan izin dan sakit peserta magang.
 */
 
 $(document).ready(function() {
+    var user;
+    try {
+        user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('siamag_user') || 'null');
+    } catch (error) {
+        user = null;
+    }
+    var p = user && (user.peserta_magang || user.peserta || user.profile || {});
+    var displayName = user && (user.nama_lengkap || p.nama_lengkap || user.nama || p.nama || user.name || p.name) ||
+        'Pengguna';
+    var initialMatch = String(displayName).match(/[a-zA-Z]/);
+    var initial = initialMatch ? initialMatch[0].toUpperCase() : 'P';
+    var dataIzin = [];
+    var editingIzinId = null;
 
-    var context = window.pembimbingDemoData.getPesertaContext();
-    var dataIzin = context.izin;
-    var pembimbingDemo = context.pembimbing.nama;
-    $('#userName').text(context.peserta.nama);
-    $('#userRole').text(context.peserta.nim + ' · ' + context.unit.nama);
-    $('#userInitial').text(context.peserta.nama.charAt(0).toUpperCase());
-    $('#pembimbingIzin').val(pembimbingDemo + ' (' + context.unit.nama + ')');
+    function namaPembimbingLapangan() {
+        var participant = user && (user.peserta_magang || user.peserta || user.profile) || {};
+        var unit = participant.unit_kerja || {};
+        var mentor = unit.pembimbing || {};
+        var account = mentor.pengguna || {};
+        return account.nama_lengkap || 'Belum ditentukan';
+    }
 
-    // Inisialisasi DataTable
+    function setPembimbingLapangan() {
+        $('#pembimbingIzin').val(namaPembimbingLapangan());
+    }
+
+    $('#userName').text(displayName);
+    $('#userRole').text('Peserta Magang');
+    $('#userInitial').text(initial);
+    setPembimbingLapangan();
+
     var table = $('#tabelIzin').DataTable({
         language: {
-            search: "Cari Izin:",
-            lengthMenu: "Tampilkan _MENU_ data",
-            zeroRecords: "Data pengajuan izin tidak ditemukan",
-            info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ permohonan",
-            infoEmpty: "Menampilkan 0 data",
-            infoFiltered: "(disaring dari _MAX_ total data)",
-            paginate: {
-                first: "Awal",
-                last: "Akhir",
-                next: "Berikutnya",
-                previous: "Sebelumnya"
-            }
+            search: 'Cari Izin:',
+            lengthMenu: 'Tampilkan _MENU_ data',
+            zeroRecords: 'Belum ada data',
+            info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ permohonan',
+            infoEmpty: 'Menampilkan 0 data',
+            infoFiltered: '(disaring dari _MAX_ total data)',
+            paginate: { first: 'Awal', last: 'Akhir', next: 'Berikutnya', previous: 'Sebelumnya' }
         },
         order: [[2, 'desc']],
-        columnDefs: [
-            { orderable: false, targets: [5, 7] }
-        ]
+        columnDefs: [{ orderable: false, targets: [5, 7] }]
     });
 
-    function updateStats() {
-        var total = dataIzin.length;
-        var disetujui = dataIzin.filter(i => i.status === 'disetujui').length;
-        var menunggu = dataIzin.filter(i => i.status === 'menunggu').length;
-        var ditolak = dataIzin.filter(i => i.status === 'ditolak').length;
+    function apiUrl(path) {
+        if (typeof window.apiUrl === 'function') return window.apiUrl(path);
+        var base = (window.API_BASE || 'http://localhost:8000/backend-api').replace(/\/+$/, '');
+        var cleanPath = String(path || '').replace(/^\/+/, '');
+        return cleanPath ? base + '/' + cleanPath : base;
+    }
 
-        $('#statTotalIzin').text(total);
-        $('#statDisetujui').text(disetujui);
-        $('#statMenungguIzin').text(menunggu);
-        $('#statDitolakIzin').text(ditolak);
+    function fileUrl(path) {
+        if (!path) return '';
+        try {
+            var url = /^https?:/i.test(path)
+                ? new URL(path)
+                : new URL(String(path).replace(/^\//, ''), new URL(apiUrl('/')).origin + '/');
+            return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : '';
+        } catch (error) {
+            return '';
+        }
+    }
+
+    function escapeHtml(value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, function(character) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
+        });
+    }
+
+    function readResponse(response) {
+        return response.text().then(function(text) {
+            var payload = null;
+            if (text) {
+                try {
+                    payload = JSON.parse(text);
+                } catch (error) {
+                    if (!response.ok) throw new Error('Permintaan gagal (HTTP ' + response.status + ').');
+                    throw new Error('Server mengembalikan respons yang tidak valid.');
+                }
+            }
+            if (!response.ok) {
+                throw new Error(window.apiResponseMessage(payload, 'Permintaan gagal (HTTP ' + response.status + ').'));
+            }
+            if (payload && payload.success === false) {
+                throw new Error(window.apiResponseMessage(payload, 'Permintaan gagal.'));
+            }
+            return payload;
+        });
+    }
+
+    function normalizeIzin(item) {
+        var status = String(item.status || 'pending').toLowerCase();
+        var start = item.tanggal_mulai || '';
+        var end = item.tanggal_selesai || '';
+        var calculatedDuration = start && end
+            ? Math.round((new Date(end) - new Date(start)) / 86400000) + 1
+            : '';
+        return {
+            id: item.id,
+            jenis: String(item.jenis || 'izin').toLowerCase(),
+            tanggal_mulai: start,
+            tanggal_selesai: end,
+            durasi_hari: item.durasi_hari || item.durasi || calculatedDuration,
+            keterangan: item.keterangan || '',
+            file_surat: item.file_surat_url || item.file_surat || item.file_surat_izin || item.surat_url || '',
+            status: status,
+            catatan_pembimbing: item.catatan_pembimbing || item.catatan || ''
+        };
+    }
+
+    function updateStats() {
+        $('#statTotalIzin').text(dataIzin.length);
+        $('#statDisetujui').text(dataIzin.filter(function(item) { return item.status === 'approved'; }).length);
+        $('#statMenungguIzin').text(dataIzin.filter(function(item) { return item.status === 'pending'; }).length);
+        $('#statDitolakIzin').text(dataIzin.filter(function(item) { return item.status === 'rejected'; }).length);
     }
 
     function renderTable() {
         table.clear();
-        dataIzin.forEach(function(item, idx) {
+        dataIzin.forEach(function(item, index) {
             var badgeJenis = item.jenis === 'sakit'
-                ? '<span class="badge" style="background:#fce4ec; color:#c62828;"><i class="fas fa-notes-medical me-1"></i>Sakit</span>'
-                : '<span class="badge" style="background:#e0f2fe; color:#0369a1;"><i class="fas fa-calendar-times me-1"></i>Izin</span>';
-
-            var badgeStatus = '';
-            if (item.status === 'disetujui') {
-                badgeStatus = '<span class="badge badge-approved"><i class="fas fa-check-circle me-1"></i>Disetujui</span>';
-            } else if (item.status === 'menunggu') {
-                badgeStatus = '<span class="badge badge-pending"><i class="fas fa-clock me-1"></i>Menunggu</span>';
-            } else {
-                badgeStatus = '<span class="badge badge-rejected"><i class="fas fa-times-circle me-1"></i>Ditolak</span>';
-            }
-
-            var colPeriode = `
-                <div>
-                    <strong>${item.tanggal_mulai}</strong>
-                    ${item.tanggal_mulai !== item.tanggal_selesai ? '<br><small class="text-muted">s/d ' + item.tanggal_selesai + '</small>' : ''}
-                </div>
-            `;
-
-            var colDurasi = `<span class="badge bg-light text-dark border">${item.durasi_hari} Hari</span>`;
-
-            var colAlasan = `
-                <div style="font-size:0.83rem; line-height:1.4; max-width:250px;">
-                    ${item.alasan}
-                </div>
-            `;
-
-            var colSurat = item.file_surat
-                ? `<span class="badge bg-light text-secondary border">
-                     <i class="fas fa-file-pdf text-danger me-1"></i>${item.file_surat}
-                   </span>`
-                : `<span class="text-muted small"><em>Tidak ada</em></span>`;
-
-            // Tombol batalkan jika masih menunggu
-            var btnBatalHtml = (item.status === 'menunggu')
-                ? `<button class="btn btn-sm btn-outline-danger btn-aksi btn-batalkan-izin" data-id="${item.id}" title="Batalkan Pengajuan">
-                     <i class="fas fa-ban"></i> Batal
-                   </button>`
+                ? '<span class="badge" style="background:#fce4ec;color:#c62828;">Sakit</span>'
+                : '<span class="badge" style="background:#e0f2fe;color:#0369a1;">Izin</span>';
+            var badgeStatus = item.status === 'approved'
+                ? '<span class="badge badge-approved">Disetujui</span>'
+                : item.status === 'pending'
+                    ? '<span class="badge badge-pending">Menunggu</span>'
+                    : item.status === 'rejected'
+                        ? '<span class="badge badge-rejected">Ditolak</span>'
+                        : item.status === 'cancelled' || item.status === 'canceled'
+                            ? '<span class="badge bg-secondary">Dibatalkan</span>'
+                            : '<span class="badge badge-rejected">' + escapeHtml(item.status) + '</span>';
+            var period = '<div><strong>' + escapeHtml(item.tanggal_mulai) + '</strong>' +
+                (item.tanggal_mulai !== item.tanggal_selesai
+                    ? '<br><small class="text-muted">s/d ' + escapeHtml(item.tanggal_selesai) + '</small>'
+                    : '') + '</div>';
+            var suratUrl = fileUrl(item.file_surat);
+            var suratPath = String(item.file_surat || '');
+            var suratExt = (suratPath.split('?')[0].split('.').pop() || '').toLowerCase();
+            var suratIcon = suratExt === 'pdf'
+                ? 'fa-file-pdf text-danger'
+                : (['jpg', 'jpeg', 'png', 'webp', 'gif'].indexOf(suratExt) !== -1
+                    ? 'fa-file-image text-primary'
+                    : 'fa-file-alt text-secondary');
+            var surat = suratUrl
+                ? '<a href="' + escapeHtml(suratUrl) + '" target="_blank" rel="noopener" class="badge bg-light text-secondary border"><i class="fas ' + suratIcon + ' me-1"></i>Lihat surat</a>'
+                : '<span class="text-muted small">Tidak ada</span>';
+            var canManage = item.status === 'pending' || item.status === 'rejected';
+            var editBtn = canManage
+                ? '<button class="btn btn-sm btn-outline-primary btn-aksi btn-edit-izin" data-id="' + escapeHtml(item.id) + '" title="Edit"><i class="fas fa-edit me-1"></i>Edit</button>'
                 : '';
-
-            var colAksi = `
-                <div class="action-buttons text-center">
-                    <button class="btn btn-sm btn-outline-primary btn-aksi btn-detail-izin" data-id="${item.id}" title="Detail">
-                        <i class="fas fa-eye me-1"></i> Detail
-                    </button>
-                    ${btnBatalHtml}
-                </div>
-            `;
-
+            var cancelBtn = canManage
+                ? '<button class="btn btn-sm btn-outline-danger btn-aksi btn-cancel-izin" data-id="' + escapeHtml(item.id) + '" title="Batalkan"><i class="fas fa-times me-1"></i>Batal</button>'
+                : '';
+            var detailBtn = '<button class="btn btn-sm btn-outline-primary btn-aksi btn-detail-izin" data-id="' + escapeHtml(item.id) + '" title="Detail"><i class="fas fa-eye me-1"></i>Detail</button>';
             table.row.add([
-                idx + 1,
+                index + 1,
                 badgeJenis,
-                colPeriode,
-                colDurasi,
-                colAlasan,
-                colSurat,
+                period,
+                '<span class="badge bg-light text-dark border">' + escapeHtml(item.durasi_hari) + ' Hari</span>',
+                '<div class="small">' + escapeHtml(item.keterangan) + '</div>',
+                surat,
                 badgeStatus,
-                colAksi
+                '<div class="action-buttons text-center">' + editBtn + ' ' + cancelBtn + ' ' + detailBtn + '</div>'
             ]);
         });
         table.draw();
         updateStats();
     }
 
-    renderTable();
+    function loadIzin(silent) {
+        $('#btnReloadTable').prop('disabled', true);
+        window.apiSetTableState(table, 'loading');
+        return window.apiRequestAll('/pengajuan-izin', ['pengajuan_izin', 'pengajuan_izins']).then(function(rows) {
+                dataIzin = rows.map(normalizeIzin);
+                renderTable();
+                window.apiSetTableState(table, 'loaded');
+                return true;
+            }).catch(function(error) {
+                window.apiSetTableState(table, 'error');
+                if (!silent) Swal.fire('Gagal Memuat Pengajuan', error.message, 'error');
+                return false;
+            }).then(function(loaded) {
+                $('#btnReloadTable').prop('disabled', false);
+                return loaded;
+            });
+    }
 
-    // Hitung durasi hari otomatis saat tanggal diubah
     function hitungDurasi() {
-        var tgl1 = $('#tglMulaiIzin').val();
-        var tgl2 = $('#tglSelesaiIzin').val();
-        if (tgl1 && tgl2) {
-            var d1 = new Date(tgl1);
-            var d2 = new Date(tgl2);
-            if (d2 >= d1) {
-                var timeDiff = d2.getTime() - d1.getTime();
-                var dayDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
-                $('#textDurasiHari').text(dayDiff + ' Hari');
-                $('#infoDurasiIzin').show();
-            } else {
-                $('#infoDurasiIzin').hide();
-            }
+        var startValue = $('#tglMulaiIzin').val();
+        var endValue = $('#tglSelesaiIzin').val();
+        if (!startValue || !endValue) {
+            $('#infoDurasiIzin').hide();
+            return;
         }
+        var start = new Date(startValue);
+        var end = new Date(endValue);
+        if (end < start) {
+            $('#infoDurasiIzin').hide();
+            return;
+        }
+        var days = Math.round((end - start) / 86400000) + 1;
+        $('#textDurasiHari').text(days + ' Hari');
+        $('#infoDurasiIzin').show();
     }
 
     $('#tglMulaiIzin, #tglSelesaiIzin').on('change', hitungDurasi);
-
-    // Buka Modal Pengajuan
     $('#btnBukaModalIzin').on('click', function() {
         $('#formIzin')[0].reset();
+        setPembimbingLapangan();
+        editingIzinId = null;
+        $('#fileSuratCurrent').hide().empty();
+        $('#modalIzinTitle').html('<i class="fas fa-envelope-open-text me-2"></i>Form Pengajuan Izin / Sakit');
+        $('#formIzin button[type="submit"]').html('<i class="fas fa-paper-plane me-1"></i> Kirim Pengajuan');
         var today = new Date().toISOString().split('T')[0];
-        $('#tglMulaiIzin').val(today);
-        $('#tglSelesaiIzin').val(today);
+        $('#tglMulaiIzin, #tglSelesaiIzin').val(today);
         hitungDurasi();
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalIzin')).show();
     });
 
-    // Submit Permohonan Izin Baru
-    $('#formIzin').on('submit', function(e) {
-        e.preventDefault();
-
-        var jenis = $('#jenisIzin').val();
-        var tglMulai = $('#tglMulaiIzin').val();
-        var tglSelesai = $('#tglSelesaiIzin').val();
-        var alasan = $('#alasanIzin').val().trim();
-
-        if (new Date(tglSelesai) < new Date(tglMulai)) {
-            Swal.fire('Validasi Tanggal', 'Tanggal selesai izin tidak boleh sebelum tanggal mulai!', 'warning');
+    $('#formIzin').on('submit', function(event) {
+        event.preventDefault();
+        var startDate = $('#tglMulaiIzin').val();
+        var endDate = $('#tglSelesaiIzin').val();
+        if (new Date(endDate) < new Date(startDate)) {
+            Swal.fire('Validasi Tanggal', 'Tanggal selesai tidak boleh sebelum tanggal mulai.', 'warning');
             return;
         }
 
-        var d1 = new Date(tglMulai);
-        var d2 = new Date(tglSelesai);
-        var durasi = Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 3600 * 24)) + 1;
-
-        var newId = dataIzin.length ? Math.max(...dataIzin.map(i => i.id)) + 1 : 1;
-        dataIzin.unshift({
-            id: newId,
-            jenis: jenis,
-            tanggal_mulai: tglMulai,
-            tanggal_selesai: tglSelesai,
-            durasi_hari: durasi,
-            alasan: alasan,
-            file_surat: "surat_permohonan_" + newId + ".pdf",
-            status: "menunggu",
-            catatan_pembimbing: "-",
-            pembimbing: pembimbingDemo
-        });
-
-        var modalEl = document.getElementById('modalIzin');
-        if (modalEl) {
-            var modal = bootstrap.Modal.getInstance(modalEl);
-            if (modal) modal.hide();
-        }
-        renderTable();
-
-        Swal.fire({
-            icon: 'success',
-            title: 'Pengajuan Terkirim!',
-            text: 'Permohonan izin Anda berhasil dikirim ke Pembimbing Lapangan (' + pembimbingDemo + ').',
-            confirmButtonColor: '#334EAC'
-        });
-    });
-
-    // Detail Izin
-    $(document).on('click', '.btn-detail-izin', function() {
-        var id = $(this).data('id');
-        var item = dataIzin.find(i => i.id == id);
-        if (!item) return;
-
-        var badgeStatus = '';
-        if (item.status === 'disetujui') {
-            badgeStatus = '<span class="badge badge-approved"><i class="fas fa-check-circle me-1"></i>Disetujui Pembimbing</span>';
-        } else if (item.status === 'menunggu') {
-            badgeStatus = '<span class="badge badge-pending"><i class="fas fa-clock me-1"></i>Menunggu Verifikasi</span>';
+        var id = editingIzinId;
+        var payload = {
+            jenis: $('#jenisIzin').val(),
+            tanggal_mulai: startDate,
+            tanggal_selesai: endDate,
+            keterangan: $('#alasanIzin').val().trim()
+        };
+        var selectedFile = $('#fileSuratIzin')[0].files[0];
+        var body;
+        var headers = { Accept: 'application/json' };
+        var method = id ? 'PUT' : 'POST';
+        if (id && !selectedFile) {
+            body = JSON.stringify(payload);
+            headers['Content-Type'] = 'application/json';
         } else {
-            badgeStatus = '<span class="badge badge-rejected"><i class="fas fa-times-circle me-1"></i>Ditolak</span>';
+            body = new FormData(this);
+            body.set('keterangan', payload.keterangan);
         }
+        var $submit = $('#formIzin button[type="submit"]');
+        var submitLabel = $submit.html();
+        $submit.prop('disabled', true);
+        $submit.html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Menyimpan...');
 
-        var catatanHtml = item.catatan_pembimbing && item.catatan_pembimbing !== '-'
-            ? `<div class="p-3 rounded mb-3" style="background:#e8f4fd; border-left:4px solid #334EAC;">
-                 <strong style="font-size:0.85rem;"><i class="fas fa-comment-alt me-1"></i>Catatan Pembimbing:</strong>
-                 <div style="font-size:0.83rem; color:#081F5C; margin-top:3px;">${item.catatan_pembimbing}</div>
-               </div>`
-            : '';
-
-        var html = `
-            ${catatanHtml}
-            <div class="modal-detail-wrapper mb-3">
-                <table class="table table-sm table-striped align-middle mb-0" style="font-size:0.875rem;">
-                    <tbody>
-                        <tr>
-                            <td class="text-muted py-2" style="width:38%;"><i class="fas fa-tag me-2 text-primary" style="width:16px;"></i>Jenis Pengajuan</td>
-                            <td class="text-center text-muted py-2" style="width:5%;">:</td>
-                            <td class="py-2"><span class="text-uppercase fw-bold text-primary">${item.jenis}</span></td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted py-2"><i class="fas fa-hourglass-half me-2 text-primary" style="width:16px;"></i>Durasi</td>
-                            <td class="text-center text-muted py-2">:</td>
-                            <td class="fw-semibold text-dark py-2">${item.durasi_hari} Hari</td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted py-2"><i class="fas fa-calendar-alt me-2 text-secondary" style="width:16px;"></i>Periode Izin</td>
-                            <td class="text-center text-muted py-2">:</td>
-                            <td class="fw-semibold text-dark py-2">${item.tanggal_mulai} s/d ${item.tanggal_selesai}</td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted py-2"><i class="fas fa-info-circle me-2 text-info" style="width:16px;"></i>Status Persetujuan</td>
-                            <td class="text-center text-muted py-2">:</td>
-                            <td class="py-2">${badgeStatus}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="mb-3">
-                <label class="fw-bold small text-muted">Alasan / Keterangan:</label>
-                <div class="p-2 rounded" style="background:var(--bg-light); font-size:0.85rem; line-height:1.5;">
-                    ${item.alasan}
-                </div>
-            </div>
-
-            <div class="mt-3">
-                <label class="fw-bold small text-muted d-block text-start mb-2">Lampiran Bukti Surat:</label>
-                <div class="p-3 border rounded bg-light text-center">
-                    <i class="fas fa-file-pdf text-danger fa-2x mb-2"></i>
-                    <div class="fw-semibold small">${item.file_surat}</div>
-                    <small class="text-muted">Berkas surat izin / keterangan dokter</small>
-                </div>
-            </div>
-        `;
-
-        $('#contentDetailIzin').html(html);
-        var modalEl = document.getElementById('modalDetailIzin');
-        if (modalEl) {
-            var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-            modal.show();
-        }
-    });
-
-    // Preview Surat
-    $(document).on('click', '.btn-preview-surat', function() {
-        var src = $(this).data('src');
-        Swal.fire({
-            title: 'Bukti Surat Izin / Dokter',
-            imageUrl: src,
-            imageWidth: 450,
-            imageAlt: 'Surat Izin',
-            confirmButtonColor: '#334EAC',
-            confirmButtonText: 'Tutup'
+        var token = localStorage.getItem('token') || localStorage.getItem('siamag_token') || '';
+        headers.Authorization = 'Bearer ' + token;
+        fetch(apiUrl(id ? '/pengajuan-izin/' + encodeURIComponent(id) : '/pengajuan-izin'), {
+            method: method,
+            body: body,
+            headers: headers
+        }).then(readResponse).then(function(responseData) {
+            var modal = bootstrap.Modal.getInstance(document.getElementById('modalIzin'));
+            if (modal) modal.hide();
+            $('#formIzin')[0].reset();
+            setPembimbingLapangan();
+            editingIzinId = null;
+            $('#fileSuratCurrent').hide().empty();
+            return loadIzin(true).then(function(loaded) {
+                Swal.fire({
+                    icon: loaded ? 'success' : 'warning',
+                    title: loaded
+                        ? id ? 'Pengajuan Diperbarui' : 'Pengajuan Terkirim'
+                        : 'Pengajuan Tersimpan, Daftar Belum Diperbarui',
+                    text: window.apiResponseMessage(responseData, 'Pengajuan izin berhasil disimpan.') +
+                        (loaded ? '' : ' Daftar gagal dimuat ulang; silakan tekan tombol muat ulang.')
+                });
+            });
+        }).catch(function(error) {
+            Swal.fire(id ? 'Pengajuan Gagal Diperbarui' : 'Pengajuan Gagal', error.message, 'error');
+        }).then(function() {
+            $submit.prop('disabled', false);
+            $submit.html(submitLabel);
         });
     });
 
-    // Batalkan Pengajuan Izin
-    $(document).on('click', '.btn-batalkan-izin', function() {
-        var id = $(this).data('id');
-        var item = dataIzin.find(i => i.id == id);
+    $('#filterStatusIzin').on('change', function() {
+        table.column(6).search($(this).val()).draw();
+    });
+    $('#btnResetFilterIzin').on('click', function() {
+        $('#filterStatusIzin').val('');
+        table.search('').columns().search('').draw();
+    });
+    $('#btnReloadTable').on('click', loadIzin);
+
+    $(document).on('click', '.btn-edit-izin', function() {
+        var item = dataIzin.find(function(row) {
+            return String(row.id) === String($(this).data('id'));
+        }.bind(this));
+        if (!item || (item.status !== 'pending' && item.status !== 'rejected')) return;
+
+        editingIzinId = item.id;
+        $('#formIzin')[0].reset();
+        setPembimbingLapangan();
+        $('#jenisIzin').val(item.jenis);
+        $('#tglMulaiIzin').val(item.tanggal_mulai);
+        $('#tglSelesaiIzin').val(item.tanggal_selesai);
+        $('#alasanIzin').val(item.keterangan);
+        $('#fileSuratIzin').val('');
+
+        var suratPath = item.file_surat_url || item.file_surat || '';
+        var suratUrl = fileUrl(suratPath);
+        var $currentFile = $('#fileSuratCurrent');
+        if (!$currentFile.length) {
+            $currentFile = $('<div id="fileSuratCurrent" class="mt-2 small" style="display:none;"></div>').insertAfter('#fileSuratIzin');
+        }
+
+        if (suratUrl) {
+            var fileName = '';
+            try {
+                var cleanPath = String(suratPath).split('?')[0].split('#')[0];
+                fileName = cleanPath.split('/').pop().split('\\').pop() || '';
+            } catch (e) {
+                fileName = '';
+            }
+            if (!fileName) {
+                fileName = 'surat_izin';
+            }
+
+            var ext = (fileName.indexOf('.') !== -1 ? fileName.split('.').pop() : '').toLowerCase();
+            var isPdf = ext === 'pdf';
+            var isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif'].indexOf(ext) !== -1;
+
+            var iconHtml = isPdf
+                ? '<i class="fas fa-file-pdf text-danger me-1"></i>'
+                : (isImage
+                    ? '<i class="fas fa-file-image text-primary me-1"></i>'
+                    : '<i class="fas fa-file-alt text-secondary me-1"></i>');
+
+            var thumbnailHtml = isImage
+                ? '<a href="' + escapeHtml(suratUrl) + '" target="_blank" rel="noopener" class="d-inline-block me-2 flex-shrink-0">' +
+                    '<img src="' + escapeHtml(suratUrl) + '" alt="' + escapeHtml(fileName) + '" class="rounded border shadow-sm" style="width: 48px; height: 48px; object-fit: cover;" title="Klik untuk melihat">' +
+                  '</a>'
+                : '';
+
+            $currentFile.html(
+                '<div class="p-2 rounded bg-light border d-flex align-items-center flex-wrap gap-2">' +
+                    thumbnailHtml +
+                    '<div class="text-truncate" style="max-width: 100%;">' +
+                        '<div class="text-muted small">File saat ini:</div>' +
+                        '<a href="' + escapeHtml(suratUrl) + '" target="_blank" rel="noopener" class="fw-semibold text-primary text-decoration-none d-inline-flex align-items-center text-truncate">' +
+                            iconHtml + '<span>' + escapeHtml(fileName) + '</span>' +
+                        '</a>' +
+                    '</div>' +
+                '</div>'
+            ).show();
+        } else {
+            $currentFile.hide().empty();
+        }
+
+        $('#modalIzinTitle').html('<i class="fas fa-edit me-2"></i>Edit Pengajuan Izin / Sakit');
+        $('#formIzin button[type="submit"]').html('<i class="fas fa-save me-1"></i>Simpan Perubahan');
+        hitungDurasi();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalIzin')).show();
+    });
+
+    $('#modalIzin').on('hidden.bs.modal', function() {
+        $('#fileSuratCurrent').hide().empty();
+        $('#fileSuratIzin').val('');
+    });
+
+    $(document).on('click', '.btn-detail-izin', function() {
+        var item = dataIzin.find(function(row) {
+            return String(row.id) === String($(this).data('id'));
+        }.bind(this));
         if (!item) return;
+        var suratUrl = fileUrl(item.file_surat);
+        var suratPath = String(item.file_surat || '');
+        var suratExt = (suratPath.split('?')[0].split('.').pop() || '').toLowerCase();
+        var isImg = ['jpg', 'jpeg', 'png', 'webp', 'gif'].indexOf(suratExt) !== -1;
+        var detailIcon = suratExt === 'pdf' ? 'fa-file-pdf text-danger' : (isImg ? 'fa-file-image text-primary' : 'fa-file-alt text-secondary');
+        var fileLink = suratUrl
+            ? '<a href="' + escapeHtml(suratUrl) + '" target="_blank" rel="noopener"><i class="fas ' + detailIcon + ' me-1"></i>Lihat / Unduh surat</a>' +
+              (isImg ? '<div class="mt-2"><img src="' + escapeHtml(suratUrl) + '" class="img-thumbnail" style="max-height: 180px; max-width: 100%;" alt="Lampiran Surat"></div>' : '')
+            : '<span class="text-muted">Tidak ada lampiran</span>';
+        $('#contentDetailIzin').html(
+            '<div class="mb-3"><strong>Jenis:</strong> ' + escapeHtml(item.jenis.toUpperCase()) + '</div>' +
+            '<div class="mb-3"><strong>Periode:</strong> ' + escapeHtml(item.tanggal_mulai) + ' s/d ' +
+            escapeHtml(item.tanggal_selesai) + ' (' + escapeHtml(item.durasi_hari) + ' hari)</div>' +
+            '<div class="mb-3"><strong>Status:</strong> ' + escapeHtml(item.status) + '</div>' +
+            '<div class="mb-3"><strong>Keterangan:</strong><div class="p-3 bg-light rounded">' +
+            escapeHtml(item.keterangan) + '</div></div>' +
+            '<div class="mb-3"><strong>Catatan Pembimbing:</strong> ' +
+            escapeHtml(item.catatan_pembimbing || '-') + '</div><div><strong>Lampiran:</strong> ' + fileLink + '</div>'
+        );
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalDetailIzin')).show();
+    });
+
+    $(document).on('click', '.btn-cancel-izin', function() {
+        var id = $(this).data('id');
+        var item = dataIzin.find(function(row) {
+            return String(row.id) === String(id);
+        });
+        if (!item || (item.status !== 'pending' && item.status !== 'rejected')) return;
 
         Swal.fire({
             title: 'Batalkan Pengajuan?',
-            text: 'Permohonan izin tanggal ' + item.tanggal_mulai + ' akan dibatalkan.',
+            text: 'Pengajuan ini akan diubah status menjadi dibatalkan.',
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#6c757d',
             confirmButtonText: 'Ya, Batalkan',
-            cancelButtonText: 'Kembali'
+            cancelButtonText: 'Tidak'
         }).then(function(result) {
             if (result.isConfirmed) {
-                dataIzin = dataIzin.filter(i => i.id != id);
-                renderTable();
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Dibatalkan!',
-                    text: 'Pengajuan izin berhasil dibatalkan.',
-                    timer: 1500,
-                    showConfirmButton: false
+                var token = localStorage.getItem('token') || localStorage.getItem('siamag_token') || '';
+                var $button = $('.btn-cancel-izin').filter(function() {
+                    return String($(this).data('id')) === String(id);
+                });
+                $button.prop('disabled', true);
+                fetch(apiUrl('/pengajuan-izin/' + encodeURIComponent(id) + '/cancel'), {
+                    method: 'PUT',
+                    headers: {
+                        Accept: 'application/json',
+                        Authorization: 'Bearer ' + token
+                    }
+                })
+                .then(readResponse)
+                .then(function(responseData) {
+                    return loadIzin(true).then(function(loaded) {
+                        Swal.fire({
+                            icon: loaded ? 'success' : 'warning',
+                            title: loaded ? 'Berhasil' : 'Pengajuan Dibatalkan, Daftar Belum Diperbarui',
+                            text: window.apiResponseMessage(responseData, 'Pengajuan telah dibatalkan.') +
+                                (loaded ? '' : ' Daftar gagal dimuat ulang; silakan tekan tombol muat ulang.')
+                        });
+                    });
+                })
+                .catch(function(err) {
+                    Swal.fire('Gagal', err.message || 'Tidak dapat membatalkan pengajuan.', 'error');
+                }).then(function() {
+                    $button.prop('disabled', false);
                 });
             }
         });
     });
-
-    // Refresh Table
-    $('#btnReloadTable').on('click', function() {
-        renderTable();
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: 'Data permohonan izin diperbarui',
-            showConfirmButton: false,
-            timer: 1500
-        });
-    });
-
+    loadIzin();
 });

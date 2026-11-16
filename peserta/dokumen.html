@@ -20,13 +20,28 @@
         </div>
         <div class="sidebar-menu">
             <div class="menu-label">Menu Utama</div>
-            <a href="dashboard.html"><i class="fas fa-th-large"></i> Dashboard</a>
+            <a href="dashboard.html">
+                <i class="fas fa-th-large"></i> Dashboard
+            </a>
+
             <div class="menu-label mt-3">Kegiatan</div>
-            <a href="absensi.html"><i class="fas fa-fingerprint"></i> Absensi</a>
-            <a href="logbook.html"><i class="fas fa-book"></i> Logbook</a>
-            <a href="pengajuan-izin.html"><i class="fas fa-file-alt"></i> Pengajuan Izin</a>
+            <a href="absensi.html">
+                <i class="fas fa-fingerprint"></i> Absensi
+            </a>
+            <a href="logbook.html">
+                <i class="fas fa-book"></i> Logbook
+            </a>
+            <a href="pengajuan-izin.html">
+                <i class="fas fa-file-alt"></i> Pengajuan Izin
+            </a>
+
             <div class="menu-label mt-3">Lainnya</div>
-            <a href="riwayat.html"><i class="fas fa-history"></i> Riwayat</a>
+            <a href="dokumen.html" class="active">
+                <i class="fas fa-folder-open"></i> Arsip Dokumen Magang
+            </a>
+            <a href="riwayat.html">
+                <i class="fas fa-history"></i> Riwayat
+            </a>
         </div>
         <div class="sidebar-footer"><a href="#" id="btnLogout"><i class="fas fa-sign-out-alt"></i> Logout</a></div>
     </nav>
@@ -37,10 +52,14 @@
                 <h4>Arsip Dokumen Magang</h4>
             </div>
             <div class="topbar-right">
+                <button class="btn-notif" id="btnNotif">
+                    <i class="far fa-bell"></i>
+                    <span class="notif-badge" style="display:none;"></span>
+                </button>
                 <div class="dropdown user-dropdown">
                     <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
-                        <div class="user-avatar" id="userInitial">P</div>
-                        <div class="d-none d-sm-block"><div class="fw-semibold small" id="userName">Peserta</div><div class="text-muted" style="font-size:.75rem" id="userRole">Peserta Magang</div></div>
+                        <div class="user-avatar" id="userInitial">-</div>
+                        <div class="d-none d-sm-block"><div class="fw-semibold small" id="userName">Memuat...</div><div class="text-muted" style="font-size:.75rem" id="userRole">Memuat...</div></div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end"><li><a class="dropdown-item text-danger btn-logout" href="#"><i class="fas fa-sign-out-alt"></i> Logout</a></li></ul>
                 </div>
@@ -53,7 +72,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="../assets/js/app.js"></script>
-<script src="../assets/js/masterData.js"></script>
 <script src="../assets/js/arsip-dokumen.js"></script>
 </body>
 </html>

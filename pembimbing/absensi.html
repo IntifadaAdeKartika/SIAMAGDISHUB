@@ -70,6 +70,9 @@
             </a>
 
             <div class="menu-label mt-3">Lainnya</div>
+            <a href="dokumen.html">
+                <i class="fas fa-folder-open"></i> Arsip Dokumen Magang
+            </a>
             <a href="laporan.html">
                 <i class="fas fa-file-export"></i> Laporan
             </a>
@@ -94,15 +97,15 @@
             </div>
             <div class="topbar-right">
                 <button class="btn-notif" id="btnNotif">
-                    <i class="fas fa-bell"></i>
-                    <span class="notif-badge">3</span>
+                    <i class="far fa-bell"></i>
+                    <span class="notif-badge" style="display:none;"></span>
                 </button>
                 <div class="dropdown user-dropdown">
                     <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
-                        <div class="user-avatar" id="userInitial">A</div>
+                        <div class="user-avatar" id="userInitial">-</div>
                         <div class="d-none d-sm-block">
-                            <div style="font-weight:600; line-height:1.2;" id="userName">Adi, S.T.</div>
-                            <div style="font-size:0.72rem; color:#999;" id="userRole">Seksi Angkutan Orang</div>
+                            <div style="font-weight:600; line-height:1.2;" id="userName">Memuat...</div>
+                            <div style="font-size:0.72rem; color:#999;" id="userRole">Memuat jabatan...</div>
                         </div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -177,7 +180,7 @@
                                 <i class="fas fa-users"></i>
                             </div>
                             <div class="stat-info">
-                                <h3>2 Org</h3>
+                                <h3>0 Org</h3>
                                 <p>Anak Bimbingan</p>
                             </div>
                         </div>
@@ -199,9 +202,9 @@
                             <label class="form-label text-muted small mb-1">Status Verifikasi</label>
                             <select class="form-select form-select-sm" id="filterStatusVerif">
                                 <option value="">Semua Status</option>
-                                <option value="menunggu">Menunggu Verifikasi</option>
-                                <option value="diverifikasi">Sudah Diverifikasi / Diparaf</option>
-                                <option value="ditolak">Ditolak</option>
+                                <option value="pending">Pending</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
                             </select>
                         </div>
                         <div class="col-md-4 col-sm-12">
@@ -227,11 +230,11 @@
                                     <th width="4%">No</th>
                                     <th>Peserta Magang</th>
                                     <th>Tanggal Presensi</th>
-                                    <th>Waktu Masuk / Pulang</th>
+                                    <th>Waktu</th>
                                     <th>Foto Selfie</th>
-                                    <th>Jarak Kantor (GPS)</th>
-                                    <th>Status Hadir</th>
-                                    <th>Status & Paraf</th>
+                                    <th>Koordinat Lokasi</th>
+                                    <th>Status Presensi</th>
+                                    <th>Verifikasi & Paraf</th>
                                     <th width="14%" class="text-center th-action text-nowrap">Aksi Verifikasi</th>
                                 </tr>
                             </thead>
@@ -277,8 +280,6 @@
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script src="../assets/js/app.js"></script>
-<script src="../assets/js/masterData.js"></script>
-<script src="../assets/js/pembimbing-demo-data.js"></script>
 <script src="../assets/js/pembimbing-absensi.js"></script>
 
 </body>
