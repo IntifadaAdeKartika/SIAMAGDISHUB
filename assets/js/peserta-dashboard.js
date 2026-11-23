@@ -8,58 +8,35 @@ $(document).ready(function() {
     var initial = initialMatch ? initialMatch[0].toUpperCase() : 'P';
     $('#userName, #greetingName').text(name);
     $('#userInitial').text(initial);
-    $('#participantUnit').text(user && (user.nama_unit_kerja || user.unit_kerja || user.unit || p.nama_unit_kerja || (p.unit_kerja && p.unit_kerja.nama_unit)) || '');
+    // 1. Tampilkan nama unit kerja (string saja, hindari [object Object])
+    var unitKerjaNama = user?.peserta_magang?.unit_kerja?.nama_unit ||
+                        user?.unit_kerja?.nama_unit ||
+                        (typeof user?.peserta_magang?.nama_unit_kerja === 'string' ? user.peserta_magang.nama_unit_kerja : '') ||
+                        (typeof user?.nama_unit_kerja === 'string' ? user.nama_unit_kerja : '') ||
+                        '';
+    $('#participantUnit').text(unitKerjaNama);
+
+    // 2. Tampilkan nama pembimbing lapangan dengan optional chaining
+    var pembimbing = user?.peserta_magang?.unit_kerja?.pembimbing?.pengguna?.nama_lengkap ||
+                     user?.peserta_magang?.unit_kerja?.pembimbing?.[0]?.pengguna?.nama_lengkap ||
+                     user?.peserta_magang?.unit_kerja?.pembimbing?.nama_lengkap ||
+                     user?.peserta_magang?.pembimbing?.pengguna?.nama_lengkap ||
+                     user?.peserta_magang?.nama_pembimbing ||
+                     '-';
+    $('#pembimbingLapanganText').text(pembimbing);
+
     function resolvePembimbing(u) {
         if (!u || typeof u !== 'object') return '';
-        var root = u.data && typeof u.data === 'object' && !u.peserta_magang ? u.data : u;
-        if (root.user && typeof root.user === 'object' && !root.peserta_magang) {
-            root = root.user;
-        }
-
-        var peserta = root.peserta_magang || root.peserta || root.profile || root;
-        var unit = (peserta && peserta.unit_kerja) || (root && root.unit_kerja) || (peserta && peserta.unit) || (root && root.unit);
-        if (Array.isArray(unit)) unit = unit[0];
-
-        // 1. Jalur utama dari user.peserta_magang.unit_kerja.pembimbing.pengguna.nama_lengkap
-        if (unit && typeof unit === 'object') {
-            var mentor = unit.pembimbing || unit.pembimbing_lapangan || unit.mentor;
-            if (Array.isArray(mentor)) mentor = mentor[0];
-
-            if (mentor && typeof mentor === 'object') {
-                var acc = mentor.pengguna || mentor.user || mentor.account;
-                var mentorName = (acc && (acc.nama_lengkap || acc.nama || acc.name)) ||
-                    mentor.nama_lengkap || mentor.nama || mentor.name;
-                if (mentorName) return String(mentorName).trim();
-            } else if (typeof mentor === 'string' && mentor.trim()) {
-                return mentor.trim();
-            }
-            if (unit.nama_pembimbing) return String(unit.nama_pembimbing).trim();
-            if (unit.nama_pembimbing_lapangan) return String(unit.nama_pembimbing_lapangan).trim();
-        }
-
-        // 2. Jalur alternatif langsung dari peserta_magang.pembimbing
-        if (peserta && typeof peserta === 'object') {
-            var pMentor = peserta.pembimbing || peserta.pembimbing_lapangan || peserta.mentor;
-            if (Array.isArray(pMentor)) pMentor = pMentor[0];
-            if (pMentor && typeof pMentor === 'object') {
-                var pAcc = pMentor.pengguna || pMentor.user || pMentor.account;
-                var pMentorName = (pAcc && (pAcc.nama_lengkap || pAcc.nama || pAcc.name)) ||
-                    pMentor.nama_lengkap || pMentor.nama || pMentor.name;
-                if (pMentorName) return String(pMentorName).trim();
-            } else if (typeof pMentor === 'string' && pMentor.trim()) {
-                return pMentor.trim();
-            }
-            if (peserta.nama_pembimbing) return String(peserta.nama_pembimbing).trim();
-            if (peserta.nama_pembimbing_lapangan) return String(peserta.nama_pembimbing_lapangan).trim();
-        }
-
-        if (root && root.nama_pembimbing) return String(root.nama_pembimbing).trim();
-
-        return '';
+        var mentorName = u?.peserta_magang?.unit_kerja?.pembimbing?.pengguna?.nama_lengkap ||
+                         u?.peserta_magang?.unit_kerja?.pembimbing?.[0]?.pengguna?.nama_lengkap ||
+                         u?.data?.peserta_magang?.unit_kerja?.pembimbing?.pengguna?.nama_lengkap ||
+                         u?.data?.peserta_magang?.unit_kerja?.pembimbing?.[0]?.pengguna?.nama_lengkap ||
+                         u?.peserta_magang?.unit_kerja?.pembimbing?.nama_lengkap ||
+                         u?.peserta_magang?.pembimbing?.pengguna?.nama_lengkap ||
+                         u?.peserta_magang?.nama_pembimbing ||
+                         '';
+        return mentorName ? String(mentorName).trim() : '';
     }
-
-    var pembimbing = resolvePembimbing(user);
-    $('#pembimbingLapanganText').text(pembimbing || '-');
 
     function escapeHtml(value) {
         return String(value == null ? '' : value).replace(/[&<>"']/g, function(character) {
@@ -112,18 +89,18 @@ $(document).ready(function() {
 
     $('#statSisaHariMagang').text('-');
     var remainingDaysRendered = renderRemainingDays(user);
-    if (!remainingDaysRendered || !pembimbing) {
+    if (!remainingDaysRendered || pembimbing === '-' || !pembimbing) {
         window.apiRequest('/me').then(function(response) {
             var profile = responseData(response, ['tanggal_selesai', 'peserta_magang', 'peserta', 'profile', 'user']);
             if (!renderRemainingDays(profile)) $('#statSisaHariMagang').text('-');
             var mentorFromApi = resolvePembimbing(profile) || resolvePembimbing(response);
-            if (mentorFromApi) {
+            if (mentorFromApi && ($('#pembimbingLapanganText').text() === '-' || !$('#pembimbingLapanganText').text())) {
                 $('#pembimbingLapanganText').text(mentorFromApi);
             }
-            var unitFromApi = profile && (profile.nama_unit_kerja ||
-                (profile.unit_kerja && profile.unit_kerja.nama_unit) ||
-                (profile.peserta_magang && profile.peserta_magang.unit_kerja && profile.peserta_magang.unit_kerja.nama_unit));
-            if (unitFromApi && !$('#participantUnit').text().trim()) {
+            var unitFromApi = profile?.peserta_magang?.unit_kerja?.nama_unit ||
+                              response?.data?.peserta_magang?.unit_kerja?.nama_unit ||
+                              profile?.unit_kerja?.nama_unit;
+            if (unitFromApi && (!$('#participantUnit').text().trim() || $('#participantUnit').text().trim() === '[object Object]')) {
                 $('#participantUnit').text(unitFromApi);
             }
             if (profile && typeof profile === 'object') {
