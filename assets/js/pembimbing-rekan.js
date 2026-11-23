@@ -57,7 +57,6 @@ $(document).ready(function() {
                     <td><span class="text-muted"><i class="fas fa-building me-1"></i>${escapeHtml(item.unit_kerja || '-')}</span></td>
                     <td>
                         <div class="small fw-semibold text-dark"><i class="fas fa-phone-alt text-success me-1"></i>${escapeHtml(item.no_hp || '-')}</div>
-                        <div class="small text-muted"><i class="fas fa-envelope text-secondary me-1"></i>${escapeHtml(item.email || '-')}</div>
                     </td>
                     <td class="text-center">
                         <span class="badge ${Number(item.jumlah_bimbingan) > 0 ? 'bg-success' : 'bg-secondary'} rounded-pill px-3 py-2">
@@ -119,7 +118,6 @@ $(document).ready(function() {
                         ? unit
                         : unit.nama_unit || unit.nama || '-'),
                     no_hp: item.no_hp || account.no_hp || '-',
-                    email: item.email || account.email || '-',
                     jumlah_bimbingan: Number.isFinite(parsedTotalBimbingan) && parsedTotalBimbingan >= 0
                         ? parsedTotalBimbingan
                         : 0,
@@ -170,7 +168,6 @@ $(document).ready(function() {
         $('#detailJabatan').text(item.jabatan);
         $('#detailUnit').text(item.unit_kerja);
         $('#detailNoHp').text(item.no_hp);
-        $('#detailEmail').text(item.email);
         $('#detailBimbingan').text(item.jumlah_bimbingan + ' Orang');
         var $participants = $('#detailDaftarPesertaBimbingan').empty();
         item.daftar_peserta_bimbingan.forEach(function(participant) {
