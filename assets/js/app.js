@@ -689,3 +689,52 @@ function hariIni() {
 function waktuSekarang() {
     return formatWaktuLengkap(new Date());
 }
+
+// ── Global Helper Buka Foto Data URI di Tab Baru ──────────────────────────────
+window.openImageInNewTab = function(url, title) {
+    if (!url) return;
+    if (/^data:image\//i.test(url)) {
+        try {
+            var arr = url.split(',');
+            var mimeMatch = arr[0].match(/:(.*?);/);
+            var mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+            var bstr = atob(arr[1]);
+            var n = bstr.length;
+            var u8arr = new Uint8Array(n);
+            while (n--) {
+                u8arr[n] = bstr.charCodeAt(n);
+            }
+            var blob = new Blob([u8arr], { type: mime });
+            var blobUrl = URL.createObjectURL(blob);
+            var newWin = window.open(blobUrl, '_blank');
+            if (!newWin) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: title || 'Foto Dokumentasi',
+                        imageUrl: url,
+                        imageAlt: 'Foto Dokumentasi',
+                        confirmButtonText: 'Tutup',
+                        confirmButtonColor: '#334EAC'
+                    });
+                }
+            }
+        } catch (err) {
+            var win = window.open('');
+            if (win) {
+                win.document.write('<!DOCTYPE html><html><head><title>' + (title || 'Foto') + '</title><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;background:#0f172a;display:flex;align-items:center;justify-content:center;min-height:100vh;}img{max-width:95%;max-height:95vh;border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.5);}</style></head><body><img src="' + url + '" alt="Foto"></body></html>');
+                win.document.close();
+            }
+        }
+    } else {
+        window.open(url, '_blank', 'noopener,noreferrer');
+    }
+};
+
+$(document).on('click', '.link-lihat-foto, a[href^="data:image/"]', function(e) {
+    var href = $(this).attr('href');
+    if (!href || href === '#') return;
+    if (/^data:image\//i.test(href)) {
+        e.preventDefault();
+        window.openImageInNewTab(href, $(this).text().trim() || 'Foto Kegiatan');
+    }
+});

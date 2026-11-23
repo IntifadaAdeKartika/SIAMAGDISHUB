@@ -69,7 +69,7 @@ $(document).ready(function() {
             mulai: item.jam_mulai || '',
             selesai: item.jam_selesai || '',
             kegiatan: item.kegiatan || '',
-            foto_kegiatan: item.foto_kegiatan_url || item.foto_kegiatan || '',
+            foto_kegiatan: item.foto_kegiatan_url || item.url_foto_kegiatan || item.foto_kegiatan || '',
             status: String(item.status_verifikasi || 'pending').toLowerCase(),
             catatan_pembimbing: item.catatan_pembimbing || '',
             paraf_pembimbing: item.paraf_pembimbing_url || item.paraf_pembimbing || '',
@@ -92,10 +92,10 @@ $(document).ready(function() {
                 status += '<br><img src="' + escapeHtml(parafUrl) +
                     '" style="height: 30px; margin-top: 5px;" alt="Paraf pembimbing">';
             }
-            var attachmentUrl = fileUrl(item.foto_kegiatan);
+                        var attachmentUrl = fileUrl(item.foto_kegiatan);
             var attachment = attachmentUrl
-                ? '<a href="' + escapeHtml(attachmentUrl) + '" target="_blank" rel="noopener" class="badge bg-light text-secondary border"><i class="fas fa-image me-1"></i>Lihat Foto</a>'
-                : '<span class="text-muted small">-</span>';
+                ? '<a href="' + escapeHtml(attachmentUrl) + '" target="_blank" rel="noopener noreferrer" class="link-lihat-foto text-primary text-decoration-underline fw-medium"><i class="fas fa-image me-1"></i>Lihat Foto</a>'
+                : '<span class="text-muted small">Tidak Ada</span>';
             var actions = '<button class="btn btn-sm btn-outline-primary btn-detail-logbook" data-id="' +
                 escapeHtml(item.id) + '"><i class="fas fa-eye me-1"></i>Detail</button>';
             if (item.status === 'pending') {
@@ -247,7 +247,7 @@ $(document).ready(function() {
             '<div class="mb-3"><strong>Status:</strong> ' + escapeHtml(item.status) + '</div>' +
             '<div class="mb-3"><strong>Kegiatan:</strong><div class="p-3 bg-light rounded">' + escapeHtml(item.kegiatan) + '</div></div>' +
             '<div class="mb-3"><strong>Catatan Pembimbing:</strong> ' + escapeHtml(item.catatan_pembimbing || '-') + '</div>' +
-            (attachmentUrl ? '<a href="' + escapeHtml(attachmentUrl) + '" target="_blank" rel="noopener">Lihat Foto Kegiatan</a>' : '<span class="text-muted">Tidak ada foto kegiatan</span>')
+            (attachmentUrl ? '<a href="' + escapeHtml(attachmentUrl) + '" target="_blank" rel="noopener noreferrer" class="link-lihat-foto text-primary text-decoration-underline fw-medium">Lihat Foto</a>' : '<span class="text-muted">Tidak Ada</span>')
         );
         $('#btnParafLogbookModal, #btnTolakLogbookModal').toggle(item.status === 'pending');
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalVerifLogbook')).show();
@@ -266,3 +266,48 @@ $(document).ready(function() {
 
     loadLogbook();
 });
+
+    // Handler Klik Buka Foto di Tab Baru (Mendukung Data URI Base64 & URL Biasa)
+    $(document).on('click', '.link-lihat-foto, a[href^="data:image/"]', function(e) {
+        var href = $(this).attr('href');
+        if (!href) return;
+        if (/^data:image\//i.test(href)) {
+            e.preventDefault();
+            try {
+                var arr = href.split(',');
+                var mime = arr[0].match(/:(.*?);/)[1];
+                var bstr = atob(arr[1]);
+                var n = bstr.length;
+                var u8arr = new Uint8Array(n);
+                while (n--) {
+                    u8arr[n] = bstr.charCodeAt(n);
+                }
+                var blob = new Blob([u8arr], { type: mime });
+                var blobUrl = URL.createObjectURL(blob);
+                var newWin = window.open(blobUrl, '_blank');
+                if (!newWin) {
+                    Swal.fire({
+                        title: 'Foto Kegiatan Logbook',
+                        imageUrl: href,
+                        imageAlt: 'Foto Kegiatan',
+                        confirmButtonText: 'Tutup',
+                        confirmButtonColor: '#334EAC'
+                    });
+                }
+            } catch (err) {
+                var win = window.open('');
+                if (win) {
+                    win.document.write('<!DOCTYPE html><html><head><title>Foto Kegiatan Logbook</title><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;background:#0f172a;display:flex;align-items:center;justify-content:center;min-height:100vh;}img{max-width:95%;max-height:95vh;border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.5);}</style></head><body><img src="' + href + '" alt="Foto Kegiatan"></body></html>');
+                    win.document.close();
+                } else {
+                    Swal.fire({
+                        title: 'Foto Kegiatan Logbook',
+                        imageUrl: href,
+                        imageAlt: 'Foto Kegiatan',
+                        confirmButtonText: 'Tutup',
+                        confirmButtonColor: '#334EAC'
+                    });
+                }
+            }
+        }
+    });

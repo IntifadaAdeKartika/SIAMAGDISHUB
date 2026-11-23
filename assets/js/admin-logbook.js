@@ -145,28 +145,54 @@ $(document).ready(function() {
         $('#modalCatatanPembimbing').text(item.catatan_pembimbing == null || item.catatan_pembimbing === ''
             ? '-' : item.catatan_pembimbing);
         $('#modalStatus').text(statusLabel(item.status_verifikasi || item.status));
-        var file = item.foto_kegiatan_url || item.foto_kegiatan;
+                var file = item.foto_kegiatan_url || item.url_foto_kegiatan || item.foto_kegiatan;
         if (file) {
             var filePath = typeof file === 'string'
                 ? file
                 : file.url || file.file_url || file.path || file.file_path || '';
-            var fileName = typeof file === 'string'
-                ? filePath.split('/').pop()
-                : file.name || file.filename || filePath.split('/').pop() || 'Lampiran kegiatan';
             var fileUrl = documentFileUrl(filePath);
             var fileType = typeof file === 'object' ? String(file.mime_type || file.type || '').toLowerCase() : '';
-            if (fileUrl && (fileType.indexOf('image/') === 0 || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(filePath))) {
-                $('#modalFotoNama').html('<img src="' + escapeHtml(fileUrl) + '" alt="Foto kegiatan" ' +
-                    'class="img-fluid rounded" style="max-height:320px;">');
-            } else if (fileUrl && (fileType === 'application/pdf' || /\.pdf$/i.test(filePath))) {
-                $('#modalFotoNama').html('<a class="btn btn-outline-danger btn-sm" href="' +
-                    escapeHtml(fileUrl) + '" target="_blank" rel="noopener noreferrer">' +
-                    '<i class="fas fa-file-pdf me-1"></i>Lihat Dokumen PDF</a>');
+            var isImage = (fileType.indexOf('image/') === 0) ||
+                          /^data:image\//i.test(fileUrl) ||
+                          /.(png|jpe?g|gif|webp|bmp|svg)($|\?)/i.test(filePath);
+            var isPdf = (fileType === 'application/pdf') ||
+                        /^data:application\/pdf/i.test(fileUrl) ||
+                        /\.pdf($|\?)/i.test(filePath);
+
+            if (isImage) {
+                $('#modalFotoBox').html(
+                    '<div class="mb-2 text-center">' +
+                        '<img src="' + escapeHtml(fileUrl) + '" alt="Foto kegiatan" class="img-fluid rounded border shadow-sm" style="max-height:260px; object-fit:contain; cursor:pointer;" onclick="window.openImageInNewTab && window.openImageInNewTab(\'' + escapeHtml(fileUrl) + '\', \'Foto Kegiatan\')">' +
+                    '</div>' +
+                    '<div>' +
+                        '<a href="' + escapeHtml(fileUrl) + '" target="_blank" rel="noopener noreferrer" class="link-lihat-foto text-primary text-decoration-underline fw-medium small">' +
+                            '<i class="fas fa-external-link-alt me-1"></i>Buka Foto di Tab Baru' +
+                        '</a>' +
+                    '</div>'
+                ).show();
+                $('#modalNoFoto').hide();
+            } else if (isPdf) {
+                $('#modalFotoBox').html(
+                    '<i class="fas fa-file-pdf text-danger fa-3x mb-2"></i>' +
+                    '<div class="fw-semibold small text-dark mb-2">Dokumen Lampiran (PDF)</div>' +
+                    '<a class="btn btn-outline-danger btn-sm link-lihat-foto" href="' + escapeHtml(fileUrl) + '" target="_blank" rel="noopener noreferrer">' +
+                        '<i class="fas fa-external-link-alt me-1"></i>Lihat Dokumen PDF' +
+                    '</a>'
+                ).show();
+                $('#modalNoFoto').hide();
             } else {
-                $('#modalFotoNama').text(fileName || 'Lampiran kegiatan');
+                var fileName = typeof file === 'string'
+                    ? (filePath.startsWith('data:') ? 'Lampiran Dokumentasi' : filePath.split('/').pop())
+                    : file.name || file.filename || 'Lampiran kegiatan';
+                $('#modalFotoBox').html(
+                    '<i class="fas fa-paperclip text-secondary fa-3x mb-2"></i>' +
+                    '<div class="fw-semibold small text-dark mb-1">' + escapeHtml(fileName) + '</div>' +
+                    '<a href="' + escapeHtml(fileUrl) + '" target="_blank" rel="noopener noreferrer" class="link-lihat-foto text-primary small">' +
+                        '<i class="fas fa-download me-1"></i>Buka / Unduh Berkas' +
+                    '</a>'
+                ).show();
+                $('#modalNoFoto').hide();
             }
-            $('#modalFotoBox').show();
-            $('#modalNoFoto').hide();
         } else {
             $('#modalFotoBox').hide();
             $('#modalNoFoto').show();
@@ -177,3 +203,35 @@ $(document).ready(function() {
     loadUnits();
     load();
 });
+
+    // Handler Klik Buka Foto di Tab Baru (Mendukung Data URI Base64 & URL Biasa)
+    $(document).on('click', '.link-lihat-foto, a[href^="data:image/"]', function(e) {
+        var href = $(this).attr('href');
+        if (!href) return;
+        if (/^data:image\//i.test(href)) {
+            e.preventDefault();
+            if (typeof window.openImageInNewTab === 'function') {
+                window.openImageInNewTab(href, 'Foto Kegiatan');
+            } else {
+                try {
+                    var arr = href.split(',');
+                    var mime = arr[0].match(/:(.*?);/)[1];
+                    var bstr = atob(arr[1]);
+                    var n = bstr.length;
+                    var u8arr = new Uint8Array(n);
+                    while (n--) {
+                        u8arr[n] = bstr.charCodeAt(n);
+                    }
+                    var blob = new Blob([u8arr], { type: mime });
+                    var blobUrl = URL.createObjectURL(blob);
+                    window.open(blobUrl, '_blank');
+                } catch (err) {
+                    var win = window.open('');
+                    if (win) {
+                        win.document.write('<!DOCTYPE html><html><head><title>Foto Kegiatan</title><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;background:#0f172a;display:flex;align-items:center;justify-content:center;min-height:100vh;}img{max-width:95%;max-height:95vh;border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.5);}</style></head><body><img src="' + href + '" alt="Foto Kegiatan"></body></html>');
+                        win.document.close();
+                    }
+                }
+            }
+        }
+    });
