@@ -267,47 +267,4 @@ $(document).ready(function() {
     loadLogbook();
 });
 
-    // Handler Klik Buka Foto di Tab Baru (Mendukung Data URI Base64 & URL Biasa)
-    $(document).on('click', '.link-lihat-foto, a[href^="data:image/"]', function(e) {
-        var href = $(this).attr('href');
-        if (!href) return;
-        if (/^data:image\//i.test(href)) {
-            e.preventDefault();
-            try {
-                var arr = href.split(',');
-                var mime = arr[0].match(/:(.*?);/)[1];
-                var bstr = atob(arr[1]);
-                var n = bstr.length;
-                var u8arr = new Uint8Array(n);
-                while (n--) {
-                    u8arr[n] = bstr.charCodeAt(n);
-                }
-                var blob = new Blob([u8arr], { type: mime });
-                var blobUrl = URL.createObjectURL(blob);
-                var newWin = window.open(blobUrl, '_blank');
-                if (!newWin) {
-                    Swal.fire({
-                        title: 'Foto Kegiatan Logbook',
-                        imageUrl: href,
-                        imageAlt: 'Foto Kegiatan',
-                        confirmButtonText: 'Tutup',
-                        confirmButtonColor: '#334EAC'
-                    });
-                }
-            } catch (err) {
-                var win = window.open('');
-                if (win) {
-                    win.document.write('<!DOCTYPE html><html><head><title>Foto Kegiatan Logbook</title><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;background:#0f172a;display:flex;align-items:center;justify-content:center;min-height:100vh;}img{max-width:95%;max-height:95vh;border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.5);}</style></head><body><img src="' + href + '" alt="Foto Kegiatan"></body></html>');
-                    win.document.close();
-                } else {
-                    Swal.fire({
-                        title: 'Foto Kegiatan Logbook',
-                        imageUrl: href,
-                        imageAlt: 'Foto Kegiatan',
-                        confirmButtonText: 'Tutup',
-                        confirmButtonColor: '#334EAC'
-                    });
-                }
-            }
-        }
-    });
+    // Handler foto dipusatkan di app.js — blok duplikat dihapus.
