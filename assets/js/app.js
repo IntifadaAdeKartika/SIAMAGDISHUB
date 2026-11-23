@@ -6,11 +6,11 @@
 // ── Konstanta Global ────────────────────────────────────────────────────────
 /** Base URL API Laravel – tersedia global untuk semua file JS halaman */
 if (typeof window.API_BASE === 'undefined') {
-    window.API_BASE = 'http://localhost:8000/backend-api';
+    window.API_BASE = 'https://siamagdishub-backend.vercel.app/backend-api';
 }
 
 function buildApiUrl(path) {
-    if (!path) return (window.API_BASE || 'http://localhost:8000/backend-api').replace(/\/+$/, '');
+    if (!path) return (window.API_BASE || 'https://siamagdishub-backend.vercel.app/backend-api').replace(/\/+$/, '');
 
     // Jika path berupa URL lengkap (http...)
     if (/^https?:\/\//i.test(path)) {
@@ -21,7 +21,7 @@ function buildApiUrl(path) {
         return path;
     }
 
-    var base = (window.API_BASE || 'http://localhost:8000/backend-api').replace(/\/+$/, '');
+    var base = (window.API_BASE || 'https://siamagdishub-backend.vercel.app/backend-api').replace(/\/+$/, '');
 
     // Bersihkan path dari garis miring di depan
     var cleanPath = String(path).replace(/^\/+/, '');

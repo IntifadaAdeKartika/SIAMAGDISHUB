@@ -1,11 +1,11 @@
 // =====================================================================
 //  SIAMAG – Login Handler
-//  Fase 0: Integrasi autentikasi nyata dengan Laravel backend API
+//  Fase 0: Integrasi autentikasi dengan Laravel backend API
 // =====================================================================
 
 /** Base URL API Laravel – diekspos global agar bisa dipakai file JS lain */
 if (typeof window.API_BASE === 'undefined') {
-    window.API_BASE = 'http://localhost:8000/backend-api';
+    window.API_BASE = 'https://siamagdishub-backend.vercel.app/backend-api';
 }
 
 /** Peta redirect berdasarkan role yang dikembalikan API */

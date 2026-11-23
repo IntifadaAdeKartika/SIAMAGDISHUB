@@ -2,12 +2,12 @@
     var fileField = 'file_surat_permohonan';
 
     function apiBase() {
-        return (window.API_BASE || 'http://localhost:8000/backend-api').replace(/\/$/, '');
+        return (window.API_BASE || 'https://siamagdishub-backend.vercel.app/backend-api').replace(/\/$/, '');
     }
 
     function apiUrl(path) {
         if (typeof window.apiUrl === 'function') return window.apiUrl(path);
-        var base = (window.API_BASE || 'http://localhost:8000/backend-api').replace(/\/+$/, '');
+        var base = (window.API_BASE || 'https://siamagdishub-backend.vercel.app/backend-api').replace(/\/+$/, '');
         var cleanPath = String(path || '').replace(/^\/+/, '');
         return cleanPath ? base + '/' + cleanPath : base;
     }
