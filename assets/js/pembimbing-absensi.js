@@ -88,7 +88,7 @@ $(document).ready(function() {
             lokasi: item.lokasi || '',
             latitude: item.latitude,
             longitude: item.longitude,
-            foto: item.foto_selfie_url || item.foto_selfie || '',
+            foto: item.foto_selfie_url || item.url_foto_selfie || item.foto_selfie || item.foto || '',
             status_event: String(item.status || '').toLowerCase(),
             status_verif: String(item.status_verifikasi || 'pending').toLowerCase(),
             paraf: item.paraf_pembimbing_url || item.paraf_pembimbing || '',

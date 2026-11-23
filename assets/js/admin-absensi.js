@@ -146,7 +146,7 @@ $(document).ready(function() {
         $('#modalRadius').text(item.latitude != null && item.longitude != null
             ? item.latitude + ', ' + item.longitude : '-');
         $('#modalVerif').text(item.status_verifikasi || '-');
-        var photoUrl = item.foto_selfie_url || item.url_foto_selfie || '';
+        var photoUrl = item.foto_selfie_url || item.url_foto_selfie || item.foto_selfie || item.foto || '';
         if (typeof photoUrl === 'string' && photoUrl.trim()) {
             $('#modalFoto').attr('src', photoUrl.trim());
             $('#modalFotoBox').show();
