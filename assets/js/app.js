@@ -1,6 +1,5 @@
 /* app.js - Shared utilities and dashboard handlers
    Handles sidebar navigation, session validation, user profile, and notifications
-   Fase 0: Integrasi autentikasi nyata (localStorage + Bearer token)
  */
 
 // ── Konstanta Global ────────────────────────────────────────────────────────
@@ -14,6 +13,11 @@ function buildApiUrl(path) {
 
     // Jika path berupa URL lengkap (http...)
     if (/^https?:\/\//i.test(path)) {
+        // PERBAIKAN: Paksa ganti http:// menjadi https:// (kecuali localhost)
+        if (path.startsWith('http://') && !path.includes('localhost')) {
+            path = path.replace('http://', 'https://');
+        }
+
         if (path.includes('localhost:8000') && !path.includes('/backend-api')) {
             return path.replace('localhost:8000', 'localhost:8000/backend-api');
         }
@@ -275,7 +279,9 @@ window.apiRequestAll = function(path, keys) {
             var metadata = page.metadata || {};
             var nestedMetadata = metadata.meta && typeof metadata.meta === 'object' ? metadata.meta : metadata;
             if (nestedMetadata.next_page_url) {
-                return requestPage(new URL(nestedMetadata.next_page_url, url).href);
+                // Paksa ubah http:// menjadi https:// pada URL paginasi
+                var safeNextUrl = nestedMetadata.next_page_url.replace(/^http:\/\//i, 'https://');
+                return requestPage(new URL(safeNextUrl, url).href);
             }
             var currentPage = Number(nestedMetadata.current_page);
             var lastPage = Number(nestedMetadata.last_page);
