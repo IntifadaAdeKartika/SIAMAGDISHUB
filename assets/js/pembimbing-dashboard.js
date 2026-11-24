@@ -87,18 +87,14 @@ $(document).ready(function() {
 
     function formatQueueDate(value) {
         if (!value) return '-';
-
-        var cleanValue = String(value)
-            .trim()
-            .replace(/\.\d+/, '')
-            .replace(/Z$/i, '')
-            .replace(/[+-]\d{2}:\d{2}$/, '');
-
-        if (!cleanValue) return '-';
-
-        return /[T ]\d{2}:\d{2}/.test(cleanValue)
-            ? formatTanggalJam(cleanValue)
-            : formatTanggal(cleanValue);
+        var str = String(value).trim();
+        if (!str) return '-';
+        // Gunakan string asli (termasuk suffix Z) agar new Date() di formatTanggalJam
+        // mengkonversi UTC ke zona waktu lokal browser (WIB = UTC+7) secara benar.
+        // Contoh: "2026-11-24T02:15:00.000000Z" (UTC) → new Date().getHours() = 9 (WIB)
+        return /[T ]\d{2}:\d{2}/.test(str)
+            ? formatTanggalJam(str)
+            : formatTanggal(str);
     }
 
     // ==============================
