@@ -126,14 +126,30 @@ $(document).ready(function() {
         });
     }
 
+    function formatTimeHI(value) {
+        if (!value) return '';
+        var str = String(value).trim();
+        if (!str) return '';
+        if (str.indexOf('T') !== -1 || str.indexOf(' ') !== -1) {
+            str = str.split(/[T ]/)[1] || str;
+        }
+        var match = str.match(/^(\d{1,2}):(\d{2})/);
+        if (match) {
+            var h = match[1].padStart(2, '0');
+            var m = match[2];
+            return h + ':' + m;
+        }
+        return str.slice(0, 5);
+    }
+
     function normalizeLogbook(item) {
         var status = String(item.status_verifikasi || item.status || 'pending').toLowerCase();
         var photo = item.foto_kegiatan_url || item.url_foto_kegiatan || item.foto_kegiatan || item.file_lampiran || item.lampiran || '';
         return {
             id: item.id,
             tanggal: item.tanggal || '',
-            waktu_mulai: item.waktu_mulai || item.jam_mulai || '',
-            waktu_selesai: item.waktu_selesai || item.jam_selesai || '',
+            waktu_mulai: formatTimeHI(item.waktu_mulai || item.jam_mulai),
+            waktu_selesai: formatTimeHI(item.waktu_selesai || item.jam_selesai),
             deskripsi_kegiatan: item.deskripsi_kegiatan || item.kegiatan || '',
             file_lampiran: photo,
             foto_kegiatan: item.foto_kegiatan || photo,
@@ -349,8 +365,8 @@ $(document).ready(function() {
     $('#formLogbook').on('submit', function(event) {
         event.preventDefault();
         var id = $('#logbookId').val();
-        var waktuMulai = $('#waktuMulai').val();
-        var waktuSelesai = $('#waktuSelesai').val();
+        var waktuMulai = formatTimeHI($('#waktuMulai').val());
+        var waktuSelesai = formatTimeHI($('#waktuSelesai').val());
         if (waktuMulai >= waktuSelesai) {
             Swal.fire('Validasi Waktu', 'Waktu selesai harus lebih besar dari waktu mulai kegiatan.', 'warning');
             return;
@@ -363,6 +379,11 @@ $(document).ready(function() {
             jam_selesai: waktuSelesai,
             kegiatan: $('#deskripsiKegiatan').val().trim()
         };
+
+        // Pastikan format jam_mulai dan jam_selesai sesuai H:i (HH:mm)
+        console.log('jam_mulai:', payload.jam_mulai);
+        console.log('jam_selesai:', payload.jam_selesai);
+
         if (!payload.id_absensi) {
             Swal.fire('Absensi Belum Tersedia', 'Logbook harus terhubung ke record absensi pada hari yang sama. Lakukan check-in terlebih dahulu.', 'warning');
             return;
@@ -445,8 +466,8 @@ $(document).ready(function() {
             $('#idAbsensiLogbook').val(item.id_absensi);
             $('#idAbsensiLogbook').data('tanggal', item.tanggal);
             $('#tglLogbook').val(item.tanggal);
-            $('#waktuMulai').val(item.waktu_mulai);
-            $('#waktuSelesai').val(item.waktu_selesai);
+            $('#waktuMulai').val(formatTimeHI(item.waktu_mulai));
+            $('#waktuSelesai').val(formatTimeHI(item.waktu_selesai));
             $('#deskripsiKegiatan').val(item.deskripsi_kegiatan);
             $('#fotoKegiatan').val('');
             $('#modalLogbookTitle').html('<i class="fas fa-edit me-2"></i>Edit / Revisi Logbook');
