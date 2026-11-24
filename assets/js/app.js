@@ -730,11 +730,20 @@ window.openImageInNewTab = function(url, title) {
     }
 };
 
-$(document).on('click', '.link-lihat-foto, a[href^="data:image/"]', function(e) {
-    var href = $(this).attr('href');
-    if (!href || href === '#') return;
-    if (/^data:image\//i.test(href)) {
+// Handler pembukaan foto: pastikan hanya terdaftar satu kali.
+$(document)
+    .off('click', '.link-lihat-foto, a[href^="data:image/"]')
+    .on('click', '.link-lihat-foto, a[href^="data:image/"]', function(e) {
+        var href = $(this).attr('href');
+
+        if (!href || href === '#') return;
+
+        // Cegah browser membuka target="_blank" secara bersamaan.
         e.preventDefault();
-        window.openImageInNewTab(href, $(this).text().trim() || 'Foto Kegiatan');
-    }
-});
+        e.stopPropagation();
+
+        window.openImageInNewTab(
+            href,
+            $(this).text().trim() || 'Foto Kegiatan'
+        );
+    });

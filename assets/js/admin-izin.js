@@ -139,12 +139,24 @@ $(document).ready(function() {
         $('#modalAlasan').text(item.keterangan || '-');
         $('#modalStatus').text(item.status || '-');
         $('#modalCatatan').text(item.catatan_pembimbing || '-');
-        var file = item.file_surat_url || item.file_surat;
+        var file = item.file_surat_url || item.file_surat || '';
+
         if (file) {
-            $('#modalBuktiNama').text(file);
+            $('#modalBuktiNama')
+                .empty()
+                .append(
+                    $('<a>', {
+                        href: file,
+                        target: '_blank',
+                        rel: 'noopener noreferrer',
+                        text: 'Lihat / Unduh Lampiran'
+                    })
+                );
+
             $('#modalBuktiBox').show();
             $('#modalNoBukti').hide();
         } else {
+            $('#modalBuktiNama').empty();
             $('#modalBuktiBox').hide();
             $('#modalNoBukti').show();
         }

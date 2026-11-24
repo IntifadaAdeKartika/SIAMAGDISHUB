@@ -55,17 +55,31 @@ $(document).ready(function() {
         return cleanPath ? base + '/' + cleanPath : base;
     }
 
-    function fileUrl(path) {
-        if (!path) return '';
-        try {
-            var url = /^https?:/i.test(path)
-                ? new URL(path)
-                : new URL(String(path).replace(/^\//, ''), new URL(apiUrl('/')).origin + '/');
-            return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : '';
-        } catch (error) {
-            return '';
-        }
+function fileUrl(path) {
+    if (!path) return '';
+
+    var value = String(path).trim();
+
+    // Mendukung lampiran Base64 dari backend.
+    if (/^data:(application\/pdf|image\/jpeg|image\/png);base64,/i.test(value)) {
+        return value;
     }
+
+    try {
+        var url = /^https?:/i.test(value)
+            ? new URL(value)
+            : new URL(
+                value.replace(/^\//, ''),
+                new URL(apiUrl('/')).origin + '/'
+            );
+
+        return url.protocol === 'http:' || url.protocol === 'https:'
+            ? url.href
+            : '';
+    } catch (error) {
+        return '';
+    }
+}
 
     function escapeHtml(value) {
         return String(value == null ? '' : value).replace(/[&<>"']/g, function(character) {
