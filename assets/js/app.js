@@ -522,9 +522,17 @@ $(document).ready(function() {
     }
 
     function safeNotificationLink(link) {
-        if (!link) return '';
+        var raw = String(link || '').trim();
+        if (!raw) return '';
+        // Backend mengirim tautan absolut (mis. /peserta/logbook.html).
+        // Saat aplikasi di-host di subfolder,arahkan ke subfolder aplikasi.
+        if (/^\/(admin|pembimbing|peserta)\//.test(raw) &&
+            window.location.pathname.indexOf(raw.split('/').slice(0, 2).join('/') + '/') !== 0) {
+            var appBase = window.location.pathname.replace(/\/(admin|pembimbing|peserta)(\/[^/]*)?$/, '/');
+            raw = appBase + raw.replace(/^\//, '');
+        }
         try {
-            var url = new URL(link, window.location.href);
+            var url = new URL(raw, window.location.href);
             return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : '';
         } catch (error) {
             return '';

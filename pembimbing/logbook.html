@@ -169,7 +169,7 @@
                             </div>
                             <div class="stat-info">
                                 <h3 id="statRevisiLogbook">0</h3>
-                                <p>Perlu Revisi</p>
+                                <p>Menunggu Revisi Peserta</p>
                             </div>
                         </div>
                     </div>
@@ -203,9 +203,10 @@
                             <label class="form-label text-muted small mb-1">Status Verifikasi</label>
                             <select class="form-select form-select-sm" id="filterStatusVerifLogbook">
                                 <option value="">Semua Status</option>
-                                <option value="pending">Pending</option>
+                                <option value="pending">Menunggu Pemeriksaan</option>
+                                <option value="revisi">Menunggu Revisi Peserta</option>
                                 <option value="approved">Approved</option>
-                                <option value="rejected">Rejected</option>
+                                <option value="rejected">Rejected (Final)</option>
                             </select>
                         </div>
                         <div class="col-md-4 col-sm-12">
@@ -262,10 +263,13 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-danger btn-sm" id="btnTolakLogbookModal">
-                    <i class="fas fa-times me-1"></i> Tolak / Minta Revisi
+                    <i class="fas fa-ban me-1"></i> Tolak Final
+                </button>
+                <button type="button" class="btn btn-outline-warning btn-sm" id="btnMintaRevisiLogbookModal">
+                    <i class="fas fa-rotate-left me-1"></i> Minta Revisi
                 </button>
                 <button type="button" class="btn btn-success btn-sm" id="btnParafLogbookModal">
-                    <i class="fas fa-signature me-1"></i> Setujui & Beri Paraf
+                    <i class="fas fa-signature me-1"></i> Approve &amp; Beri Paraf
                 </button>
             </div>
         </div>

@@ -1,5 +1,5 @@
 /* peserta-logbook.js
-   Pengisian dan pengelolaan logbook peserta magang.
+   Pengisian, revisi, dan pengelolaan logbook peserta magang.
  */
 
 $(document).ready(function() {
@@ -32,13 +32,13 @@ $(document).ready(function() {
             $('#idAbsensiLogbook').val(checkIn ? checkIn.id : '');
             $('#idAbsensiLogbook').data('tanggal', checkIn ? String(checkIn.tanggal_jam || '').slice(0, 10) : '');
             $('#absensiLogbookNotice').toggle(!checkIn);
-            return Boolean(checkIn);
+            return checkIn ? checkIn : null;
         }).catch(function(error) {
             $('#idAbsensiLogbook').val('');
             $('#idAbsensiLogbook').removeData('tanggal');
             $('#absensiLogbookNotice').removeClass('alert-info').addClass('alert-warning')
                 .text('Data absensi untuk mengaitkan logbook gagal dimuat: ' + error.message).show();
-            return false;
+            return null;
         });
     }
     var p = user && (user.peserta_magang || user.peserta || user.profile || {});
@@ -47,6 +47,8 @@ $(document).ready(function() {
     var initialMatch = String(displayName).match(/[a-zA-Z]/);
     var initial = initialMatch ? initialMatch[0].toUpperCase() : 'P';
     var dataLogbook = [];
+    var currentEditingLogbook = null;
+    var statusFilter = '';
 
     $('#userName').text(displayName);
     $('#userRole').text('Peserta Magang');
@@ -63,7 +65,7 @@ $(document).ready(function() {
             paginate: { first: 'Awal', last: 'Akhir', next: 'Berikutnya', previous: 'Sebelumnya' }
         },
         order: [[1, 'desc']],
-        columnDefs: [{ orderable: false, targets: [5] }]
+        columnDefs: [{ orderable: false, targets: [2, 3, 4, 5] }]
     });
 
     function apiUrl(path) {
@@ -105,6 +107,10 @@ $(document).ready(function() {
         });
     }
 
+    function toBoolean(value) {
+        return value === true || value === 1 || String(value).toLowerCase() === 'true';
+    }
+
     function readResponse(response) {
         return response.text().then(function(text) {
             var payload = null;
@@ -142,9 +148,24 @@ $(document).ready(function() {
         return str.slice(0, 5);
     }
 
+    function formatDateTimeLabel(value) {
+        if (!value) return '';
+        if (typeof window.apiFormatDateTime === 'function') {
+            var formatted = window.apiFormatDateTime(value);
+            return formatted && formatted.full && formatted.full !== '-' ? formatted.full : '';
+        }
+        return String(value).replace('T', ' ').slice(0, 19);
+    }
+
+    function truncate(value, maxLength) {
+        var text = String(value == null ? '' : value);
+        return text.length > maxLength ? text.slice(0, maxLength - 1) + '…' : text;
+    }
+
     function normalizeLogbook(item) {
         var status = String(item.status_verifikasi || item.status || 'pending').toLowerCase();
         var photo = item.foto_kegiatan_url || item.url_foto_kegiatan || item.foto_kegiatan || item.file_lampiran || item.lampiran || '';
+        var riwayat = Array.isArray(item.riwayat_revisi) ? item.riwayat_revisi : [];
         return {
             id: item.id,
             tanggal: item.tanggal || '',
@@ -152,22 +173,70 @@ $(document).ready(function() {
             waktu_selesai: formatTimeHI(item.waktu_selesai || item.jam_selesai),
             deskripsi_kegiatan: item.deskripsi_kegiatan || item.kegiatan || '',
             file_lampiran: photo,
-            foto_kegiatan: item.foto_kegiatan || photo,
+            foto_kegiatan: item.foto_kegiatan || '',
             foto_kegiatan_url: item.foto_kegiatan_url || photo,
             id_absensi: item.id_absensi || '',
             status_verifikasi: status,
             catatan_pembimbing: item.catatan_pembimbing != null ? item.catatan_pembimbing : (item.catatan || ''),
             pembimbing: item.pembimbing || item.nama_pembimbing || '',
-            paraf_pembimbing: item.paraf_pembimbing_url || item.paraf_pembimbing || ''
+            paraf_pembimbing: item.paraf_pembimbing_url || item.paraf_pembimbing || '',
+            revisi_diminta: toBoolean(item.revisi_diminta),
+            revisi_diminta_pada: item.revisi_diminta_pada || null,
+            revisi_dikirim_pada: item.revisi_dikirim_pada || null,
+            riwayat_revisi: riwayat,
+            diverifikasi_pada: item.diverifikasi_pada || null
         };
     }
 
-    function statusLabel(status) {
-        return {
-            pending: 'Pending',
-            approved: 'Approved',
-            rejected: 'Rejected'
-        }[String(status || '').toLowerCase()] || status || '-';
+    function needsRevision(item) {
+        return item.status_verifikasi === 'pending' && item.revisi_diminta;
+    }
+
+    function canEdit(item) {
+        return item.status_verifikasi === 'pending';
+    }
+
+    function statusLabel(item) {
+        if (item.status_verifikasi === 'approved') return 'Approved';
+        if (item.status_verifikasi === 'rejected') return 'Rejected';
+        return needsRevision(item) ? 'Perlu Revisi' : 'Pending';
+    }
+
+    function statusBadge(item) {
+        if (item.status_verifikasi === 'approved') {
+            return '<span class="badge badge-approved"><i class="fas fa-check-circle me-1"></i>Approved</span>';
+        }
+        if (item.status_verifikasi === 'rejected') {
+            return '<span class="badge badge-rejected"><i class="fas fa-times-circle me-1"></i>Rejected</span>';
+        }
+        if (needsRevision(item)) {
+            return '<span class="badge badge-revisi"><i class="fas fa-rotate-left me-1"></i>Perlu Revisi</span>';
+        }
+        return '<span class="badge badge-pending"><i class="fas fa-clock me-1"></i>Pending</span>';
+    }
+
+    function statusMetaHtml(item) {
+        if (item.status_verifikasi === 'approved') {
+            return '<div class="small text-success mt-1">Paraf:<br>' +
+                parafImage(item.paraf_pembimbing, 'height: 30px;') + '</div>';
+        }
+        if (item.status_verifikasi === 'rejected') {
+            return '<div class="small text-danger mt-1"><i class="fas fa-comment-dots me-1"></i>' +
+                escapeHtml(truncate(item.catatan_pembimbing || 'Ditolak final oleh pembimbing', 90)) + '</div>';
+        }
+        if (needsRevision(item)) {
+            var html = '<div class="small text-warning-emphasis mt-1"><i class="fas fa-comment-dots me-1"></i>' +
+                escapeHtml(truncate(item.catatan_pembimbing || 'Perbaiki logbook sesuai catatan pembimbing', 90)) + '</div>';
+            if (item.revisi_diminta_pada) {
+                html += '<div class="small text-muted">Diminta: ' + escapeHtml(formatDateTimeLabel(item.revisi_diminta_pada)) + '</div>';
+            }
+            return html;
+        }
+        var pendingHtml = '<div class="small text-muted mt-1"><i class="fas fa-hourglass-half me-1"></i>Menunggu pemeriksaan pembimbing</div>';
+        if (item.revisi_dikirim_pada) {
+            pendingHtml += '<div class="small text-info-emphasis">Revisi dikirim: ' + escapeHtml(formatDateTimeLabel(item.revisi_dikirim_pada)) + '</div>';
+        }
+        return pendingHtml;
     }
 
     function updateStats() {
@@ -176,39 +245,23 @@ $(document).ready(function() {
             return item.status_verifikasi === 'approved';
         }).length);
         $('#statMenunggu').text(dataLogbook.filter(function(item) {
-            return item.status_verifikasi === 'pending';
+            return item.status_verifikasi === 'pending' && !item.revisi_diminta;
         }).length);
         $('#statDitolak').text(dataLogbook.filter(function(item) {
-            return item.status_verifikasi === 'rejected';
+            return needsRevision(item);
         }).length);
     }
 
     function renderTable() {
         table.clear();
         dataLogbook.forEach(function(item, index) {
-            var status = item.status_verifikasi;
-            var badge = status === 'approved'
-                ? '<span class="badge badge-approved"><i class="fas fa-check-circle me-1"></i>' + statusLabel(status) + '</span>'
-                : status === 'pending'
-                    ? '<span class="badge badge-pending"><i class="fas fa-clock me-1"></i>' + statusLabel(status) + '</span>'
-                    : status === 'rejected'
-                        ? '<span class="badge badge-rejected"><i class="fas fa-times-circle me-1"></i>' + statusLabel(status) + '</span>'
-                        : '<span class="badge bg-secondary">' + escapeHtml(statusLabel(status)) + '</span>';
-            var paraf = parafImage(item.paraf_pembimbing, 'height: 30px;');
-            var info = status === 'approved'
-                ? '<div class="small text-success mt-1">Paraf:<br>' + paraf + '</div>'
-                : status === 'pending'
-                    ? '<div class="small text-muted mt-1">Paraf:<br>' + paraf +
-                        '</div><div class="small text-muted mt-1">Belum diparaf</div>'
-                    : '<div class="small text-danger mt-1">Paraf:<br>' + paraf +
-                        '</div><div class="small text-danger mt-1"><i class="fas fa-comment-dots me-1"></i>Ada catatan</div>';
-                        var attachmentUrl = fileUrl(item.file_lampiran);
+            var attachmentUrl = fileUrl(item.file_lampiran);
             var attachment = attachmentUrl
                 ? '<a href="' + escapeHtml(attachmentUrl) + '" target="_blank" rel="noopener noreferrer" class="link-lihat-foto text-primary text-decoration-underline fw-medium">Lihat Foto</a>'
                 : '<span class="text-muted small">Tidak Ada</span>';
-            var editButton = status !== 'approved'
+            var editButton = canEdit(item)
                 ? '<button class="btn btn-sm btn-outline-secondary btn-aksi btn-edit-logbook" data-id="' +
-                    escapeHtml(item.id) + '" title="Edit / Revisi"><i class="fas fa-edit"></i></button>'
+                    escapeHtml(item.id) + '" title="' + (needsRevision(item) ? 'Perbaiki logbook' : 'Edit logbook') + '"><i class="fas fa-edit"></i></button>'
                 : '';
 
             table.row.add([
@@ -217,7 +270,7 @@ $(document).ready(function() {
                     escapeHtml(item.waktu_mulai) + ' - ' + escapeHtml(item.waktu_selesai) + '</div></div>',
                 '<div class="small">' + escapeHtml(item.deskripsi_kegiatan) + '</div>',
                 attachment,
-                '<div>' + badge + info + '</div>',
+                '<div>' + statusBadge(item) + statusMetaHtml(item) + '</div>',
                 '<div class="action-buttons text-center"><button class="btn btn-sm btn-outline-primary btn-aksi btn-detail-logbook" data-id="' +
                     escapeHtml(item.id) + '"><i class="fas fa-eye me-1"></i>Detail</button> ' + editButton + '</div>'
             ]);
@@ -244,13 +297,25 @@ $(document).ready(function() {
             });
     }
 
+    $.fn.dataTable.ext.search.push(function(settings, searchData, dataIndex) {
+        if (!settings.nTable || settings.nTable.id !== 'tabelLogbook') return true;
+        if (!statusFilter) return true;
+        var item = dataLogbook[dataIndex];
+        if (!item) return true;
+        if (statusFilter === 'revisi') return needsRevision(item);
+        if (statusFilter === 'pending') return item.status_verifikasi === 'pending' && !item.revisi_diminta;
+        return item.status_verifikasi === statusFilter;
+    });
+
     $('#filterStatusLogbook').on('change', function() {
-        table.column(4).search($(this).val()).draw();
+        statusFilter = $(this).val();
+        table.draw();
     });
     $('#filterKeywordLogbook').on('keyup', function() {
         table.search($(this).val()).draw();
     });
     $('#btnResetFilterLogbook').on('click', function() {
+        statusFilter = '';
         $('#filterStatusLogbook, #filterKeywordLogbook').val('');
         table.search('').columns().search('').draw();
     });
@@ -277,6 +342,14 @@ $(document).ready(function() {
             $('#previewFotoImg').hide().attr('src', '');
             $('#previewFotoEmpty').show();
         }
+    }
+
+    function resetRevisionNotice() {
+        currentEditingLogbook = null;
+        $('#catatanRevisiNotice').hide();
+        $('#catatanRevisiText').text('');
+        $('#catatanRevisiWaktu').text('');
+        $('#btnSimpanLogbook').html('<i class="fas fa-save me-1"></i> Simpan Logbook');
     }
 
     $('#fotoKegiatan').on('change', function() {
@@ -334,6 +407,7 @@ $(document).ready(function() {
         $('#btnBatalPilihFoto').hide();
         $('#previewFotoError').hide();
         $('#previewFotoEmpty').hide();
+        resetRevisionNotice();
     });
 
     $('#btnTambahLogbook').on('click', function() {
@@ -346,6 +420,7 @@ $(document).ready(function() {
         $('#waktuMulai').val('08:00');
         $('#waktuSelesai').val('15:00');
         $('#modalLogbookTitle').html('<i class="fas fa-edit me-2"></i>Isi Logbook Kegiatan Hari Ini');
+        resetRevisionNotice();
 
         currentLogbookPhoto = '';
         if (currentObjectUrl) {
@@ -365,6 +440,8 @@ $(document).ready(function() {
     $('#formLogbook').on('submit', function(event) {
         event.preventDefault();
         var id = $('#logbookId').val();
+        var isEdit = !!id;
+        var isRevisionSubmit = !!(currentEditingLogbook && needsRevision(currentEditingLogbook));
         var waktuMulai = formatTimeHI($('#waktuMulai').val());
         var waktuSelesai = formatTimeHI($('#waktuSelesai').val());
         if (waktuMulai >= waktuSelesai) {
@@ -373,25 +450,27 @@ $(document).ready(function() {
         }
 
         var payload = {
-            id_absensi: $('#idAbsensiLogbook').val(),
             tanggal: $('#tglLogbook').val(),
             jam_mulai: waktuMulai,
             jam_selesai: waktuSelesai,
             kegiatan: $('#deskripsiKegiatan').val().trim()
         };
-
-        // Pastikan format jam_mulai dan jam_selesai sesuai H:i (HH:mm)
-        console.log('jam_mulai:', payload.jam_mulai);
-        console.log('jam_selesai:', payload.jam_selesai);
-
-        if (!payload.id_absensi) {
-            Swal.fire('Absensi Belum Tersedia', 'Logbook harus terhubung ke record absensi pada hari yang sama. Lakukan check-in terlebih dahulu.', 'warning');
-            return;
+        var idAbsensi = $('#idAbsensiLogbook').val();
+        if (idAbsensi) {
+            payload.id_absensi = idAbsensi;
         }
-        if ($('#idAbsensiLogbook').data('tanggal') !== payload.tanggal) {
-            Swal.fire('Tanggal Absensi Tidak Cocok', 'Logbook harus menggunakan tanggal yang sama dengan event absensi masuk yang ditautkan.', 'warning');
-            return;
+
+        if (!isEdit) {
+            if (!payload.id_absensi) {
+                Swal.fire('Absensi Belum Tersedia', 'Logbook harus terhubung ke record absensi pada hari yang sama. Lakukan check-in terlebih dahulu.', 'warning');
+                return;
+            }
+            if ($('#idAbsensiLogbook').data('tanggal') !== payload.tanggal) {
+                Swal.fire('Tanggal Absensi Tidak Cocok', 'Logbook harus menggunakan tanggal yang sama dengan event absensi masuk yang ditautkan.', 'warning');
+                return;
+            }
         }
+
         var fotoKegiatan = $('#fotoKegiatan')[0].files[0];
         var body;
         var method;
@@ -401,7 +480,7 @@ $(document).ready(function() {
             body = new FormData();
             Object.keys(payload).forEach(function(key) { body.append(key, payload[key]); });
             body.append('foto_kegiatan', fotoKegiatan, fotoKegiatan.name);
-            if (id) {
+            if (isEdit) {
                 body.append('_method', 'PUT');
                 method = 'POST';
                 headers['X-HTTP-Method-Override'] = 'PUT';
@@ -411,7 +490,7 @@ $(document).ready(function() {
             headers['Accept'] = 'application/json';
         } else {
             body = JSON.stringify(payload);
-            method = id ? 'PUT' : 'POST';
+            method = isEdit ? 'PUT' : 'POST';
             headers['Content-Type'] = 'application/json';
             headers['Accept'] = 'application/json';
         }
@@ -421,7 +500,7 @@ $(document).ready(function() {
         var token = localStorage.getItem('token') || localStorage.getItem('siamag_token') || '';
         headers['Authorization'] = 'Bearer ' + token;
 
-        fetch(apiUrl(id ? '/logbook/' + encodeURIComponent(id) : '/logbook'), {
+        fetch(apiUrl(isEdit ? '/logbook/' + encodeURIComponent(id) : '/logbook'), {
             method: method,
             headers: headers,
             body: body
@@ -429,19 +508,20 @@ $(document).ready(function() {
             var modal = bootstrap.Modal.getInstance(document.getElementById('modalLogbook'));
             if (modal) modal.hide();
             return loadLogbook(true).then(function(loaded) {
+                var serverMessage = window.apiResponseMessage(responseData,
+                    isRevisionSubmit ? 'Revisi logbook berhasil dikirim.' : 'Logbook berhasil disimpan.');
                 if (!loaded) {
                     Swal.fire({
                         icon: 'warning',
-                        title: id ? 'Logbook Diperbarui' : 'Logbook Tersimpan',
-                        text: window.apiResponseMessage(responseData, 'Logbook berhasil disimpan.') +
-                            ' Daftar gagal dimuat ulang; silakan tekan tombol muat ulang.'
+                        title: isRevisionSubmit ? 'Revisi Terkirim' : (isEdit ? 'Logbook Diperbarui' : 'Logbook Tersimpan'),
+                        text: serverMessage + ' Daftar gagal dimuat ulang; silakan tekan tombol muat ulang.'
                     });
                     return;
                 }
                 Swal.fire({
                     icon: 'success',
-                    title: id ? 'Logbook Diperbarui' : 'Logbook Terkirim',
-                    text: window.apiResponseMessage(responseData, 'Logbook berhasil disimpan dan menunggu verifikasi.')
+                    title: isRevisionSubmit ? 'Revisi Terkirim' : (isEdit ? 'Logbook Diperbarui' : 'Logbook Terkirim'),
+                    text: serverMessage
                 });
             });
         }).catch(function(error) {
@@ -451,6 +531,22 @@ $(document).ready(function() {
         });
     });
 
+    function renderRiwayatRevisi(riwayat) {
+        if (!riwayat || !riwayat.length) return '';
+        var items = riwayat.map(function(entry, index) {
+            var diminta = formatDateTimeLabel(entry.diminta_pada) || '-';
+            var dikirim = entry.dikirim_pada ? formatDateTimeLabel(entry.dikirim_pada) : 'Belum dikirim ulang';
+            return '<div class="border-start border-3 border-warning ps-3 mb-3">' +
+                '<div class="small fw-semibold">Revisi #' + (index + 1) + ' &middot; ' +
+                    escapeHtml(entry.pembimbing_nama || 'Pembimbing') + '</div>' +
+                '<div class="small mb-1">' + escapeHtml(entry.catatan || '-') + '</div>' +
+                '<div class="small text-muted">Diminta: ' + escapeHtml(diminta) + '</div>' +
+                '<div class="small text-muted">Dikirim ulang: ' + escapeHtml(dikirim) + '</div>' +
+                '</div>';
+        }).join('');
+        return '<div class="mb-3"><strong>Riwayat Revisi:</strong><div class="mt-2">' + items + '</div></div>';
+    }
+
     $(document).on('click', '.btn-edit-logbook, .btn-detail-logbook', function() {
         var item = dataLogbook.find(function(row) {
             return String(row.id) === String($(this).data('id'));
@@ -458,19 +554,38 @@ $(document).ready(function() {
         if (!item) return;
 
         if ($(this).hasClass('btn-edit-logbook')) {
-            if (item.status_verifikasi === 'approved') {
-                Swal.fire('Logbook Terkunci', 'Logbook yang sudah diverifikasi tidak dapat diedit.', 'info');
+            if (!canEdit(item)) {
+                Swal.fire('Logbook Terkunci', 'Logbook yang sudah disetujui atau ditolak final tidak dapat diedit.', 'info');
                 return;
             }
+            currentEditingLogbook = item;
             $('#logbookId').val(item.id);
             $('#idAbsensiLogbook').val(item.id_absensi);
-            $('#idAbsensiLogbook').data('tanggal', item.tanggal);
+            if (item.id_absensi) {
+                $('#idAbsensiLogbook').data('tanggal', item.tanggal);
+            } else {
+                $('#idAbsensiLogbook').removeData('tanggal');
+            }
             $('#tglLogbook').val(item.tanggal);
             $('#waktuMulai').val(formatTimeHI(item.waktu_mulai));
             $('#waktuSelesai').val(formatTimeHI(item.waktu_selesai));
             $('#deskripsiKegiatan').val(item.deskripsi_kegiatan);
             $('#fotoKegiatan').val('');
-            $('#modalLogbookTitle').html('<i class="fas fa-edit me-2"></i>Edit / Revisi Logbook');
+            $('#modalLogbookTitle').html(needsRevision(item)
+                ? '<i class="fas fa-rotate-left me-2"></i>Perbaiki Logbook (Revisi)'
+                : '<i class="fas fa-edit me-2"></i>Edit Logbook');
+
+            if (needsRevision(item)) {
+                $('#catatanRevisiText').text(item.catatan_pembimbing || '-');
+                $('#catatanRevisiWaktu').text(item.revisi_diminta_pada
+                    ? 'Diminta pada ' + formatDateTimeLabel(item.revisi_diminta_pada)
+                    : '');
+                $('#catatanRevisiNotice').show();
+                $('#btnSimpanLogbook').html('<i class="fas fa-paper-plane me-1"></i> Kirim Revisi');
+            } else {
+                $('#catatanRevisiNotice').hide();
+                $('#btnSimpanLogbook').html('<i class="fas fa-save me-1"></i> Simpan Perubahan');
+            }
 
             var existingPhoto = item.foto_kegiatan_url || item.foto_kegiatan || item.file_lampiran || '';
             currentLogbookPhoto = existingPhoto;
@@ -487,15 +602,27 @@ $(document).ready(function() {
         var paraf = parafImage(item.paraf_pembimbing, 'max-height: 100px;');
         var catatanPembimbing = item.catatan_pembimbing == null || item.catatan_pembimbing === ''
             ? '-' : item.catatan_pembimbing;
+        var revisionInfo = '';
+        if (needsRevision(item)) {
+            revisionInfo = '<div class="alert alert-warning py-2 small"><i class="fas fa-rotate-left me-1"></i>' +
+                '<strong>Logbook perlu diperbaiki.</strong> Baca catatan pembimbing lalu kirim ulang hasil revisi.</div>';
+        } else if (item.status_verifikasi === 'pending' && item.revisi_dikirim_pada) {
+            revisionInfo = '<div class="alert alert-info py-2 small"><i class="fas fa-paper-plane me-1"></i>' +
+                'Revisi telah dikirim pada ' + escapeHtml(formatDateTimeLabel(item.revisi_dikirim_pada)) +
+                ' dan menunggu pemeriksaan pembimbing.</div>';
+        }
+
         $('#contentDetailLogbook').html(
             '<div class="mb-3"><strong>Tanggal & Waktu:</strong> ' + escapeHtml(item.tanggal) + ' (' +
             escapeHtml(item.waktu_mulai) + ' - ' + escapeHtml(item.waktu_selesai) + ')</div>' +
-            '<div class="mb-3"><strong>Status:</strong> ' + escapeHtml(statusLabel(item.status_verifikasi)) + '</div>' +
+            '<div class="mb-3"><strong>Status:</strong> ' + statusBadge(item) + '</div>' +
+            revisionInfo +
             '<div class="mb-3"><strong>Deskripsi Kegiatan:</strong><div class="p-3 bg-light rounded">' +
             escapeHtml(item.deskripsi_kegiatan) + '</div></div>' +
             '<div class="mb-3"><strong>Foto Kegiatan:</strong> ' + attachment + '</div>' +
             '<div class="mb-3"><strong>Catatan Pembimbing:</strong> ' +
             escapeHtml(catatanPembimbing) + '</div>' +
+            renderRiwayatRevisi(item.riwayat_revisi) +
             '<div class="mb-3"><strong>Paraf Pembimbing:</strong><br>' + paraf + '</div>'
         );
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalDetailLogbook')).show();
@@ -504,5 +631,3 @@ $(document).ready(function() {
     loadTodayAttendance();
     loadLogbook();
 });
-
-    // Handler foto dipusatkan di app.js — blok duplikat dihapus.

@@ -174,9 +174,10 @@
                             <label class="form-label text-muted small mb-1">Filter Status Verifikasi</label>
                             <select class="form-select form-select-sm" id="filterStatusLogbook">
                                 <option value="">Semua Status</option>
-                                <option value="approved">Diverifikasi</option>
-                                <option value="pending">Menunggu</option>
-                                <option value="rejected">Ditolak / Perlu Revisi</option>
+                                <option value="pending">Menunggu Pemeriksaan</option>
+                                <option value="revisi">Perlu Revisi</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected (Final)</option>
                             </select>
                         </div>
                         <div class="col-md-4 col-sm-6">
@@ -238,6 +239,11 @@
                     <div class="alert alert-info py-2 small" id="absensiLogbookNotice" style="display:none;">
                         Logbook harus dihubungkan dengan record absensi (masuk) pada tanggal kegiatan. Lakukan check-in terlebih dahulu.
                     </div>
+                    <div class="alert alert-warning py-2 small" id="catatanRevisiNotice" style="display:none;">
+                        <div class="fw-semibold mb-1"><i class="fas fa-rotate-left me-1"></i>Logbook ini diminta revisi oleh pembimbing.</div>
+                        <div id="catatanRevisiText"></div>
+                        <div class="text-muted mt-1" id="catatanRevisiWaktu"></div>
+                    </div>
 
                     <div class="row g-3">
                         <div class="col-md-4">
@@ -289,7 +295,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary btn-sm" style="background:var(--primary); border:none;">
+                    <button type="submit" class="btn btn-primary btn-sm" id="btnSimpanLogbook" style="background:var(--primary); border:none;">
                         <i class="fas fa-save me-1"></i> Simpan Logbook
                     </button>
                 </div>

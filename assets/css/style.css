@@ -760,6 +760,7 @@ img {
 }
 
 .badge-pending  { background: #fef3c7; color: #92400e; }
+.badge-revisi   { background: #ffedd5; color: #9a3412; border: 1px solid #fdba74; }
 .badge-approved { background: #dcfce7; color: #166534; }
 .badge-rejected { background: #fee2e2; color: #991b1b; }
 .badge-aktif    { background: #d4edda; color: #155724; }
