@@ -128,13 +128,16 @@ $(document).ready(function() {
 
     function normalizeLogbook(item) {
         var status = String(item.status_verifikasi || item.status || 'pending').toLowerCase();
+        var photo = item.foto_kegiatan_url || item.url_foto_kegiatan || item.foto_kegiatan || item.file_lampiran || item.lampiran || '';
         return {
             id: item.id,
             tanggal: item.tanggal || '',
             waktu_mulai: item.waktu_mulai || item.jam_mulai || '',
             waktu_selesai: item.waktu_selesai || item.jam_selesai || '',
             deskripsi_kegiatan: item.deskripsi_kegiatan || item.kegiatan || '',
-            file_lampiran: item.foto_kegiatan_url || item.url_foto_kegiatan || item.foto_kegiatan || item.file_lampiran || item.lampiran || '',
+            file_lampiran: photo,
+            foto_kegiatan: item.foto_kegiatan || photo,
+            foto_kegiatan_url: item.foto_kegiatan_url || photo,
             id_absensi: item.id_absensi || '',
             status_verifikasi: status,
             catatan_pembimbing: item.catatan_pembimbing != null ? item.catatan_pembimbing : (item.catatan || ''),
@@ -237,6 +240,86 @@ $(document).ready(function() {
     });
     $('#btnReloadTable').on('click', loadLogbook);
 
+    var currentLogbookPhoto = '';
+    var currentObjectUrl = null;
+
+    function showExistingPhotoPreview(photo) {
+        if (currentObjectUrl) {
+            URL.revokeObjectURL(currentObjectUrl);
+            currentObjectUrl = null;
+        }
+        $('#btnBatalPilihFoto').hide();
+        $('#previewFotoLabel').text('Foto Kegiatan Saat Ini');
+        $('#previewFotoContainer').show();
+        $('#previewFotoError').hide();
+
+        var url = fileUrl(photo);
+        if (url) {
+            $('#previewFotoEmpty').hide();
+            $('#previewFotoImg').attr('src', url).show();
+        } else {
+            $('#previewFotoImg').hide().attr('src', '');
+            $('#previewFotoEmpty').show();
+        }
+    }
+
+    $('#fotoKegiatan').on('change', function() {
+        var file = this.files && this.files[0];
+        if (currentObjectUrl) {
+            URL.revokeObjectURL(currentObjectUrl);
+            currentObjectUrl = null;
+        }
+        $('#previewFotoError').hide();
+
+        if (file) {
+            currentObjectUrl = URL.createObjectURL(file);
+            $('#previewFotoLabel').text('Foto Kegiatan Baru');
+            $('#previewFotoEmpty').hide();
+            $('#previewFotoImg').attr('src', currentObjectUrl).show();
+            $('#previewFotoContainer').show();
+            $('#btnBatalPilihFoto').show();
+        } else {
+            $('#btnBatalPilihFoto').hide();
+            var id = $('#logbookId').val();
+            if (id) {
+                showExistingPhotoPreview(currentLogbookPhoto);
+            } else {
+                $('#previewFotoContainer').hide();
+                $('#previewFotoImg').hide().attr('src', '');
+            }
+        }
+    });
+
+    $('#btnBatalPilihFoto').on('click', function(e) {
+        e.preventDefault();
+        $('#fotoKegiatan').val('');
+        $('#fotoKegiatan').trigger('change');
+    });
+
+    $('#previewFotoImg').on('error', function() {
+        $(this).hide();
+        $('#previewFotoEmpty').hide();
+        $('#previewFotoError').show();
+    });
+
+    $('#previewFotoImg').on('load', function() {
+        $('#previewFotoError').hide();
+    });
+
+    $('#modalLogbook').on('hidden.bs.modal', function() {
+        if (currentObjectUrl) {
+            URL.revokeObjectURL(currentObjectUrl);
+            currentObjectUrl = null;
+        }
+        currentLogbookPhoto = '';
+        $('#fotoKegiatan').val('');
+        $('#previewFotoImg').attr('src', '').hide();
+        $('#previewFotoContainer').hide();
+        $('#btnBatalPilihFoto').hide();
+        $('#previewFotoError').hide();
+        $('#previewFotoEmpty').hide();
+    });
+
     $('#btnTambahLogbook').on('click', function() {
         $('#formLogbook')[0].reset();
         $('#logbookId').val('');
@@ -247,6 +330,19 @@ $(document).ready(function() {
         $('#waktuMulai').val('08:00');
         $('#waktuSelesai').val('15:00');
         $('#modalLogbookTitle').html('<i class="fas fa-edit me-2"></i>Isi Logbook Kegiatan Hari Ini');
+
+        currentLogbookPhoto = '';
+        if (currentObjectUrl) {
+            URL.revokeObjectURL(currentObjectUrl);
+            currentObjectUrl = null;
+        }
+        $('#fotoKegiatan').val('');
+        $('#btnBatalPilihFoto').hide();
+        $('#previewFotoError').hide();
+        $('#previewFotoEmpty').hide();
+        $('#previewFotoImg').hide().attr('src', '');
+        $('#previewFotoContainer').hide();
+
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalLogbook')).show();
     });
 
@@ -276,15 +372,27 @@ $(document).ready(function() {
             return;
         }
         var fotoKegiatan = $('#fotoKegiatan')[0].files[0];
-        var body = JSON.stringify(payload);
-        var method = id ? 'PUT' : 'POST';
-        var headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
+        var body;
+        var method;
+        var headers = {};
+
         if (fotoKegiatan) {
             body = new FormData();
             Object.keys(payload).forEach(function(key) { body.append(key, payload[key]); });
             body.append('foto_kegiatan', fotoKegiatan, fotoKegiatan.name);
-            if (id) method = 'PUT';
-            headers = { Accept: 'application/json' };
+            if (id) {
+                body.append('_method', 'PUT');
+                method = 'POST';
+                headers['X-HTTP-Method-Override'] = 'PUT';
+            } else {
+                method = 'POST';
+            }
+            headers['Accept'] = 'application/json';
+        } else {
+            body = JSON.stringify(payload);
+            method = id ? 'PUT' : 'POST';
+            headers['Content-Type'] = 'application/json';
+            headers['Accept'] = 'application/json';
         }
         var $submit = $('#formLogbook button[type="submit"]');
         $submit.prop('disabled', true);
@@ -342,6 +450,11 @@ $(document).ready(function() {
             $('#deskripsiKegiatan').val(item.deskripsi_kegiatan);
             $('#fotoKegiatan').val('');
             $('#modalLogbookTitle').html('<i class="fas fa-edit me-2"></i>Edit / Revisi Logbook');
+
+            var existingPhoto = item.foto_kegiatan_url || item.foto_kegiatan || item.file_lampiran || '';
+            currentLogbookPhoto = existingPhoto;
+            showExistingPhotoPreview(existingPhoto);
+
             bootstrap.Modal.getOrCreateInstance(document.getElementById('modalLogbook')).show();
             return;
         }
