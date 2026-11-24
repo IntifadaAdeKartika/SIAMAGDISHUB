@@ -75,65 +75,108 @@ $(document).ready(function() {
                 escapeHtml(verification) + '</span></td></tr>');
         });
     }
-
+    
     function renderLeave(data) {
         var container = $('#dashboardIzinRows').empty();
         var rows = [];
+
         if (Array.isArray(data)) {
             rows = data;
         } else if (data && typeof data === 'object') {
             rows = Array.isArray(data.izin_terbaru) ? data.izin_terbaru :
-                   (data.data && Array.isArray(data.data.izin_terbaru) ? data.data.izin_terbaru :
-                   dashboardRows(data, ['izin_terbaru', 'pengajuan_izin_terbaru', 'latest_leaves', 'recent_leaves', 'pengajuan_izin', 'izin']));
+                (data.data && Array.isArray(data.data.izin_terbaru) ?
+                    data.data.izin_terbaru :
+                    dashboardRows(data, [
+                        'izin_terbaru',
+                        'pengajuan_izin_terbaru',
+                        'latest_leaves',
+                        'recent_leaves',
+                        'pengajuan_izin',
+                        'izin'
+                    ]));
         }
 
         if (!rows || !rows.length) {
-            container.html('<div class="text-center text-muted py-4">Belum ada pengajuan izin.</div>');
+            container.html(
+                '<div class="text-center text-muted py-4">' +
+                'Belum ada pengajuan izin.</div>'
+            );
             return;
         }
 
         rows.slice(0, 5).forEach(function(row) {
-            var personName = (row.peserta_magang && row.peserta_magang.pengguna && row.peserta_magang.pengguna.nama_lengkap) ||
-                             (row.peserta_magang && row.peserta_magang.nama_lengkap) ||
-                             row.nama_peserta ||
-                             (participant(row) && participant(row).name) ||
-                             '-';
+
+            var personName =
+                (row.peserta_magang &&
+                row.peserta_magang.pengguna &&
+                row.peserta_magang.pengguna.nama_lengkap) ||
+                (row.peserta_magang &&
+                row.peserta_magang.nama_lengkap) ||
+                row.nama_peserta ||
+                participant(row).name ||
+                '-';
+
             var status = String(row.status || 'pending').toLowerCase();
+
             var badgeClass = 'badge-pending';
+
             if (status === 'approved') {
                 badgeClass = 'badge-approved';
             } else if (status === 'rejected') {
                 badgeClass = 'badge-rejected';
             } else if (status === 'cancelled' || status === 'canceled') {
                 badgeClass = 'bg-secondary text-white';
-            } else {
-                badgeClass = 'badge-pending';
             }
 
             var tanggalPengajuan = row.created_at
                 ? formatTanggal(row.created_at)
-                : (row.tanggal_mulai ? formatTanggal(row.tanggal_mulai) : '-');
+                : (row.tanggal_mulai
+                    ? formatTanggal(row.tanggal_mulai)
+                    : '-');
 
             var jenisLabel = row.jenis
-                ? (row.jenis.charAt(0).toUpperCase() + row.jenis.slice(1).toLowerCase())
+                ? row.jenis.charAt(0).toUpperCase() +
+                row.jenis.slice(1).toLowerCase()
                 : 'Izin';
-            var keterangan = row.keterangan ? ' - ' + row.keterangan : '';
+
+            var keterangan = row.keterangan
+                ? ' - ' + row.keterangan
+                : '';
 
             container.append(
-                '<div class="list-item">' +
-                    '<div class="stat-icon bg-orange m-0" style="width:38px;height:38px;font-size:.85rem;margin-bottom:0">' +
+                '<div class="dashboard-leave-item">' +
+
+                    '<div class="dashboard-leave-icon">' +
                         '<i class="fas fa-user"></i>' +
                     '</div>' +
-                    '<div class="flex-grow-1 min-w-0">' +
-                        '<div class="fw-semibold small text-truncate">' + escapeHtml(personName) + '</div>' +
-                        '<div class="text-muted small text-truncate">' + escapeHtml(jenisLabel + keterangan) + '</div>' +
-                        '<div class="text-muted mt-1" style="font-size:.72rem">' + escapeHtml(tanggalPengajuan) + '</div>' +
+
+                    '<div class="dashboard-leave-content">' +
+                        '<div class="dashboard-leave-name">' +
+                            escapeHtml(personName) +
+                        '</div>' +
+
+                        '<div class="dashboard-leave-description">' +
+                            escapeHtml(jenisLabel + keterangan) +
+                        '</div>' +
+
+                        '<div class="dashboard-leave-date">' +
+                            '<i class="far fa-calendar-alt me-1"></i>' +
+                            escapeHtml(tanggalPengajuan) +
+                        '</div>' +
                     '</div>' +
-                    '<span class="badge ' + badgeClass + '">' + escapeHtml(status) + '</span>' +
+
+                    '<div class="dashboard-leave-status">' +
+                        '<span class="badge ' + badgeClass + '">' +
+                            escapeHtml(status) +
+                        '</span>' +
+                    '</div>' +
+
                 '</div>'
             );
-        });
-    }
+
+        }); // Penutup forEach
+
+    } // Penutup renderLeave
 
     function unwrapDashboard(payload) {
         var current = payload;
