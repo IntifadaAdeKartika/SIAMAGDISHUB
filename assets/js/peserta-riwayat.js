@@ -251,7 +251,62 @@ $(document).ready(function() {
         $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
     });
 
+    function activeReportContext() {
+        var $link = $('#riwayatTab .nav-link.active').first();
+        var selector = $link.attr('data-bs-target') || $link.attr('data-target') || '';
+        return {
+            title: $.trim($link.text().replace(/\s+/g, ' ')),
+            $pane: selector ? $(selector) : $()
+        };
+    }
+
+    function syncPrintReportTitle() {
+        var context = activeReportContext();
+        if (context.title) {
+            $('#printReportTitle').text(context.title);
+        }
+    }
+
+    var printRestore = null;
+
+    function preparePrintReport() {
+        if (printRestore) return;
+        syncPrintReportTitle();
+        var context = activeReportContext();
+        var tableNode = context.$pane.find('table.dataTable').get(0);
+        var instance = tableNode && $.fn.dataTable.isDataTable(tableNode)
+            ? $(tableNode).DataTable()
+            : null;
+        printRestore = {
+            instance: instance,
+            pageLength: instance ? instance.page.len() : null,
+            title: document.title
+        };
+        document.title = (context.title || 'Laporan') + ' - SIAMAG Dishub';
+        if (instance) {
+            instance.page.len(-1).draw(false);
+        }
+    }
+
+    function restoreAfterPrint() {
+        if (!printRestore) return;
+        if (printRestore.instance) {
+            printRestore.instance.page.len(printRestore.pageLength).draw(false);
+        }
+        document.title = printRestore.title;
+        printRestore = null;
+    }
+
+    window.addEventListener('beforeprint', preparePrintReport);
+    window.addEventListener('afterprint', restoreAfterPrint);
+    syncPrintReportTitle();
+    $('#riwayatTab').on('shown.bs.tab', syncPrintReportTitle);
+
     $('#btnReloadTable').on('click', loadHistory);
-    $('#btnCetakRekap').on('click', function() { window.print(); });
+    $('#btnCetakRekap').on('click', function() {
+        preparePrintReport();
+        window.print();
+        window.setTimeout(restoreAfterPrint, 500);
+    });
     loadHistory();
 });
