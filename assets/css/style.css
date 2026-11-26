@@ -2109,25 +2109,27 @@ div.dataTables_wrapper div.dataTables_processing {
 }
 
 /* Modal Logbook Peserta – compact & scrollable body with fixed header/footer */
-.modal-logbook .modal-dialog {
-    max-height: 90vh;
-    max-height: 90dvh;
-}
-
+/* Modal Logbook Peserta – scroll body, header/footer tetap terlihat */
 .modal-logbook .modal-content {
-    max-height: 90vh;
-    max-height: 90dvh;
+    display: flex;
+    flex-direction: column;
+    max-height: min(90vh, calc(100vh - 3.5rem));
+    max-height: min(90dvh, calc(100dvh - 3.5rem));
     overflow: hidden;
 }
 
 .modal-logbook .modal-header,
 .modal-logbook .modal-footer {
-    flex-shrink: 0;
+    flex: 0 0 auto;
     background: #fff;
 }
 
 .modal-logbook .modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
 }
 
@@ -2172,11 +2174,6 @@ div.dataTables_wrapper div.dataTables_processing {
 }
 
 @media (max-height: 700px) and (min-width: 576px) {
-    .modal-logbook .modal-content {
-        max-height: calc(100vh - 3.5rem);
-        max-height: calc(100dvh - 3.5rem);
-    }
-
     .modal-logbook .modal-body {
         padding: 16px 20px;
     }
