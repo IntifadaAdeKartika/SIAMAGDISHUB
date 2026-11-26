@@ -51,6 +51,7 @@ $(document).ready(function() {
     var hasCheckedInToday = false;
     var currentCheckIn = null;
     var currentCheckOut = null;
+    var perbaikanParamHandled = false;
     var $video = $('#webcamVideo');
     var $canvas = $('#snapshotCanvas');
     var $snapshot = $('#snapshotImg');
@@ -338,6 +339,99 @@ $(document).ready(function() {
         return data;
     }
 
+    function statusOf(record) {
+        return String(record && record.status_verifikasi || '').toLowerCase();
+    }
+
+    function recordRejected(record) {
+        return Boolean(record) && statusOf(record) === 'rejected';
+    }
+
+    function setAttendanceButtonLabels(checkInRejected, checkOutRejected) {
+        $('#btnCheckIn').html(checkInRejected
+            ? '<i class="fas fa-sync-alt me-1"></i> Perbaiki Check-in'
+            : '<i class="fas fa-sign-in-alt me-1"></i> Check-in Masuk');
+        $('#btnCheckOut').html(checkOutRejected
+            ? '<i class="fas fa-sync-alt me-1"></i> Perbaiki Check-out'
+            : '<i class="fas fa-sign-out-alt me-1"></i> Check-out Pulang');
+    }
+
+    function renderPerbaikanNotice() {
+        var items = [];
+        if (recordRejected(currentCheckIn)) {
+            items.push({ target: 'masuk', label: 'Check-in', record: currentCheckIn });
+        }
+        if (recordRejected(currentCheckOut)) {
+            items.push({ target: 'keluar', label: 'Check-out', record: currentCheckOut });
+        }
+
+        var $container = $('#boxPerbaikanPresensi');
+        if (!items.length) {
+            $container.remove();
+            return;
+        }
+
+        if (!$container.length) {
+            $container = $('<div id="boxPerbaikanPresensi" class="mb-3"></div>');
+            $('.attendance-layout').first().before($container);
+        }
+
+        $container.html(items.map(function(item) {
+            var alasan = item.record.alasan_penolakan
+                ? escapeHtml(item.record.alasan_penolakan)
+                : '-';
+            return '<div class="alert alert-danger d-flex flex-wrap align-items-center gap-2 mb-2" role="alert">' +
+                '<i class="fas fa-exclamation-triangle"></i>' +
+                '<div class="flex-grow-1 small">' +
+                    '<strong>Presensi ' + item.label + ' Ditolak.</strong> ' +
+                    'Silakan perbaiki presensi sesuai keterangan berikut.' +
+                    '<div><em>Alasan penolakan: ' + alasan + '</em></div>' +
+                '</div>' +
+                '<button type="button" class="btn btn-sm btn-danger btn-perbaiki-presensi" data-target="' + item.target + '">' +
+                    '<i class="fas fa-sync-alt me-1"></i> Perbaiki Presensi' +
+                '</button>' +
+            '</div>';
+        }).join(''));
+    }
+
+    function fokuskanFormPerbaikan(target) {
+        var $button = target === 'keluar' ? $('#btnCheckOut') : $('#btnCheckIn');
+        var form = document.querySelector('.attendance-layout');
+        if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.setTimeout(function() {
+            $button.trigger('focus').css('box-shadow', '0 0 0 .25rem rgba(220,53,69,.35)');
+            window.setTimeout(function() {
+                $button.css('box-shadow', '');
+            }, 2500);
+        }, 350);
+    }
+
+    function handlePerbaikanParam() {
+        if (perbaikanParamHandled) return;
+        var id = new URLSearchParams(window.location.search).get('perbaikan');
+        if (!id) return;
+        perbaikanParamHandled = true;
+        if (window.history && typeof window.history.replaceState === 'function') {
+            window.history.replaceState(null, '', window.location.pathname);
+        }
+
+        if (currentCheckIn && String(currentCheckIn.id) === String(id) && recordRejected(currentCheckIn)) {
+            fokuskanFormPerbaikan('masuk');
+            return;
+        }
+        if (currentCheckOut && String(currentCheckOut.id) === String(id) && recordRejected(currentCheckOut)) {
+            fokuskanFormPerbaikan('keluar');
+            return;
+        }
+
+        Swal.fire({
+            icon: 'info',
+            title: 'Presensi Tidak Dapat Diperbaiki',
+            text: 'Presensi pada notifikasi tersebut sudah diperbaiki atau tidak tersedia untuk hari ini.',
+            confirmButtonText: 'Tutup'
+        });
+    }
+
     function updateTodayStatus(today) {
         if (!today || typeof today.has_checked_in === 'undefined') {
             throw new Error('Format status presensi hari ini dari server tidak valid.');
@@ -348,20 +442,36 @@ $(document).ready(function() {
         currentCheckOut = today.check_out || null;
         attendanceLoaded = true;
 
-        var checkInStatus = String(currentCheckIn && currentCheckIn.status_verifikasi || 'pending').toLowerCase();
+        var checkInStatus = statusOf(currentCheckIn) || 'pending';
+        var checkInRejected = recordRejected(currentCheckIn);
+        var checkOutRejected = recordRejected(currentCheckOut);
+
         $('#badgeStatusHariIni')
             .removeClass('bg-secondary bg-success bg-warning bg-danger text-dark')
             .addClass(!hasCheckedInToday ? 'bg-secondary' :
+                checkOutRejected || checkInRejected ? 'bg-danger' :
                 checkInStatus === 'approved' ? 'bg-success' :
                     checkInStatus === 'rejected' ? 'bg-danger' : 'bg-warning text-dark')
             .text(!hasCheckedInToday
                 ? 'Belum Check-in'
-                : checkInStatus === 'pending'
-                    ? 'Masuk Tercatat · Menunggu Verifikasi'
-                    : 'Masuk Tercatat · ' + checkInStatus);
-        $('#btnCheckIn').prop('disabled', hasCheckedInToday);
-        $('#btnCheckOut').prop('disabled', !hasCheckedInToday || Boolean(currentCheckOut));
+                : checkOutRejected
+                    ? 'Check-out Ditolak · Perlu Perbaikan'
+                    : checkInRejected
+                        ? 'Check-in Ditolak · Perlu Perbaikan'
+                        : checkInStatus === 'pending'
+                            ? 'Masuk Tercatat · Menunggu Verifikasi'
+                            : 'Masuk Tercatat · ' + checkInStatus);
+
+        $('#btnCheckIn').prop('disabled', hasCheckedInToday && !checkInRejected);
+        $('#btnCheckOut').prop('disabled', !hasCheckedInToday || (Boolean(currentCheckOut) && !checkOutRejected));
+        setAttendanceButtonLabels(checkInRejected, checkOutRejected);
+        renderPerbaikanNotice();
+        handlePerbaikanParam();
     }
+
+    $(document).on('click', '.btn-perbaiki-presensi', function() {
+        fokuskanFormPerbaikan(String($(this).data('target')));
+    });
 
     function refreshAttendanceState() {
         return Promise.all([
@@ -389,10 +499,18 @@ $(document).ready(function() {
                 : '-';
             var coordinates = item.latitude != null && item.longitude != null
                 ? item.latitude + ', ' + item.longitude : '-';
+            var statusVerif = String(item.status_verifikasi || 'pending').toLowerCase();
+            var statusCell = escapeHtml(statusVerif);
+            if (statusVerif === 'rejected' && item.alasan_penolakan) {
+                statusCell += '<div class="small text-danger mt-1">' + escapeHtml(item.alasan_penolakan) + '</div>';
+            }
+            if (Number(item.jumlah_resubmit || 0) > 0) {
+                statusCell += '<div class="small text-muted">Perbaikan ke-' + escapeHtml(item.jumlah_resubmit) + '</div>';
+            }
             return '<tr><td>' + escapeHtml(formattedDateTime.dateLabel + ' ' + formattedDateTime.time) + '</td><td>' +
                 escapeHtml(item.status || '-') + '</td><td>' + escapeHtml(item.lokasi || '-') + '</td><td>' +
                 escapeHtml(coordinates) + '</td><td>' + photoCell + '</td><td>' +
-                escapeHtml(item.status_verifikasi || 'pending') + '</td><td>' +
+                statusCell + '</td><td>' +
                 escapeHtml(item.keterangan || '-') + '</td></tr>';
         }).join('');
         $('#tabelRiwayatSingkat tbody').html(html ||
@@ -430,8 +548,16 @@ $(document).ready(function() {
             Swal.fire('Status Belum Tersedia', 'Tunggu sampai status presensi hari ini berhasil dimuat.', 'warning');
             return;
         }
-        if ((endpoint === '/check-in' && hasCheckedInToday) ||
-            (endpoint === '/check-out' && (!hasCheckedInToday || currentCheckOut))) {
+
+        var repairing = endpoint === '/check-in'
+            ? recordRejected(currentCheckIn)
+            : recordRejected(currentCheckOut);
+
+        if (!repairing && endpoint === '/check-in' && hasCheckedInToday) {
+            Swal.fire('Aksi Presensi Tidak Tersedia', 'Status presensi hari ini sudah berubah. Muat ulang data sebelum mencoba lagi.', 'warning');
+            return;
+        }
+        if (!repairing && endpoint === '/check-out' && (!hasCheckedInToday || currentCheckOut)) {
             Swal.fire('Aksi Presensi Tidak Tersedia', 'Status presensi hari ini sudah berubah. Muat ulang data sebelum mencoba lagi.', 'warning');
             return;
         }
@@ -444,9 +570,12 @@ $(document).ready(function() {
             return;
         }
 
+        var repairRecord = endpoint === '/check-in' ? currentCheckIn : currentCheckOut;
+        var requestUrl = repairing
+            ? apiUrl('/absensi/' + encodeURIComponent(repairRecord.id) + '/perbaikan')
+            : apiUrl(endpoint);
         var keterangan = String($('#keterangan').val() || '').trim();
         var $button = endpoint === '/check-in' ? $('#btnCheckIn') : $('#btnCheckOut');
-        var originalHtml = $button.html();
         $button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Mengirim...');
 
         detectLocation().then(function(coords) {
@@ -461,7 +590,7 @@ $(document).ready(function() {
             formData.append('foto_selfie', fotoSelfie, fotoSelfie.name);
             if (keterangan) formData.append('keterangan', keterangan);
             var token = localStorage.getItem('token') || localStorage.getItem('siamag_token') || '';
-            return fetch(apiUrl(endpoint), {
+            return fetch(requestUrl, {
                 method: 'POST',
                 body: formData,
                 headers: {
@@ -481,8 +610,10 @@ $(document).ready(function() {
             return refreshAttendanceState().then(function() {
                 Swal.fire({
                     icon: 'success',
-                    title: 'Presensi Berhasil',
-                    text: responseMessage(payload, actionLabel + ' berhasil dicatat.')
+                    title: repairing ? 'Perbaikan Presensi Terkirim' : 'Presensi Berhasil',
+                    text: responseMessage(payload, repairing
+                        ? 'Perbaikan presensi berhasil dikirim dan menunggu verifikasi pembimbing.'
+                        : actionLabel + ' berhasil dicatat.')
                 });
             }, function(refreshError) {
                 Swal.fire({
@@ -494,7 +625,11 @@ $(document).ready(function() {
         }).catch(function(error) {
             showError(error, 'Presensi ditolak');
         }).then(function() {
-            $button.prop('disabled', false).html(originalHtml);
+            var checkInRejected = recordRejected(currentCheckIn);
+            var checkOutRejected = recordRejected(currentCheckOut);
+            setAttendanceButtonLabels(checkInRejected, checkOutRejected);
+            $('#btnCheckIn').prop('disabled', hasCheckedInToday && !checkInRejected);
+            $('#btnCheckOut').prop('disabled', !hasCheckedInToday || (Boolean(currentCheckOut) && !checkOutRejected));
         });
     }
 

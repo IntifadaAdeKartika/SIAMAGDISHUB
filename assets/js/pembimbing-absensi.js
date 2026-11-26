@@ -94,7 +94,10 @@ $(document).ready(function() {
             paraf: item.paraf_pembimbing_url || item.paraf_pembimbing || '',
             paraf_oleh: item.diverifikasi_oleh || '',
             waktu_paraf: item.diverifikasi_pada || '',
-            catatan: item.keterangan || ''
+            catatan: item.keterangan || '',
+            jumlah_resubmit: Number(item.jumlah_resubmit || 0),
+            alasan_penolakan: item.alasan_penolakan || '',
+            riwayat_penolakan: Array.isArray(item.riwayat_penolakan) ? item.riwayat_penolakan : []
         };
     }
 
@@ -159,13 +162,23 @@ $(document).ready(function() {
             var eventClass = item.status_event === 'masuk' ? 'bg-primary' : 'bg-secondary';
             var eventLabel = item.status_event === 'masuk' ? 'Masuk' : (item.status_event === 'keluar' ? 'Keluar' : item.status_event);
             var parafUrl = item.status_verif === 'approved' ? fileUrl(item.paraf) : '';
-            var verification = item.status_verif === 'approved'
-                ? '<span class="badge badge-approved">Approved</span>' +
+            var resubmitBadge = item.jumlah_resubmit > 0
+                ? ' <span class="badge bg-info text-dark">Pengajuan Ulang #' + escapeHtml(item.jumlah_resubmit) + '</span>'
+                : '';
+            var verification;
+            if (item.status_verif === 'approved') {
+                verification = '<span class="badge badge-approved">Approved</span>' + resubmitBadge +
                     (parafUrl ? '<br><img src="' + escapeHtml(parafUrl) +
-                        '" alt="Paraf" style="height: 30px; margin-top: 5px;">' : '')
-                : item.status_verif === 'rejected'
-                    ? '<span class="badge badge-rejected">Rejected</span>'
-                    : '<span class="badge badge-pending">Pending</span>';
+                        '" alt="Paraf" style="height: 30px; margin-top: 5px;">' : '');
+            } else if (item.status_verif === 'rejected') {
+                verification = '<span class="badge badge-rejected">Rejected</span>' +
+                    (item.alasan_penolakan
+                        ? '<div class="small text-danger mt-1 text-truncate" style="max-width:220px;" title="' +
+                            escapeHtml(item.alasan_penolakan) + '">' + escapeHtml(item.alasan_penolakan) + '</div>'
+                        : '');
+            } else {
+                verification = '<span class="badge badge-pending">Pending</span>' + resubmitBadge;
+            }
             var action = '<div class="action-buttons text-center"><button class="btn btn-sm btn-outline-primary btn-detail-absen" data-id="' +
                 escapeHtml(item.id) + '"><i class="fas fa-eye me-1"></i>Detail</button>' +
                 (item.status_verif === 'pending'
@@ -243,8 +256,11 @@ $(document).ready(function() {
     function postVerification(id, status, catatan, signature) {
         var formData = new FormData();
         formData.append('status_verifikasi', status);
-        if (status === 'rejected') formData.append('alasan_penolakan', catatan);
-        formData.append('paraf_digital', signature, signature.name);
+        if (status === 'rejected') {
+            formData.append('alasan_penolakan', catatan || '');
+        } else if (signature) {
+            formData.append('paraf_digital', signature, signature.name);
+        }
         return fetch(apiUrl('/verifikasi-absensi/' + encodeURIComponent(id)), {
             method: 'POST',
             body: formData,
@@ -277,42 +293,41 @@ $(document).ready(function() {
 
     function rejectOne(item) {
         if (!beginVerification()) return;
+        var jenisPresensi = item.status_event === 'keluar' ? 'Check-out' : 'Check-in';
         Swal.fire({
             title: 'Tolak Presensi?',
-            html: '<label class="form-label text-start w-100" for="catatanTolakAbsen">Keterangan penolakan</label>' +
+            html: '<p class="small text-muted mb-2">Peserta: <strong>' + escapeHtml(item.nama) + '</strong> · ' +
+                escapeHtml(jenisPresensi) + ' tanggal ' + escapeHtml(item.tanggal) + '</p>' +
+                '<label class="form-label text-start w-100" for="catatanTolakAbsen">Keterangan Penolakan</label>' +
                 '<textarea id="catatanTolakAbsen" class="form-control mb-3" rows="3" placeholder="Tuliskan alasan penolakan..."></textarea>' +
-                '<label class="form-label text-start w-100" for="parafTolakAbsen">Paraf pembimbing (gambar, maks. 5 MB)</label>' +
-                '<input id="parafTolakAbsen" type="file" class="form-control" accept="image/*" required>',
+                '<div class="small text-muted text-start">Peserta akan menerima notifikasi beserta alasan ini untuk memperbaiki presensinya.</div>',
+            icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: 'Tolak Presensi',
+            confirmButtonText: 'Kirim Penolakan ke Peserta',
             cancelButtonText: 'Batal',
+            confirmButtonColor: '#dc3545',
             preConfirm: function() {
                 var popup = Swal.getPopup();
                 var reason = popup.querySelector('#catatanTolakAbsen').value.trim();
-                var signature = popup.querySelector('#parafTolakAbsen').files[0];
                 if (!reason) {
                     Swal.showValidationMessage('Keterangan penolakan wajib diisi.');
                     return false;
                 }
-                if (!signature || !signature.type || signature.type.indexOf('image/') !== 0) {
-                    Swal.showValidationMessage('Pilih file paraf berupa gambar.');
+                if (reason.length > 500) {
+                    Swal.showValidationMessage('Keterangan penolakan maksimal 500 karakter.');
                     return false;
                 }
-                if (signature.size > 5 * 1024 * 1024) {
-                    Swal.showValidationMessage('Ukuran file paraf maksimal 5 MB.');
-                    return false;
-                }
-                return { reason: reason, signature: signature };
+                return { reason: reason };
             }
         }).then(function(result) {
             if (!result.isConfirmed) return;
-            return postVerification(item.id, 'rejected', result.value.reason, result.value.signature)
+            return postVerification(item.id, 'rejected', result.value.reason, null)
                 .then(function(responseData) {
                     return loadAttendance(true).then(function(loaded) {
                         return Swal.fire({
                             icon: loaded ? 'success' : 'warning',
-                            title: loaded ? 'Berhasil' : 'Verifikasi Tersimpan, Daftar Belum Diperbarui',
-                            text: window.apiResponseMessage(responseData, 'Presensi ditolak.') +
+                            title: loaded ? 'Penolakan Terkirim' : 'Penolakan Tersimpan, Daftar Belum Diperbarui',
+                            text: window.apiResponseMessage(responseData, 'Penolakan berhasil dikirim kepada peserta.') +
                                 (loaded ? '' : ' Daftar gagal dimuat ulang; silakan tekan tombol muat ulang.')
                         });
                     });
@@ -349,6 +364,23 @@ $(document).ready(function() {
         if (item) rejectOne(item);
     });
 
+    function formatRiwayatWaktu(value) {
+        if (!value) return '-';
+        if (typeof window.apiFormatDateTime === 'function') return window.apiFormatDateTime(value).full;
+        return String(value).replace('T', ' ').slice(0, 16);
+    }
+
+    function riwayatPenolakanHtml(item) {
+        if (!item.riwayat_penolakan.length) return '';
+        var rows = item.riwayat_penolakan.slice().reverse().map(function(entry) {
+            var oleh = entry.pembimbing_nama ? escapeHtml(entry.pembimbing_nama) : 'Pembimbing';
+            return '<li class="mb-1"><span class="text-danger">' + escapeHtml(entry.alasan || '-') + '</span>' +
+                '<div class="text-muted" style="font-size:0.72rem;">' + oleh + ' · ' +
+                escapeHtml(formatRiwayatWaktu(entry.pada)) + '</div></li>';
+        }).join('');
+        return '<ul class="list-unstyled mb-0">' + rows + '</ul>';
+    }
+
     $(document).on('click', '.btn-detail-absen', function() {
         var item = records.find(function(row) { return String(row.id) === String($(this).data('id')); }.bind(this));
         if (!item) return;
@@ -376,6 +408,18 @@ $(document).ready(function() {
             '</dd><dt class="col-5">Status Presensi</dt><dd class="col-7">' + escapeHtml(eventLabel) +
             '</dd><dt class="col-5">Status Verifikasi</dt><dd class="col-7">' +
             escapeHtml(verificationStatus) + '</dd>' +
+            (item.jumlah_resubmit > 0
+                ? '<dt class="col-5">Pengajuan</dt><dd class="col-7">Pengajuan ulang ke-' +
+                    escapeHtml(item.jumlah_resubmit) + '</dd>'
+                : '') +
+            (item.alasan_penolakan
+                ? '<dt class="col-5">Alasan Penolakan</dt><dd class="col-7 text-danger">' +
+                    escapeHtml(item.alasan_penolakan) + '</dd>'
+                : '') +
+            (item.riwayat_penolakan.length
+                ? '<dt class="col-5">Riwayat Penolakan</dt><dd class="col-7 small">' +
+                    riwayatPenolakanHtml(item) + '</dd>'
+                : '') +
             (parafUrl
                 ? '<dt class="col-5">Paraf Pembimbing</dt><dd class="col-7"><img src="' +
                     escapeHtml(parafUrl) + '" alt="Paraf" style="height: 30px; margin-top: 5px;"></dd>'
