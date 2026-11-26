@@ -134,11 +134,17 @@
             #riwayatTabContent .table-responsive table,
             #riwayatTabContent .tab-pane table.dataTable,
             #riwayatTabContent .tab-pane .table-custom {
-                width: 100% !important;
+                /*
+                 * Lebar tabel dibulatkan browser ke atas (~1px) sehingga garis
+                 * terluar kanan bisa jatuh di luar area konten dan terpotong.
+                 * Kurangi 1px agar seluruh garis tepi tetap tercetak utuh.
+                 */
+                width: calc(100% - 1px) !important;
                 max-width: 100% !important;
                 min-width: 0 !important;
                 margin: 0 !important;
                 border-collapse: collapse !important;
+                border-spacing: 0 !important;
                 table-layout: fixed !important;
             }
 
@@ -157,11 +163,19 @@
                 page-break-inside: avoid !important;
             }
 
+            /*
+             * Sel header yang sortable memakai position: relative dan latar
+             * yang menutupi garis border-collapse saat dicetak. Netralkan
+             * keduanya agar garis grid selalu utuh di semua sisi sel.
+             */
             .tab-pane .table-custom th,
             .tab-pane .table-custom td {
                 height: auto !important;
                 padding: 4px 5px !important;
                 border: 1px solid #444 !important;
+                box-shadow: none !important;
+                background-clip: padding-box !important;
+                position: static !important;
                 color: #000 !important;
                 font-size: 8.5pt !important;
                 line-height: 1.35 !important;
