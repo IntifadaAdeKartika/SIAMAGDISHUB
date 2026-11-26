@@ -10,6 +10,31 @@ $(document).ready(function() {
         user = null;
     }
 
+    var todayAttendance = null;
+    var attendanceLoaded = false;
+    var attendanceFetchFailed = false;
+    var attendanceLoadError = '';
+    var izinList = [];
+    var izinLoaded = false;
+    var izinLoadFailed = false;
+    var izinLoadPromise = null;
+    var logbookCreateAccess = null;
+
+    function localDateString(date) {
+        var d = date instanceof Date ? date : new Date();
+        return d.getFullYear() + '-' +
+            String(d.getMonth() + 1).padStart(2, '0') + '-' +
+            String(d.getDate()).padStart(2, '0');
+    }
+
+    function dateOnlyLocal(value) {
+        if (!value) return '';
+        var raw = String(value).trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+        var date = new Date(raw);
+        return isNaN(date.getTime()) ? raw.slice(0, 10) : localDateString(date);
+    }
+
     function loadTodayAttendance() {
         var token = localStorage.getItem('token') || localStorage.getItem('siamag_token') || '';
         return fetch(apiUrl('/absensi/today'), {
@@ -29,17 +54,177 @@ $(document).ready(function() {
             var hasCheckedIn = data.has_checked_in === true || data.has_checked_in === 1 ||
                 String(data.has_checked_in).toLowerCase() === 'true';
             var checkIn = hasCheckedIn ? data.check_in : null;
-            $('#idAbsensiLogbook').val(checkIn ? checkIn.id : '');
-            $('#idAbsensiLogbook').data('tanggal', checkIn ? String(checkIn.tanggal_jam || '').slice(0, 10) : '');
-            $('#absensiLogbookNotice').toggle(!checkIn);
-            return checkIn ? checkIn : null;
+            todayAttendance = checkIn
+                ? {
+                    id: checkIn.id,
+                    tanggal: dateOnlyLocal(checkIn.tanggal_jam) || localDateString(),
+                    status_verifikasi: checkIn.status_verifikasi || ''
+                }
+                : null;
+            attendanceLoaded = true;
+            attendanceFetchFailed = false;
+            attendanceLoadError = '';
+            return todayAttendance;
         }).catch(function(error) {
-            $('#idAbsensiLogbook').val('');
-            $('#idAbsensiLogbook').removeData('tanggal');
-            $('#absensiLogbookNotice').removeClass('alert-info').addClass('alert-warning')
-                .text('Data absensi untuk mengaitkan logbook gagal dimuat: ' + error.message).show();
+            todayAttendance = null;
+            attendanceLoaded = true;
+            attendanceFetchFailed = true;
+            attendanceLoadError = error.message;
             return null;
         });
+    }
+
+    function normalizeIzin(item) {
+        if (!item || typeof item !== 'object') return null;
+        var status = String(item.status || '').toLowerCase();
+        var mulai = String(item.tanggal_mulai || '').slice(0, 10);
+        var selesai = String(item.tanggal_selesai || '').slice(0, 10);
+        if (!status || !mulai || !selesai) return null;
+        return {
+            id: item.id,
+            status: status,
+            tanggal_mulai: mulai,
+            tanggal_selesai: selesai,
+            jenis: item.jenis || '',
+            keterangan: item.keterangan || ''
+        };
+    }
+
+    function loadIzinData(force) {
+        if (izinLoadPromise && !force) return izinLoadPromise;
+        izinLoadFailed = false;
+        izinLoadPromise = window.apiRequestAll('/pengajuan-izin', ['pengajuan_izin', 'pengajuan-izins', 'izin', 'izins'])
+            .then(function(rows) {
+                izinList = rows.map(normalizeIzin).filter(Boolean);
+                izinLoaded = true;
+                return izinList;
+            })
+            .catch(function() {
+                izinList = [];
+                izinLoaded = true;
+                izinLoadFailed = true;
+                return [];
+            });
+        return izinLoadPromise;
+    }
+
+    function ensureCreateAccessData() {
+        var attendancePromise = attendanceLoaded ? Promise.resolve() : loadTodayAttendance();
+        var izinPromise = izinLoaded ? Promise.resolve() : loadIzinData();
+        return Promise.all([attendancePromise, izinPromise]);
+    }
+
+    function findIzinByStatus(tanggal, status) {
+        if (!tanggal) return null;
+        return izinList.find(function(item) {
+            return item.status === status &&
+                item.tanggal_mulai <= tanggal &&
+                item.tanggal_selesai >= tanggal;
+        }) || null;
+    }
+
+    function setIzinNotice(message, variant) {
+        var $notice = $('#izinLogbookNotice');
+        if (!message) {
+            $notice.hide().text('');
+            return;
+        }
+        $notice.removeClass('alert-info alert-warning alert-danger')
+            .addClass(variant === 'warning' ? 'alert-warning' : (variant === 'danger' ? 'alert-danger' : 'alert-info'))
+            .text(message)
+            .show();
+    }
+
+    function evaluateCreateAccess() {
+        if ($('#logbookId').val()) {
+            logbookCreateAccess = null;
+            return null;
+        }
+
+        var tanggal = String($('#tglLogbook').val() || '').slice(0, 10);
+        var today = localDateString();
+        var approvedIzin = findIzinByStatus(tanggal, 'approved');
+        var pendingIzin = findIzinByStatus(tanggal, 'pending');
+        var rejectedIzin = findIzinByStatus(tanggal, 'rejected');
+        var hasTodayAttendance = !!(todayAttendance && todayAttendance.tanggal === tanggal);
+
+        if (hasTodayAttendance) {
+            $('#idAbsensiLogbook').val(todayAttendance.id);
+            $('#idAbsensiLogbook').data('tanggal', todayAttendance.tanggal);
+        } else {
+            $('#idAbsensiLogbook').val('');
+            $('#idAbsensiLogbook').removeData('tanggal');
+        }
+
+        if (hasTodayAttendance) {
+            $('#absensiLogbookNotice').hide();
+            setIzinNotice('');
+            logbookCreateAccess = { blocked: false, reason: 'absensi' };
+            return logbookCreateAccess;
+        }
+
+        if (approvedIzin) {
+            $('#absensiLogbookNotice').hide();
+            setIzinNotice('Anda memiliki pengajuan izin yang disetujui pada tanggal ini. Anda tetap dapat mencatat kegiatan melalui Logbook.', 'info');
+            logbookCreateAccess = { blocked: false, reason: 'izin-approved', izin: approvedIzin };
+            return logbookCreateAccess;
+        }
+
+        if (izinLoadFailed) {
+            $('#absensiLogbookNotice').hide();
+            setIzinNotice('Data pengajuan izin gagal dimuat. Logbook tetap dapat dikirim dan akan divalidasi oleh server.', 'warning');
+            logbookCreateAccess = { blocked: false, reason: 'izin-error' };
+            return logbookCreateAccess;
+        }
+
+        if (attendanceFetchFailed) {
+            $('#absensiLogbookNotice').hide();
+            setIzinNotice('Status absensi hari ini gagal dimuat: ' + attendanceLoadError + ' Logbook tetap dapat dikirim dan akan divalidasi oleh server.', 'warning');
+            logbookCreateAccess = { blocked: false, reason: 'absensi-error' };
+            return logbookCreateAccess;
+        }
+
+        if (tanggal === today) {
+            $('#absensiLogbookNotice').hide();
+            if (pendingIzin) {
+                setIzinNotice('Pengajuan izin pada tanggal ini masih menunggu persetujuan pembimbing sehingga belum dapat digunakan untuk mengisi Logbook.', 'warning');
+                logbookCreateAccess = {
+                    blocked: true,
+                    reason: 'izin-pending',
+                    title: 'Izin Belum Disetujui',
+                    message: 'Pengajuan izin pada tanggal ini masih menunggu persetujuan. Lakukan check-in atau tunggu persetujuan pembimbing sebelum mengisi Logbook.'
+                };
+            } else if (rejectedIzin) {
+                setIzinNotice('Pengajuan izin pada tanggal ini ditolak sehingga tidak dapat digunakan untuk mengisi Logbook.', 'warning');
+                logbookCreateAccess = {
+                    blocked: true,
+                    reason: 'izin-rejected',
+                    title: 'Izin Ditolak',
+                    message: 'Pengajuan izin pada tanggal ini ditolak. Lakukan check-in terlebih dahulu untuk mengisi Logbook.'
+                };
+            } else {
+                setIzinNotice('');
+                $('#absensiLogbookNotice').show();
+                logbookCreateAccess = {
+                    blocked: true,
+                    reason: 'tanpa-absensi',
+                    title: 'Absensi Belum Tersedia',
+                    message: 'Logbook harus terhubung ke record absensi pada hari yang sama. Lakukan check-in terlebih dahulu.'
+                };
+            }
+            return logbookCreateAccess;
+        }
+
+        $('#absensiLogbookNotice').hide();
+        if (pendingIzin) {
+            setIzinNotice('Pengajuan izin pada tanggal ini masih menunggu persetujuan dan belum dianggap disetujui. Logbook hanya dapat disimpan jika terdapat absensi masuk yang disetujui pada tanggal tersebut.', 'warning');
+        } else if (rejectedIzin) {
+            setIzinNotice('Pengajuan izin pada tanggal ini ditolak. Logbook hanya dapat disimpan jika terdapat absensi masuk yang disetujui pada tanggal tersebut.', 'warning');
+        } else {
+            setIzinNotice('Tidak ada pengajuan izin yang disetujui pada tanggal ini. Logbook hanya dapat disimpan jika terdapat absensi masuk yang disetujui pada tanggal tersebut.', 'warning');
+        }
+        logbookCreateAccess = { blocked: false, reason: 'validasi-server' };
+        return logbookCreateAccess;
     }
     var p = user && (user.peserta_magang || user.peserta || user.profile || {});
     var displayName = user && (user.nama_lengkap || p.nama_lengkap || user.nama || p.nama || user.name || p.name) ||
@@ -407,6 +592,8 @@ $(document).ready(function() {
         $('#btnBatalPilihFoto').hide();
         $('#previewFotoError').hide();
         $('#previewFotoEmpty').hide();
+        $('#izinLogbookNotice').hide().text('');
+        $('#absensiLogbookNotice').hide();
         resetRevisionNotice();
     });
 
@@ -415,12 +602,23 @@ $(document).ready(function() {
         $('#logbookId').val('');
         $('#idAbsensiLogbook').val('');
         $('#idAbsensiLogbook').removeData('tanggal');
-        loadTodayAttendance();
-        $('#tglLogbook').val(new Date().toISOString().split('T')[0]);
+        $('#tglLogbook').val(localDateString());
         $('#waktuMulai').val('08:00');
         $('#waktuSelesai').val('15:00');
         $('#modalLogbookTitle').html('<i class="fas fa-edit me-2"></i>Isi Logbook Kegiatan Hari Ini');
         resetRevisionNotice();
+
+        todayAttendance = null;
+        attendanceLoaded = false;
+        attendanceFetchFailed = false;
+        attendanceLoadError = '';
+        izinList = [];
+        izinLoaded = false;
+        izinLoadFailed = false;
+        izinLoadPromise = null;
+        logbookCreateAccess = null;
+        $('#izinLogbookNotice').hide().text('');
+        $('#absensiLogbookNotice').hide();
 
         currentLogbookPhoto = '';
         if (currentObjectUrl) {
@@ -435,6 +633,12 @@ $(document).ready(function() {
         $('#previewFotoContainer').hide();
 
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalLogbook')).show();
+        ensureCreateAccessData().then(evaluateCreateAccess);
+    });
+
+    $('#tglLogbook').on('change', function() {
+        if ($('#logbookId').val()) return;
+        ensureCreateAccessData().then(evaluateCreateAccess);
     });
 
     $('#formLogbook').on('submit', function(event) {
@@ -460,75 +664,88 @@ $(document).ready(function() {
             payload.id_absensi = idAbsensi;
         }
 
-        if (!isEdit) {
-            if (!payload.id_absensi) {
-                Swal.fire('Absensi Belum Tersedia', 'Logbook harus terhubung ke record absensi pada hari yang sama. Lakukan check-in terlebih dahulu.', 'warning');
-                return;
-            }
-            if ($('#idAbsensiLogbook').data('tanggal') !== payload.tanggal) {
-                Swal.fire('Tanggal Absensi Tidak Cocok', 'Logbook harus menggunakan tanggal yang sama dengan event absensi masuk yang ditautkan.', 'warning');
-                return;
-            }
-        }
+        function submitLogbookRequest() {
+            var fotoKegiatan = $('#fotoKegiatan')[0].files[0];
+            var body;
+            var method;
+            var headers = {};
 
-        var fotoKegiatan = $('#fotoKegiatan')[0].files[0];
-        var body;
-        var method;
-        var headers = {};
-
-        if (fotoKegiatan) {
-            body = new FormData();
-            Object.keys(payload).forEach(function(key) { body.append(key, payload[key]); });
-            body.append('foto_kegiatan', fotoKegiatan, fotoKegiatan.name);
-            if (isEdit) {
-                body.append('_method', 'PUT');
-                method = 'POST';
-                headers['X-HTTP-Method-Override'] = 'PUT';
+            if (fotoKegiatan) {
+                body = new FormData();
+                Object.keys(payload).forEach(function(key) { body.append(key, payload[key]); });
+                body.append('foto_kegiatan', fotoKegiatan, fotoKegiatan.name);
+                if (isEdit) {
+                    body.append('_method', 'PUT');
+                    method = 'POST';
+                    headers['X-HTTP-Method-Override'] = 'PUT';
+                } else {
+                    method = 'POST';
+                }
+                headers['Accept'] = 'application/json';
             } else {
-                method = 'POST';
+                body = JSON.stringify(payload);
+                method = isEdit ? 'PUT' : 'POST';
+                headers['Content-Type'] = 'application/json';
+                headers['Accept'] = 'application/json';
             }
-            headers['Accept'] = 'application/json';
-        } else {
-            body = JSON.stringify(payload);
-            method = isEdit ? 'PUT' : 'POST';
-            headers['Content-Type'] = 'application/json';
-            headers['Accept'] = 'application/json';
-        }
-        var $submit = $('#formLogbook button[type="submit"]');
-        $submit.prop('disabled', true);
+            var $submit = $('#formLogbook button[type="submit"]');
+            $submit.prop('disabled', true);
 
-        var token = localStorage.getItem('token') || localStorage.getItem('siamag_token') || '';
-        headers['Authorization'] = 'Bearer ' + token;
+            var token = localStorage.getItem('token') || localStorage.getItem('siamag_token') || '';
+            headers['Authorization'] = 'Bearer ' + token;
 
-        fetch(apiUrl(isEdit ? '/logbook/' + encodeURIComponent(id) : '/logbook'), {
-            method: method,
-            headers: headers,
-            body: body
-        }).then(readResponse).then(function(responseData) {
-            var modal = bootstrap.Modal.getInstance(document.getElementById('modalLogbook'));
-            if (modal) modal.hide();
-            return loadLogbook(true).then(function(loaded) {
-                var serverMessage = window.apiResponseMessage(responseData,
-                    isRevisionSubmit ? 'Revisi logbook berhasil dikirim.' : 'Logbook berhasil disimpan.');
-                if (!loaded) {
+            fetch(apiUrl(isEdit ? '/logbook/' + encodeURIComponent(id) : '/logbook'), {
+                method: method,
+                headers: headers,
+                body: body
+            }).then(readResponse).then(function(responseData) {
+                var modal = bootstrap.Modal.getInstance(document.getElementById('modalLogbook'));
+                if (modal) modal.hide();
+                return loadLogbook(true).then(function(loaded) {
+                    var serverMessage = window.apiResponseMessage(responseData,
+                        isRevisionSubmit ? 'Revisi logbook berhasil dikirim.' : 'Logbook berhasil disimpan.');
+                    if (!loaded) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: isRevisionSubmit ? 'Revisi Terkirim' : (isEdit ? 'Logbook Diperbarui' : 'Logbook Tersimpan'),
+                            text: serverMessage + ' Daftar gagal dimuat ulang; silakan tekan tombol muat ulang.'
+                        });
+                        return;
+                    }
                     Swal.fire({
-                        icon: 'warning',
-                        title: isRevisionSubmit ? 'Revisi Terkirim' : (isEdit ? 'Logbook Diperbarui' : 'Logbook Tersimpan'),
-                        text: serverMessage + ' Daftar gagal dimuat ulang; silakan tekan tombol muat ulang.'
+                        icon: 'success',
+                        title: isRevisionSubmit ? 'Revisi Terkirim' : (isEdit ? 'Logbook Diperbarui' : 'Logbook Terkirim'),
+                        text: serverMessage
                     });
+                });
+            }).catch(function(error) {
+                Swal.fire('Logbook Gagal Disimpan', error.message, 'error');
+            }).then(function() {
+                $submit.prop('disabled', false);
+            });
+        }
+
+        if (!isEdit) {
+            ensureCreateAccessData().then(function() {
+                evaluateCreateAccess();
+                if (logbookCreateAccess && logbookCreateAccess.blocked) {
+                    Swal.fire(logbookCreateAccess.title || 'Logbook Belum Dapat Disimpan', logbookCreateAccess.message, 'warning');
                     return;
                 }
-                Swal.fire({
-                    icon: 'success',
-                    title: isRevisionSubmit ? 'Revisi Terkirim' : (isEdit ? 'Logbook Diperbarui' : 'Logbook Terkirim'),
-                    text: serverMessage
-                });
+                var absensiId = $('#idAbsensiLogbook').val();
+                if (absensiId) {
+                    payload.id_absensi = absensiId;
+                } else {
+                    delete payload.id_absensi;
+                }
+                submitLogbookRequest();
+            }).catch(function(error) {
+                Swal.fire('Logbook Gagal Disimpan', error.message, 'error');
             });
-        }).catch(function(error) {
-            Swal.fire('Logbook Gagal Disimpan', error.message, 'error');
-        }).then(function() {
-            $submit.prop('disabled', false);
-        });
+            return;
+        }
+
+        submitLogbookRequest();
     });
 
     function renderRiwayatRevisi(riwayat) {
@@ -559,6 +776,9 @@ $(document).ready(function() {
                 return;
             }
             currentEditingLogbook = item;
+            logbookCreateAccess = null;
+            $('#izinLogbookNotice').hide().text('');
+            $('#absensiLogbookNotice').hide();
             $('#logbookId').val(item.id);
             $('#idAbsensiLogbook').val(item.id_absensi);
             if (item.id_absensi) {
