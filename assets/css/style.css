@@ -2107,3 +2107,102 @@ div.dataTables_wrapper div.dataTables_processing {
         font-size: 0.7rem;
     }
 }
+
+/* Modal Logbook Peserta – compact & scrollable body with fixed header/footer */
+.modal-logbook .modal-dialog {
+    max-height: 90vh;
+    max-height: 90dvh;
+}
+
+.modal-logbook .modal-content {
+    max-height: 90vh;
+    max-height: 90dvh;
+    overflow: hidden;
+}
+
+.modal-logbook .modal-header,
+.modal-logbook .modal-footer {
+    flex-shrink: 0;
+    background: #fff;
+}
+
+.modal-logbook .modal-body {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.modal-logbook .logbook-file-input {
+    width: 100%;
+    max-width: 100%;
+    padding: 0.45rem 0.6rem;
+    font-size: 0.875rem;
+}
+
+.modal-logbook .logbook-photo-preview-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.4rem;
+}
+
+.modal-logbook .logbook-photo-frame {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    min-height: 96px;
+    max-height: 230px;
+    overflow: hidden;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+}
+
+.modal-logbook .logbook-photo-img {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+@media (max-height: 700px) and (min-width: 576px) {
+    .modal-logbook .modal-content {
+        max-height: calc(100vh - 3.5rem);
+        max-height: calc(100dvh - 3.5rem);
+    }
+
+    .modal-logbook .modal-body {
+        padding: 16px 20px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .modal-logbook .modal-body {
+        padding: 1rem;
+    }
+
+    .modal-logbook .modal-footer {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .modal-logbook .modal-footer .btn {
+        flex: 1 1 calc(50% - 0.5rem);
+        min-width: 0;
+    }
+
+    .modal-logbook .logbook-photo-frame {
+        padding: 8px;
+        max-height: 200px;
+    }
+
+    .modal-logbook .logbook-photo-img {
+        max-height: 168px;
+    }
+}

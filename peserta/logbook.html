@@ -226,7 +226,7 @@
 
 <!-- MODAL TAMBAH / EDIT LOGBOOK -->
 <div class="modal fade" id="modalLogbook" tabindex="-1" aria-labelledby="modalLogbookTitle" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable modal-logbook">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalLogbookTitle"><i class="fas fa-edit me-2"></i>Isi Logbook Kegiatan</h5>
@@ -267,24 +267,24 @@
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label">Foto Kegiatan (Opsional)</label>
-                            <input type="file" class="form-control" id="fotoKegiatan" name="foto_kegiatan" accept="image/*">
-                            <small class="text-muted">Unggah foto kegiatan bila diperlukan.</small>
+                            <label class="form-label mb-1" for="fotoKegiatan">Foto Kegiatan (Opsional)</label>
+                            <input type="file" class="form-control logbook-file-input" id="fotoKegiatan" name="foto_kegiatan" accept="image/*">
+                            <small class="text-muted d-block mt-1">Unggah foto kegiatan bila diperlukan.</small>
 
                             <!-- Preview Foto Kegiatan -->
-                            <div id="previewFotoContainer" class="mt-3" style="display: none;">
-                                <div class="d-flex align-items-center justify-content-between mb-1">
+                            <div id="previewFotoContainer" class="logbook-photo-preview mt-3" style="display: none;">
+                                <div class="logbook-photo-preview-head">
                                     <span class="small fw-semibold text-muted" id="previewFotoLabel">Foto Kegiatan Saat Ini</span>
-                                    <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none text-danger small" id="btnBatalPilihFoto" style="display: none;">
+                                    <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none text-danger small text-nowrap" id="btnBatalPilihFoto" style="display: none;">
                                         <i class="fas fa-times me-1"></i>Batal pilih foto baru
                                     </button>
                                 </div>
-                                <div class="p-2 border rounded bg-light text-center" style="max-width: 100%;">
-                                    <img id="previewFotoImg" src="" alt="Foto Kegiatan" class="img-fluid rounded border shadow-sm" style="max-height: 180px; width: auto; object-fit: contain; display: none;">
-                                    <div id="previewFotoEmpty" class="text-muted small py-2" style="display: none;">
+                                <div class="logbook-photo-frame">
+                                    <img id="previewFotoImg" src="" alt="Foto Kegiatan" class="logbook-photo-img">
+                                    <div id="previewFotoEmpty" class="text-muted small" style="display: none;">
                                         <i class="fas fa-image me-1"></i>Belum ada foto kegiatan
                                     </div>
-                                    <div id="previewFotoError" class="text-danger small py-2" style="display: none;">
+                                    <div id="previewFotoError" class="text-danger small" style="display: none;">
                                         <i class="fas fa-exclamation-triangle me-1"></i>Gagal memuat foto kegiatan
                                     </div>
                                 </div>
