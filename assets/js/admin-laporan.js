@@ -176,8 +176,43 @@ $(document).ready(function() {
         $('#tglSelesai').val(dateValue(today));
         updateReport();
     });
-    $('#btnCetakLaporan').on('click', function() { window.print(); });
+    $('#btnCetakLaporan').on('click', function() {
+        preparePrintLaporan();
+        window.print();
+        window.setTimeout(restorePrintLaporan, 500);
+    });
     $('#btnExportExcel').on('click', exportCsv);
+
+    function printReportTitle(jenis) {
+        return jenis === 'logbook'
+            ? 'Rekapitulasi Logbook Kegiatan Peserta Magang'
+            : 'Rekapitulasi Presensi Peserta Magang';
+    }
+
+    function syncPrintReportHeader() {
+        var jenis = $('#jenisLaporan').val();
+        $('#printLaporanTitle').text(printReportTitle(jenis));
+        document.body.classList.toggle('print-logbook-report', jenis === 'logbook');
+    }
+
+    var printTitleBefore = null;
+
+    function preparePrintLaporan() {
+        syncPrintReportHeader();
+        if (printTitleBefore === null) printTitleBefore = document.title;
+        document.title = printReportTitle($('#jenisLaporan').val()) + ' - SIAMAG Dishub';
+    }
+
+    function restorePrintLaporan() {
+        if (printTitleBefore !== null) {
+            document.title = printTitleBefore;
+            printTitleBefore = null;
+        }
+    }
+
+    window.addEventListener('beforeprint', preparePrintLaporan);
+    window.addEventListener('afterprint', restorePrintLaporan);
+    syncPrintReportHeader();
 
     $('#tabelLaporanPresensi tbody').html(
         '<tr><td colspan="9" class="text-center py-4 text-muted">Memuat data...</td></tr>');
