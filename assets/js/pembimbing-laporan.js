@@ -139,6 +139,7 @@ $(document).ready(function() {
     if (!$('#tglSelesai').val()) $('#tglSelesai').val(toDateInput(today));
 
     function renderLaporan() {
+        syncPrintReportHeader();
         if (!reportLoaded) return;
         var jenis = $('#jenisLaporan').val();
         var nim = $('#filterPeserta').val();
@@ -258,8 +259,38 @@ $(document).ready(function() {
     });
 
     $('#btnCetakLaporan').on('click', function() {
+        preparePrintLaporan();
         window.print();
+        window.setTimeout(restorePrintLaporan, 500);
     });
+
+    function printReportTitle(jenis) {
+        return jenis === 'logbook'
+            ? 'Rekap Logbook dan Kegiatan Bimbingan'
+            : 'Rekap Presensi/Absensi dan Kegiatan Bimbingan';
+    }
+
+    function syncPrintReportHeader() {
+        $('#printLaporanTitle').text(printReportTitle($('#jenisLaporan').val()));
+    }
+
+    var printTitleBefore = null;
+
+    function preparePrintLaporan() {
+        syncPrintReportHeader();
+        if (printTitleBefore === null) printTitleBefore = document.title;
+        document.title = $('#printLaporanTitle').text().replace(/\//g, '-') + ' - SIAMAG Dishub';
+    }
+
+    function restorePrintLaporan() {
+        if (printTitleBefore !== null) {
+            document.title = printTitleBefore;
+            printTitleBefore = null;
+        }
+    }
+
+    window.addEventListener('beforeprint', preparePrintLaporan);
+    window.addEventListener('afterprint', restorePrintLaporan);
 
     // Helper: ambil teks bersih dari HTML
     function stripHtml(html) {
@@ -306,5 +337,6 @@ $(document).ready(function() {
         URL.revokeObjectURL(url);
     });
 
+    syncPrintReportHeader();
     loadReport();
 });
