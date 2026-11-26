@@ -2108,7 +2108,6 @@ div.dataTables_wrapper div.dataTables_processing {
     }
 }
 
-/* Modal Logbook Peserta – compact & scrollable body with fixed header/footer */
 /* Modal Logbook Peserta – scroll body, header/footer tetap terlihat */
 .modal-logbook .modal-content {
     display: flex;
@@ -2116,6 +2115,14 @@ div.dataTables_wrapper div.dataTables_processing {
     max-height: min(90vh, calc(100vh - 3.5rem));
     max-height: min(90dvh, calc(100dvh - 3.5rem));
     overflow: hidden;
+}
+
+/* Body & footer berada di dalam <form>, jadi form harus jadi flex item modal-content */
+.modal-logbook .modal-content > form {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
 .modal-logbook .modal-header,
