@@ -46,11 +46,181 @@ $(document).ready(function() {
         }[String(status || '').toLowerCase()] || status || '-';
     }
 
-    function documentFileUrl(path) {
-        var value = String(path || '').trim();
-        if (/^https?:\/\//i.test(value)) return value;
-        var apiOrigin = String(window.API_BASE || window.location.origin).match(/^(https?:\/\/[^/]+)/i);
-        return apiOrigin && value ? apiOrigin[1] + '/' + value.replace(/^\/+/, '') : '';
+    var detailItem = null;
+    var previewObjectUrl = null;
+
+    function lampiranFileInfo(file) {
+        var raw = typeof file === 'string' ? file : '';
+        var path = raw;
+        var mime = '';
+        var name = '';
+
+        if (file && typeof file === 'object') {
+            path = String(file.url || file.file_url || file.path || file.file_path || '');
+            mime = String(file.mime_type || file.type || '').toLowerCase();
+            name = file.name || file.filename || '';
+        }
+
+        var dataMatch = /^data:([^;,]+)/i.exec(raw);
+        if (!mime && dataMatch) mime = dataMatch[1].toLowerCase();
+
+        var extMatch = /\.([a-z0-9]{2,5})(?:[?#]|$)/i.exec(path);
+        var ext = extMatch ? extMatch[1].toLowerCase() : '';
+
+        if (!mime && ext) {
+            if (ext === 'pdf') mime = 'application/pdf';
+            else if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'].indexOf(ext) >= 0) {
+                mime = 'image/' + (ext === 'jpg' ? 'jpeg' : ext);
+            }
+        }
+
+        // SVG berpotensi berisi skrip; perlakukan sebagai berkas unduhan.
+        if (mime === 'image/svg+xml') mime = 'application/octet-stream';
+
+        if (!name) {
+            if (raw.indexOf('data:') === 0) name = 'Lampiran Dokumentasi';
+            else if (path) name = path.split('?')[0].split('/').pop();
+        }
+
+        return { mime: mime, ext: ext, name: name || 'Lampiran kegiatan' };
+    }
+
+    function lampiranRequest(item, download) {
+        var id = item ? (item.id || item.id_logbook) : '';
+        if (!id) return Promise.reject(new Error('Data logbook tidak lengkap.'));
+
+        var token = window.getAuthToken ? window.getAuthToken() : (localStorage.getItem('token') || localStorage.getItem('siamag_token') || '');
+        var headers = { Accept: 'application/json' };
+        if (token) headers.Authorization = 'Bearer ' + token;
+
+        var url = window.apiUrl('/logbook/' + encodeURIComponent(id) + '/lampiran' + (download ? '?download=1' : ''));
+
+        return fetch(url, { headers: headers }).then(function(response) {
+            if (response.status === 401) {
+                if (typeof window.handleUnauthorized === 'function') window.handleUnauthorized();
+                throw new Error('Sesi Anda telah berakhir. Silakan login kembali.');
+            }
+
+            if (!response.ok) {
+                return response.text().then(function(text) {
+                    var message = 'Lampiran tidak dapat diambil (HTTP ' + response.status + ').';
+                    if (text) {
+                        try {
+                            var payload = JSON.parse(text);
+                            if (payload && payload.message) message = payload.message;
+                        } catch (error) {
+                            // Respons bukan JSON; gunakan pesan bawaan.
+                        }
+                    }
+                    throw new Error(message);
+                });
+            }
+
+            return response.blob().then(function(blob) {
+                var disposition = response.headers.get('Content-Disposition') || '';
+                var match = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
+                var filename = '';
+                if (match) {
+                    try {
+                        filename = decodeURIComponent(match[1] || match[2]);
+                    } catch (error) {
+                        filename = match[2] || '';
+                    }
+                }
+                return { blob: blob, filename: filename };
+            });
+        });
+    }
+
+    function simpanBlob(blob, filename) {
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = filename || 'lampiran-logbook';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        window.setTimeout(function() {
+            link.remove();
+            URL.revokeObjectURL(url);
+        }, 60000);
+    }
+
+    function bukaLampiran(item, mode) {
+        var id = item.id || item.id_logbook;
+        var newWindow = null;
+
+        if (mode === 'open') {
+            newWindow = window.open('', '_blank');
+            if (newWindow) {
+                try {
+                    newWindow.document.write('<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><title>Lampiran Logbook</title><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0f172a;color:#e2e8f0;font-family:system-ui,sans-serif;font-size:14px}</style></head><body>Memuat lampiran...</body></html>');
+                    newWindow.document.close();
+                } catch (error) {
+                    // Abaikan kegagalan menulis halaman sementara.
+                }
+            }
+        }
+
+        lampiranRequest(item, mode === 'download').then(function(result) {
+            var inlineSafe = [
+                'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'application/pdf'
+            ].indexOf(String(result.blob.type || '').toLowerCase()) >= 0;
+
+            if (mode === 'download' || !inlineSafe) {
+                if (newWindow) newWindow.close();
+                simpanBlob(result.blob, result.filename || ('lampiran-logbook-' + id));
+                return;
+            }
+
+            var url = URL.createObjectURL(result.blob);
+            if (newWindow) {
+                newWindow.location.href = url;
+                window.setTimeout(function() {
+                    URL.revokeObjectURL(url);
+                }, 60000);
+            } else {
+                Swal.fire({
+                    title: 'Lampiran Siap Dibuka',
+                    html: '<a href="' + url + '" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">Buka Lampiran</a>',
+                    showConfirmButton: false,
+                    showCloseButton: true,
+                    willClose: function() {
+                        URL.revokeObjectURL(url);
+                    }
+                });
+            }
+        }).catch(function(error) {
+            if (newWindow) newWindow.close();
+            Swal.fire('Lampiran Tidak Dapat Dibuka', error.message, 'error');
+        });
+    }
+
+    function clearPreviewObjectUrl() {
+        if (previewObjectUrl) {
+            URL.revokeObjectURL(previewObjectUrl);
+            previewObjectUrl = null;
+        }
+    }
+
+    function muatPreviewLampiran(item) {
+        var image = document.querySelector('#modalFotoBox img[data-lampiran-preview="1"]');
+        var loading = document.querySelector('#modalFotoBox [data-lampiran-loading]');
+        if (!image) return;
+
+        lampiranRequest(item, false).then(function(result) {
+            clearPreviewObjectUrl();
+            previewObjectUrl = URL.createObjectURL(result.blob);
+            image.src = previewObjectUrl;
+            image.style.display = '';
+            if (loading) loading.style.display = 'none';
+        }).catch(function(error) {
+            image.style.display = 'none';
+            if (loading) {
+                loading.className = 'small text-danger';
+                loading.textContent = error.message;
+            }
+        });
     }
 
     function render() {
@@ -145,49 +315,42 @@ $(document).ready(function() {
         $('#modalCatatanPembimbing').text(item.catatan_pembimbing == null || item.catatan_pembimbing === ''
             ? '-' : item.catatan_pembimbing);
         $('#modalStatus').text(statusLabel(item.status_verifikasi || item.status));
-                var file = item.foto_kegiatan_url || item.url_foto_kegiatan || item.foto_kegiatan;
+        detailItem = item;
+        var file = item.foto_kegiatan_url || item.url_foto_kegiatan || item.foto_kegiatan;
         if (file) {
-            var filePath = typeof file === 'string'
-                ? file
-                : file.url || file.file_url || file.path || file.file_path || '';
-            var fileUrl = documentFileUrl(filePath);
-            var fileType = typeof file === 'object' ? String(file.mime_type || file.type || '').toLowerCase() : '';
-            var isImage = (fileType.indexOf('image/') === 0) ||
-                          /^data:image\//i.test(fileUrl) ||
-                          /.(png|jpe?g|gif|webp|bmp|svg)($|\?)/i.test(filePath);
-            var isPdf = (fileType === 'application/pdf') ||
-                        /^data:application\/pdf/i.test(fileUrl) ||
-                        /\.pdf($|\?)/i.test(filePath);
+            var info = lampiranFileInfo(file);
+            var isImage = info.mime.indexOf('image/') === 0;
+            var isPdf = info.mime === 'application/pdf';
+            var logbookId = item.id || item.id_logbook || '';
 
             if (isImage) {
                 $('#modalFotoBox').html(
                     '<div class="mb-2 text-center">' +
-                        '<img src="' + escapeHtml(fileUrl) + '" alt="Foto kegiatan" class="img-fluid rounded border shadow-sm" style="max-height:260px; object-fit:contain; cursor:pointer;" onclick="window.openImageInNewTab && window.openImageInNewTab(\'' + escapeHtml(fileUrl) + '\', \'Foto Kegiatan\')">' +
+                        '<img alt="Foto kegiatan" data-lampiran-preview="1" class="img-fluid rounded border shadow-sm" style="max-height:260px; object-fit:contain; cursor:pointer; display:none;">' +
+                        '<div class="small text-muted" data-lampiran-loading>Memuat lampiran...</div>' +
                     '</div>' +
                     '<div>' +
-                        '<a href="' + escapeHtml(fileUrl) + '" target="_blank" rel="noopener noreferrer" class="link-lihat-foto text-primary text-decoration-underline fw-medium small">' +
+                        '<a href="#" class="link-lampiran-logbook text-primary text-decoration-underline fw-medium small" data-logbook-id="' + escapeHtml(logbookId) + '" data-lampiran-mode="open">' +
                             '<i class="fas fa-external-link-alt me-1"></i>Buka Foto di Tab Baru' +
                         '</a>' +
                     '</div>'
                 ).show();
                 $('#modalNoFoto').hide();
+                muatPreviewLampiran(item);
             } else if (isPdf) {
                 $('#modalFotoBox').html(
                     '<i class="fas fa-file-pdf text-danger fa-3x mb-2"></i>' +
                     '<div class="fw-semibold small text-dark mb-2">Dokumen Lampiran (PDF)</div>' +
-                    '<a class="btn btn-outline-danger btn-sm link-lihat-foto" href="' + escapeHtml(fileUrl) + '" target="_blank" rel="noopener noreferrer">' +
+                    '<a class="link-lampiran-logbook btn btn-outline-danger btn-sm" href="#" data-logbook-id="' + escapeHtml(logbookId) + '" data-lampiran-mode="open">' +
                         '<i class="fas fa-external-link-alt me-1"></i>Lihat Dokumen PDF' +
                     '</a>'
                 ).show();
                 $('#modalNoFoto').hide();
             } else {
-                var fileName = typeof file === 'string'
-                    ? (filePath.startsWith('data:') ? 'Lampiran Dokumentasi' : filePath.split('/').pop())
-                    : file.name || file.filename || 'Lampiran kegiatan';
                 $('#modalFotoBox').html(
                     '<i class="fas fa-paperclip text-secondary fa-3x mb-2"></i>' +
-                    '<div class="fw-semibold small text-dark mb-1">' + escapeHtml(fileName) + '</div>' +
-                    '<a href="' + escapeHtml(fileUrl) + '" target="_blank" rel="noopener noreferrer" class="link-lihat-foto text-primary small">' +
+                    '<div class="fw-semibold small text-dark mb-1">' + escapeHtml(info.name) + '</div>' +
+                    '<a href="#" class="link-lampiran-logbook text-primary small" data-logbook-id="' + escapeHtml(logbookId) + '" data-lampiran-mode="download">' +
                         '<i class="fas fa-download me-1"></i>Buka / Unduh Berkas' +
                     '</a>'
                 ).show();
@@ -200,38 +363,27 @@ $(document).ready(function() {
         var modal = document.getElementById('modalDetailLogbook');
         if (modal) bootstrap.Modal.getOrCreateInstance(modal).show();
     });
+    $(document).on('click', '.link-lampiran-logbook', function(e) {
+        e.preventDefault();
+        var id = String($(this).data('logbook-id') || '');
+        var item = detailItem && String(detailItem.id || detailItem.id_logbook) === id
+            ? detailItem
+            : records.find(function(row) {
+                return String(row.id || row.id_logbook) === id;
+            });
+        if (!item) return;
+        bukaLampiran(item, $(this).data('lampiran-mode') === 'download' ? 'download' : 'open');
+    });
+
+    $(document).on('click', '#modalFotoBox img[data-lampiran-preview="1"]', function() {
+        if (detailItem) bukaLampiran(detailItem, 'open');
+    });
+
+    $('#modalDetailLogbook').on('hidden.bs.modal', function() {
+        clearPreviewObjectUrl();
+        detailItem = null;
+    });
+
     loadUnits();
     load();
 });
-
-    // Handler Klik Buka Foto di Tab Baru (Mendukung Data URI Base64 & URL Biasa)
-    $(document).on('click', '.link-lihat-foto, a[href^="data:image/"]', function(e) {
-        var href = $(this).attr('href');
-        if (!href) return;
-        if (/^data:image\//i.test(href)) {
-            e.preventDefault();
-            if (typeof window.openImageInNewTab === 'function') {
-                window.openImageInNewTab(href, 'Foto Kegiatan');
-            } else {
-                try {
-                    var arr = href.split(',');
-                    var mime = arr[0].match(/:(.*?);/)[1];
-                    var bstr = atob(arr[1]);
-                    var n = bstr.length;
-                    var u8arr = new Uint8Array(n);
-                    while (n--) {
-                        u8arr[n] = bstr.charCodeAt(n);
-                    }
-                    var blob = new Blob([u8arr], { type: mime });
-                    var blobUrl = URL.createObjectURL(blob);
-                    window.open(blobUrl, '_blank');
-                } catch (err) {
-                    var win = window.open('');
-                    if (win) {
-                        win.document.write('<!DOCTYPE html><html><head><title>Foto Kegiatan</title><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;background:#0f172a;display:flex;align-items:center;justify-content:center;min-height:100vh;}img{max-width:95%;max-height:95vh;border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.5);}</style></head><body><img src="' + href + '" alt="Foto Kegiatan"></body></html>');
-                        win.document.close();
-                    }
-                }
-            }
-        }
-    });
