@@ -203,6 +203,8 @@
                             <select class="form-select form-select-sm" id="filterStatusVerif">
                                 <option value="">Semua Status</option>
                                 <option value="pending">Pending</option>
+                                <option value="revisi">Menunggu Revisi Peserta</option>
+                                <option value="revisi_terkirim">Menunggu Verifikasi Ulang</option>
                                 <option value="approved">Approved</option>
                                 <option value="rejected">Rejected</option>
                             </select>
@@ -252,10 +254,10 @@
 
 <!-- MODAL DETAIL & VERIFIKASI ABSENSI -->
 <div class="modal fade" id="modalVerifAbsen" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-md modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-signature me-2"></i>Verifikasi Presensi & Paraf</h5>
+                <h5 class="modal-title"><i class="fas fa-signature me-2"></i>Detail & Verifikasi Presensi</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4" id="contentModalVerif">
@@ -265,8 +267,47 @@
                 <button type="button" class="btn btn-outline-danger btn-sm" id="btnTolakDariModal">
                     <i class="fas fa-times me-1"></i> Tolak Absen
                 </button>
+                <button type="button" class="btn btn-outline-warning btn-sm" id="btnMintaRevisiDariModal">
+                    <i class="fas fa-rotate-left me-1"></i> Minta Revisi
+                </button>
                 <button type="button" class="btn btn-success btn-sm" id="btnParafDariModal">
-                    <i class="fas fa-check-circle me-1"></i> Setujui & Beri Paraf
+                    <i class="fas fa-check-circle me-1"></i> Setujui Absensi
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL MINTA REVISI ABSENSI -->
+<div class="modal fade" id="modalMintaRevisiAbsen" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-rotate-left me-2"></i>Minta Revisi Presensi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted mb-3" id="infoRevisiAbsen"></p>
+                <div class="mb-3">
+                    <label for="bagianRevisiAbsen" class="form-label small fw-semibold">Bagian yang Diminta</label>
+                    <select class="form-select form-select-sm" id="bagianRevisiAbsen">
+                        <option value="check-in">Check-in</option>
+                        <option value="check-out">Check-out</option>
+                        <option value="both">Check-in dan Check-out</option>
+                    </select>
+                    <div class="form-text" id="bagianRevisiHint"></div>
+                </div>
+                <div class="mb-2">
+                    <label for="catatanRevisiAbsen" class="form-label small fw-semibold">Catatan Pembimbing</label>
+                    <textarea class="form-control form-control-sm" id="catatanRevisiAbsen" rows="4" maxlength="1000"
+                        placeholder="Contoh: Lokasi Check-in kurang akurat, silakan lakukan Check-in ulang."></textarea>
+                    <div class="form-text">Peserta akan menerima notifikasi berisi catatan ini.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-warning btn-sm" id="btnKirimRevisiAbsen">
+                    <i class="fas fa-paper-plane me-1"></i> Kirim Permintaan Revisi
                 </button>
             </div>
         </div>

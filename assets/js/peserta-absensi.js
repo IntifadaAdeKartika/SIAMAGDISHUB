@@ -1,5 +1,5 @@
 /* peserta-absensi.js
-   Presensi peserta dengan geolocation dan kamera perangkat.
+   Presensi peserta dengan geolocation, kamera perangkat, dan alur revisi.
  */
 
 $(document).ready(function() {
@@ -52,6 +52,14 @@ $(document).ready(function() {
     var currentCheckIn = null;
     var currentCheckOut = null;
     var perbaikanParamHandled = false;
+    var revisiParamHandled = false;
+    var activeRevisions = [];
+    var waitingRevisions = [];
+    var revisionGroups = [];
+    var revisionMode = { checkIn: null, checkOut: null };
+    var revisionSelected = { masuk: null, keluar: null };
+    var revisionLoadError = null;
+    var revisionSubmitActive = false;
     var $video = $('#webcamVideo');
     var $canvas = $('#snapshotCanvas');
     var $snapshot = $('#snapshotImg');
@@ -347,13 +355,121 @@ $(document).ready(function() {
         return Boolean(record) && statusOf(record) === 'rejected';
     }
 
+    function revisionPartLabel(rowStatus) {
+        return rowStatus === 'keluar' ? 'Check-out' : 'Check-in';
+    }
+
+    function revisionLastEntry(row) {
+        var list = row && Array.isArray(row.riwayat_revisi) ? row.riwayat_revisi : [];
+        return list.length ? list[list.length - 1] : null;
+    }
+
+    function revisionRepaired(row) {
+        var last = revisionLastEntry(row);
+        return Boolean(last) && last.status === 'siap_dikirim';
+    }
+
+    function revisionTimestamp(value) {
+        if (!value) return '-';
+        return window.apiFormatDateTime(value).full;
+    }
+
+    function revisionTimeLabel(row) {
+        var formatted = window.apiFormatDateTime(row && row.tanggal_jam);
+        return formatted.dateLabel + ' ' + formatted.time;
+    }
+
+    function revisionDateKey(row) {
+        return window.apiFormatDateTime(row && row.tanggal_jam).date;
+    }
+
+    function isTodayValue(value) {
+        var formatted = window.apiFormatDateTime(value).date;
+        var now = new Date();
+        var today = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
+        return formatted === today;
+    }
+
+    function selectedRevisionRow(target) {
+        var key = target === 'keluar' ? 'keluar' : 'masuk';
+        var rows = activeRevisions.filter(function(row) { return String(row.status) === target; });
+        if (!rows.length) return null;
+        var selectedId = revisionSelected[key];
+        var selected = rows.find(function(row) { return String(row.id) === String(selectedId); });
+        return selected || rows[0];
+    }
+
     function setAttendanceButtonLabels(checkInRejected, checkOutRejected) {
-        $('#btnCheckIn').html(checkInRejected
-            ? '<i class="fas fa-sync-alt me-1"></i> Perbaiki Check-in'
-            : '<i class="fas fa-sign-in-alt me-1"></i> Check-in Masuk');
-        $('#btnCheckOut').html(checkOutRejected
-            ? '<i class="fas fa-sync-alt me-1"></i> Perbaiki Check-out'
-            : '<i class="fas fa-sign-out-alt me-1"></i> Check-out Pulang');
+        var revIn = revisionMode.checkIn;
+        var revOut = revisionMode.checkOut;
+        $('#btnCheckIn').html(revIn
+            ? '<i class="fas fa-sync-alt me-1"></i> Check-in Ulang'
+            : checkInRejected
+                ? '<i class="fas fa-sync-alt me-1"></i> Perbaiki Check-in'
+                : '<i class="fas fa-sign-in-alt me-1"></i> Check-in Masuk');
+        $('#btnCheckOut').html(revOut
+            ? '<i class="fas fa-sync-alt me-1"></i> Check-out Ulang'
+            : checkOutRejected
+                ? '<i class="fas fa-sync-alt me-1"></i> Perbaiki Check-out'
+                : '<i class="fas fa-sign-out-alt me-1"></i> Check-out Pulang');
+    }
+
+    function syncAttendanceControls() {
+        var checkInRejected = recordRejected(currentCheckIn);
+        var checkOutRejected = recordRejected(currentCheckOut);
+        setAttendanceButtonLabels(checkInRejected, checkOutRejected);
+        $('#btnCheckIn').prop('disabled', !attendanceLoaded ||
+            !(revisionMode.checkIn || checkInRejected || !hasCheckedInToday));
+        $('#btnCheckOut').prop('disabled', !attendanceLoaded ||
+            !(revisionMode.checkOut || checkOutRejected || (hasCheckedInToday && !currentCheckOut)));
+    }
+
+    function loadRevisionRows() {
+        return window.apiRequestAll('/absensi/revisi?per_page=100', ['absensi']).then(function(rows) {
+            var list = Array.isArray(rows) ? rows.slice() : [];
+            list.sort(function(a, b) {
+                return new Date(b.tanggal_jam || 0) - new Date(a.tanggal_jam || 0);
+            });
+            activeRevisions = list.filter(function(row) {
+                return statusOf(row) === 'pending' && row.revisi_diminta;
+            });
+            waitingRevisions = list.filter(function(row) {
+                return statusOf(row) === 'pending' && !row.revisi_diminta && Boolean(row.revisi_dikirim_pada);
+            });
+            revisionMode.checkIn = activeRevisions.filter(function(row) { return row.status === 'masuk'; })[0] || null;
+            revisionMode.checkOut = activeRevisions.filter(function(row) { return row.status === 'keluar'; })[0] || null;
+            ['masuk', 'keluar'].forEach(function(target) {
+                var id = revisionSelected[target];
+                if (id && !activeRevisions.some(function(row) {
+                    return String(row.status) === target && String(row.id) === String(id);
+                })) {
+                    revisionSelected[target] = null;
+                }
+            });
+            revisionGroups = [];
+            activeRevisions.forEach(function(row) {
+                var key = revisionDateKey(row);
+                var group = revisionGroups.find(function(item) { return item.key === key; });
+                if (!group) {
+                    group = { key: key, label: revisionTimeLabel(row), rows: [], checkIn: null, checkOut: null };
+                    revisionGroups.push(group);
+                }
+                group.rows.push(row);
+                if (row.status === 'masuk') group.checkIn = row;
+                if (row.status === 'keluar') group.checkOut = row;
+            });
+            revisionGroups.sort(function(a, b) { return a.key < b.key ? 1 : (a.key > b.key ? -1 : 0); });
+            revisionLoadError = null;
+            return list;
+        }).catch(function(error) {
+            revisionLoadError = error;
+            activeRevisions = [];
+            waitingRevisions = [];
+            revisionGroups = [];
+            revisionMode.checkIn = null;
+            revisionMode.checkOut = null;
+            return [];
+        });
     }
 
     function renderPerbaikanNotice() {
@@ -394,6 +510,96 @@ $(document).ready(function() {
         }).join(''));
     }
 
+    function renderRevisiNotice() {
+        var html = '';
+
+        if (revisionLoadError) {
+            html += '<div class="alert alert-warning py-2 small mb-2">' +
+                '<i class="fas fa-triangle-exclamation me-1"></i>Data permintaan revisi gagal dimuat. ' +
+                '<button type="button" class="btn btn-sm btn-outline-warning py-0 ms-2" id="btnRetryRevisi">Coba lagi</button>' +
+                '</div>';
+        }
+
+        revisionGroups.forEach(function(group, groupIndex) {
+            var rowsHtml = group.rows.map(function(row) {
+                var last = revisionLastEntry(row);
+                var catatan = (last && last.catatan) || row.catatan_pembimbing || '-';
+                var pembimbing = (last && last.pembimbing_nama) || 'Pembimbing';
+                var diminta = (last && last.diminta_pada) || row.revisi_diminta_pada;
+                var repaired = revisionRepaired(row);
+                var target = row.status === 'keluar' ? 'keluar' : 'masuk';
+                return '<div class="border rounded p-2 mb-2 bg-white" data-revisi-id="' + escapeHtml(row.id) + '">' +
+                    '<div class="d-flex justify-content-between align-items-center flex-wrap gap-1">' +
+                        '<div class="small fw-semibold">' + revisionPartLabel(row.status) + '</div>' +
+                        '<span class="badge ' + (repaired ? 'badge-approved' : 'badge-revisi') + '">' +
+                            (repaired ? '<i class="fas fa-check me-1"></i>Sudah diperbaiki' : '<i class="fas fa-rotate-left me-1"></i>Perlu diperbaiki') +
+                        '</span>' +
+                    '</div>' +
+                    '<div class="small mt-1">Catatan pembimbing: <em>' + escapeHtml(catatan) + '</em></div>' +
+                    '<div class="small text-muted">Diminta oleh ' + escapeHtml(pembimbing) + ' · ' +
+                        escapeHtml(revisionTimestamp(diminta)) + '</div>' +
+                    '<div class="mt-2">' +
+                        '<button type="button" class="btn btn-sm btn-warning btn-revisi-presensi" data-target="' + target +
+                            '" data-id="' + escapeHtml(row.id) + '">' +
+                            '<i class="fas fa-sync-alt me-1"></i> ' + (row.status === 'keluar' ? 'Check-out Ulang' : 'Check-in Ulang') +
+                        '</button>' +
+                    '</div>' +
+                    '</div>';
+            }).join('');
+
+            var belum = group.rows.filter(function(row) { return !revisionRepaired(row); });
+            var canSubmit = belum.length === 0 && !revisionSubmitActive;
+            var hint = canSubmit
+                ? 'Semua bagian yang diminta sudah diperbaiki. Kirim hasil revisi untuk diverifikasi pembimbing.'
+                : 'Lakukan ' + belum.map(function(row) {
+                    return revisionPartLabel(row.status).toLowerCase() + ' ulang';
+                }).join(' dan ') + ' terlebih dahulu, lalu kirim hasil revisi.';
+
+            html += '<div class="card border-warning mb-2" data-revisi-group="' + groupIndex + '">' +
+                '<div class="card-body p-3">' +
+                    '<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">' +
+                        '<div class="fw-semibold"><i class="fas fa-rotate-left me-1"></i>Presensi Perlu Direvisi</div>' +
+                        '<span class="badge badge-revisi">Revisi Diminta</span>' +
+                    '</div>' +
+                    '<div class="small mb-2">Tanggal presensi: <strong>' + escapeHtml(group.label) + '</strong></div>' +
+                    rowsHtml +
+                    '<div class="d-flex justify-content-end mt-2">' +
+                        '<button type="button" class="btn btn-sm btn-primary btn-kirim-hasil-revisi" data-group="' + groupIndex + '"' +
+                            (canSubmit ? '' : ' disabled') + '>' +
+                            '<i class="fas fa-paper-plane me-1"></i> Kirim Hasil Revisi' +
+                        '</button>' +
+                    '</div>' +
+                    '<div class="small text-muted mt-1 text-end">' + escapeHtml(hint) + '</div>' +
+                '</div>' +
+            '</div>';
+        });
+
+        waitingRevisions.forEach(function(row) {
+            var last = revisionLastEntry(row);
+            var catatan = (last && last.catatan) || row.catatan_pembimbing || '';
+            html += '<div class="alert alert-info py-2 small mb-2" data-revisi-id="' + escapeHtml(row.id) + '">' +
+                '<div class="d-flex justify-content-between align-items-center flex-wrap gap-1">' +
+                    '<div><i class="fas fa-paper-plane me-1"></i><strong>Hasil revisi ' + revisionPartLabel(row.status) + '</strong> ' +
+                        escapeHtml(revisionTimeLabel(row)) + ' sudah dikirim.</div>' +
+                    '<span class="badge badge-pending">Menunggu Verifikasi Pembimbing</span>' +
+                '</div>' +
+                '<div class="text-muted mt-1">Dikirim: ' + escapeHtml(revisionTimestamp(row.revisi_dikirim_pada)) + '</div>' +
+                (catatan ? '<div class="mt-1">Catatan pembimbing: <em>' + escapeHtml(catatan) + '</em></div>' : '') +
+                '</div>';
+        });
+
+        var $container = $('#boxRevisiPresensi');
+        if (!html) {
+            $container.remove();
+            return;
+        }
+        if (!$container.length) {
+            $container = $('<div id="boxRevisiPresensi" class="mb-3"></div>');
+            $('.attendance-layout').first().before($container);
+        }
+        $container.html(html);
+    }
+
     function fokuskanFormPerbaikan(target) {
         var $button = target === 'keluar' ? $('#btnCheckOut') : $('#btnCheckIn');
         var form = document.querySelector('.attendance-layout');
@@ -432,6 +638,48 @@ $(document).ready(function() {
         });
     }
 
+    function handleRevisiParam() {
+        if (revisiParamHandled) return;
+        var id = new URLSearchParams(window.location.search).get('revisi');
+        if (!id) return;
+        revisiParamHandled = true;
+        if (window.history && typeof window.history.replaceState === 'function') {
+            try {
+                var url = new URL(window.location.href);
+                url.searchParams.delete('revisi');
+                window.history.replaceState(null, '', url.pathname + (url.search ? url.search : '') + url.hash);
+            } catch (error) {
+                window.history.replaceState(null, '', window.location.pathname);
+            }
+        }
+
+        var $target = $('#boxRevisiPresensi [data-revisi-id]').filter(function() {
+            return String($(this).data('revisi-id')) === String(id);
+        });
+        if (!$target.length) {
+            if (revisionLoadError) return;
+            Swal.fire({
+                icon: 'info',
+                title: 'Revisi Tidak Dapat Dikerjakan',
+                text: 'Permintaan revisi pada notifikasi tersebut sudah dikirim atau tidak lagi aktif.',
+                confirmButtonText: 'Tutup'
+            });
+            return;
+        }
+
+        $target[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        $target.addClass('shadow-sm border-warning');
+        window.setTimeout(function() { $target.removeClass('shadow-sm'); }, 4000);
+        var row = activeRevisions.concat(waitingRevisions).find(function(item) {
+            return String(item.id) === String(id);
+        });
+        if (row && row.revisi_diminta) {
+            revisionSelected[row.status === 'keluar' ? 'keluar' : 'masuk'] = row.id;
+            syncAttendanceControls();
+            fokuskanFormPerbaikan(row.status === 'keluar' ? 'keluar' : 'masuk');
+        }
+    }
+
     function updateTodayStatus(today) {
         if (!today || typeof today.has_checked_in === 'undefined') {
             throw new Error('Format status presensi hari ini dari server tidak valid.');
@@ -445,38 +693,116 @@ $(document).ready(function() {
         var checkInStatus = statusOf(currentCheckIn) || 'pending';
         var checkInRejected = recordRejected(currentCheckIn);
         var checkOutRejected = recordRejected(currentCheckOut);
+        var revTodayIn = revisionMode.checkIn && isTodayValue(revisionMode.checkIn.tanggal_jam);
+        var revTodayOut = revisionMode.checkOut && isTodayValue(revisionMode.checkOut.tanggal_jam);
+        var waitingToday = waitingRevisions.some(function(row) { return isTodayValue(row.tanggal_jam); });
 
         $('#badgeStatusHariIni')
-            .removeClass('bg-secondary bg-success bg-warning bg-danger text-dark')
-            .addClass(!hasCheckedInToday ? 'bg-secondary' :
+            .removeClass('bg-secondary bg-success bg-warning bg-danger bg-info text-dark')
+            .addClass(!hasCheckedInToday && !revTodayIn ? 'bg-secondary' :
+                revTodayOut || revTodayIn ? 'bg-warning text-dark' :
                 checkOutRejected || checkInRejected ? 'bg-danger' :
                 checkInStatus === 'approved' ? 'bg-success' :
-                    checkInStatus === 'rejected' ? 'bg-danger' : 'bg-warning text-dark')
-            .text(!hasCheckedInToday
+                    waitingToday && checkInStatus === 'pending' ? 'bg-info text-dark' :
+                        checkInStatus === 'rejected' ? 'bg-danger' : 'bg-warning text-dark')
+            .text(!hasCheckedInToday && !revTodayIn
                 ? 'Belum Check-in'
-                : checkOutRejected
-                    ? 'Check-out Ditolak · Perlu Perbaikan'
-                    : checkInRejected
-                        ? 'Check-in Ditolak · Perlu Perbaikan'
-                        : checkInStatus === 'pending'
-                            ? 'Masuk Tercatat · Menunggu Verifikasi'
-                            : 'Masuk Tercatat · ' + checkInStatus);
+                : revTodayOut || revTodayIn
+                    ? 'Presensi Hari Ini Perlu Direvisi'
+                    : checkOutRejected
+                        ? 'Check-out Ditolak · Perlu Perbaikan'
+                        : checkInRejected
+                            ? 'Check-in Ditolak · Perlu Perbaikan'
+                            : waitingToday && checkInStatus === 'pending'
+                                ? 'Revisi Terkirim · Menunggu Verifikasi'
+                                : checkInStatus === 'pending'
+                                    ? 'Masuk Tercatat · Menunggu Verifikasi'
+                                    : 'Masuk Tercatat · ' + checkInStatus);
 
-        $('#btnCheckIn').prop('disabled', hasCheckedInToday && !checkInRejected);
-        $('#btnCheckOut').prop('disabled', !hasCheckedInToday || (Boolean(currentCheckOut) && !checkOutRejected));
-        setAttendanceButtonLabels(checkInRejected, checkOutRejected);
+        syncAttendanceControls();
         renderPerbaikanNotice();
+        renderRevisiNotice();
         handlePerbaikanParam();
+        handleRevisiParam();
     }
 
     $(document).on('click', '.btn-perbaiki-presensi', function() {
         fokuskanFormPerbaikan(String($(this).data('target')));
     });
 
+    $(document).on('click', '.btn-revisi-presensi', function() {
+        var target = String($(this).data('target'));
+        revisionSelected[target] = $(this).data('id');
+        syncAttendanceControls();
+        fokuskanFormPerbaikan(target);
+    });
+
+    $(document).on('click', '#btnRetryRevisi', function() {
+        refreshAttendanceState().catch(function(error) {
+            showError(error, 'Data Revisi Gagal Dimuat');
+        });
+    });
+
+    function kirimHasilRevisi(groupIndex) {
+        var group = revisionGroups[Number(groupIndex)];
+        if (!group || revisionSubmitActive) return;
+        var belum = group.rows.filter(function(row) { return !revisionRepaired(row); });
+        if (belum.length) {
+            Swal.fire('Perbaikan Belum Lengkap',
+                'Selesaikan ' + belum.map(function(row) { return revisionPartLabel(row.status).toLowerCase(); }).join(' dan ') +
+                ' ulang terlebih dahulu.', 'warning');
+            return;
+        }
+
+        var labels = group.rows.map(function(row) { return revisionPartLabel(row.status); }).join(' dan ');
+        Swal.fire({
+            title: 'Kirim Hasil Revisi?',
+            html: '<p class="small mb-2">Hasil revisi <strong>' + escapeHtml(labels) + '</strong> tanggal <strong>' +
+                escapeHtml(group.label) + '</strong> akan dikirim ke pembimbing.</p>' +
+                '<p class="small text-muted mb-0">Setelah dikirim, status presensi menjadi menunggu verifikasi pembimbing.</p>',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Kirim Hasil Revisi',
+            cancelButtonText: 'Batal'
+        }).then(function(result) {
+            if (!result.isConfirmed) return;
+            revisionSubmitActive = true;
+            renderRevisiNotice();
+            var anchorId = group.rows[0].id;
+            return window.apiRequest('/absensi/revisi/' + encodeURIComponent(anchorId) + '/kirim', {
+                method: 'POST'
+            }).then(function(payload) {
+                return refreshAttendanceState().then(function() {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Hasil Revisi Terkirim',
+                        text: responseMessage(payload, 'Hasil revisi berhasil dikirim dan menunggu verifikasi pembimbing.')
+                    });
+                }, function(refreshError) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Revisi Terkirim, Data Belum Diperbarui',
+                        text: responseMessage(payload, 'Hasil revisi berhasil dikirim.') + ' ' + refreshError.message
+                    });
+                });
+            }).catch(function(error) {
+                showError(error, 'Gagal Mengirim Hasil Revisi');
+            }).then(function() {
+                revisionSubmitActive = false;
+                renderRevisiNotice();
+            });
+        });
+    }
+
+    $(document).on('click', '.btn-kirim-hasil-revisi', function() {
+        kirimHasilRevisi($(this).data('group'));
+    });
+
     function refreshAttendanceState() {
         return Promise.all([
             window.apiRequest('/absensi/today'),
-            window.apiRequest('/riwayat')
+            window.apiRequest('/riwayat'),
+            loadRevisionRows()
         ]).then(function(responses) {
             var today = responseData(responses[0], ['has_checked_in', 'check_in', 'check_out']);
             var historyData = responseData(responses[1], ['riwayat_absensi', 'riwayat_logbook', 'riwayat_izin']);
@@ -506,6 +832,11 @@ $(document).ready(function() {
             }
             if (Number(item.jumlah_resubmit || 0) > 0) {
                 statusCell += '<div class="small text-muted">Perbaikan ke-' + escapeHtml(item.jumlah_resubmit) + '</div>';
+            }
+            if (item.revisi_diminta) {
+                statusCell += '<div class="small text-warning-emphasis">Revisi diminta pembimbing</div>';
+            } else if (statusVerif === 'pending' && item.revisi_dikirim_pada) {
+                statusCell += '<div class="small text-info-emphasis">Menunggu verifikasi revisi</div>';
             }
             return '<tr><td>' + escapeHtml(formattedDateTime.dateLabel + ' ' + formattedDateTime.time) + '</td><td>' +
                 escapeHtml(item.status || '-') + '</td><td>' + escapeHtml(item.lokasi || '-') + '</td><td>' +
@@ -549,15 +880,17 @@ $(document).ready(function() {
             return;
         }
 
-        var repairing = endpoint === '/check-in'
-            ? recordRejected(currentCheckIn)
-            : recordRejected(currentCheckOut);
+        var target = endpoint === '/check-in' ? 'masuk' : 'keluar';
+        var rejected = target === 'masuk' ? recordRejected(currentCheckIn) : recordRejected(currentCheckOut);
+        var revisionRecord = rejected ? null : selectedRevisionRow(target);
+        var isRevision = Boolean(revisionRecord);
+        var repairing = !isRevision && rejected;
 
-        if (!repairing && endpoint === '/check-in' && hasCheckedInToday) {
+        if (!isRevision && !repairing && endpoint === '/check-in' && hasCheckedInToday) {
             Swal.fire('Aksi Presensi Tidak Tersedia', 'Status presensi hari ini sudah berubah. Muat ulang data sebelum mencoba lagi.', 'warning');
             return;
         }
-        if (!repairing && endpoint === '/check-out' && (!hasCheckedInToday || currentCheckOut)) {
+        if (!isRevision && !repairing && endpoint === '/check-out' && (!hasCheckedInToday || currentCheckOut)) {
             Swal.fire('Aksi Presensi Tidak Tersedia', 'Status presensi hari ini sudah berubah. Muat ulang data sebelum mencoba lagi.', 'warning');
             return;
         }
@@ -570,12 +903,12 @@ $(document).ready(function() {
             return;
         }
 
-        var repairRecord = endpoint === '/check-in' ? currentCheckIn : currentCheckOut;
+        var repairRecord = target === 'masuk' ? currentCheckIn : currentCheckOut;
         var requestUrl = repairing
             ? apiUrl('/absensi/' + encodeURIComponent(repairRecord.id) + '/perbaikan')
             : apiUrl(endpoint);
         var keterangan = String($('#keterangan').val() || '').trim();
-        var $button = endpoint === '/check-in' ? $('#btnCheckIn') : $('#btnCheckOut');
+        var $button = target === 'masuk' ? $('#btnCheckIn') : $('#btnCheckOut');
         $button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Mengirim...');
 
         detectLocation().then(function(coords) {
@@ -583,12 +916,13 @@ $(document).ready(function() {
                 throw new Error('Posisi di luar radius kantor (' + jarakUserSekarang + ' m; batas ' + activeKantor.radius + ' m).');
             }
             var formData = new FormData();
-            formData.append('status', endpoint === '/check-in' ? 'masuk' : 'keluar');
+            formData.append('status', target);
             formData.append('latitude', coords.latitude);
             formData.append('longitude', coords.longitude);
             formData.append('lokasi', activeKantor.nama);
             formData.append('foto_selfie', fotoSelfie, fotoSelfie.name);
             if (keterangan) formData.append('keterangan', keterangan);
+            if (isRevision) formData.append('id_absensi', revisionRecord.id);
             var token = localStorage.getItem('token') || localStorage.getItem('siamag_token') || '';
             return fetch(requestUrl, {
                 method: 'POST',
@@ -610,10 +944,14 @@ $(document).ready(function() {
             return refreshAttendanceState().then(function() {
                 Swal.fire({
                     icon: 'success',
-                    title: repairing ? 'Perbaikan Presensi Terkirim' : 'Presensi Berhasil',
-                    text: responseMessage(payload, repairing
-                        ? 'Perbaikan presensi berhasil dikirim dan menunggu verifikasi pembimbing.'
-                        : actionLabel + ' berhasil dicatat.')
+                    title: isRevision
+                        ? (target === 'masuk' ? 'Check-in Ulang Tersimpan' : 'Check-out Ulang Tersimpan')
+                        : repairing ? 'Perbaikan Presensi Terkirim' : 'Presensi Berhasil',
+                    text: responseMessage(payload, isRevision
+                        ? 'Perbaikan tersimpan. Silakan kirim hasil revisi untuk diverifikasi pembimbing.'
+                        : repairing
+                            ? 'Perbaikan presensi berhasil dikirim dan menunggu verifikasi pembimbing.'
+                            : actionLabel + ' berhasil dicatat.')
                 });
             }, function(refreshError) {
                 Swal.fire({
@@ -625,11 +963,7 @@ $(document).ready(function() {
         }).catch(function(error) {
             showError(error, 'Presensi ditolak');
         }).then(function() {
-            var checkInRejected = recordRejected(currentCheckIn);
-            var checkOutRejected = recordRejected(currentCheckOut);
-            setAttendanceButtonLabels(checkInRejected, checkOutRejected);
-            $('#btnCheckIn').prop('disabled', hasCheckedInToday && !checkInRejected);
-            $('#btnCheckOut').prop('disabled', !hasCheckedInToday || (Boolean(currentCheckOut) && !checkOutRejected));
+            syncAttendanceControls();
         });
     }
 

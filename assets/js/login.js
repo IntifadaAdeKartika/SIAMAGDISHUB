@@ -1,6 +1,6 @@
 // =====================================================================
 //  SIAMAG – Login Handler
-//  Fase 0: Integrasi autentikasi dengan Laravel backend API
+//  Integrasi autentikasi dengan Laravel backend API
 // =====================================================================
 
 /** Base URL API Laravel – diekspos global agar bisa dipakai file JS lain */
